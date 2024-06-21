@@ -2,6 +2,7 @@
 import { useSearchParams } from 'next/navigation'
 import { Button, Navbar } from '@/components'
 import Link from 'next/link'
+import { Suspense } from 'react'
 
 export default function Congratulations() {
 	const searchParams = useSearchParams()
@@ -9,7 +10,7 @@ export default function Congratulations() {
 	const brandName = searchParams.get('name')
 
 	return (
-		<>
+		<Suspense>
 			<Navbar />
 			<main className='h-screen py-12 px-16 flex flex-col gap-8 text-black'>
 				<h1 className='text-3xl font-bold'>Congratulations</h1>
@@ -26,6 +27,6 @@ export default function Congratulations() {
 					I’m already selling the product on Shopify
 				</Button>
 			</main>
-		</>
+		</Suspense>
 	)
 }

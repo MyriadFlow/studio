@@ -124,23 +124,25 @@ export default function CreatePhygital() {
 		}
 
 		try {
-			const brandName = localStorage.getItem('brandName')
-			values.image = imageUrl
-			values.brandName = brandName!
-			localStorage.setItem('phygitalData', JSON.stringify(values))
+			if (typeof window !== 'undefined' && localStorage) {
+				const brandName = localStorage.getItem('brandName')
+				values.image = imageUrl
+				values.brandName = brandName!
+				localStorage.setItem('phygitalData', JSON.stringify(values))
 
-			if (imageUrl !== '') {
-				setLoading(true)
-				const collection = await fetch(`${apiUrl}/api/create-collection`, {
-					method: 'POST',
-					body: JSON.stringify([values.phygitalName, values.brandName]),
-				})
+				if (imageUrl !== '') {
+					setLoading(true)
+					const collection = await fetch(`${apiUrl}/api/create-collection`, {
+						method: 'POST',
+						body: JSON.stringify([values.phygitalName, values.brandName]),
+					})
 
-				if (collection.status === 201) {
-					router.push(
-						`/create-phygital-detail
+					if (collection.status === 201) {
+						router.push(
+							`/create-phygital-detail
 			`
-					)
+						)
+					}
 				}
 			} else if (!imageError && imageUrl === '') {
 				toast.warning('Wait for your image to finish upload')

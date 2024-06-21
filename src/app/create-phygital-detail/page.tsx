@@ -60,7 +60,13 @@ export default function CreatePhygitalDetail() {
 	const [formData, setFormData] = useState<FormDataEntry[]>([])
 	const [loading, setLoading] = useState(false)
 
-	const storedData = localStorage.getItem('phygitalData') ?? '{}'
+	const getData = () => {
+		if (typeof window !== 'undefined' && localStorage) {
+			return localStorage.getItem('phygitalData')
+		}
+	}
+
+	const storedData = getData() ?? '{}'
 
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),

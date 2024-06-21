@@ -91,8 +91,19 @@ export default function CreateWebxrExperience() {
 	const [loading, setLoading] = useState<boolean>(false)
 	const [imageError, setImageError] = useState<boolean>(false)
 
-	const storedData = localStorage.getItem('avatar') ?? '{}'
-	const phygital = localStorage.getItem('phygitalData') ?? '{}'
+	const getPhy = () => {
+		if (typeof window !== 'undefined' && localStorage) {
+			return localStorage.getItem('phygitalData')
+		}
+	}
+	const getAvatar = () => {
+		if (typeof window !== 'undefined' && localStorage) {
+			return localStorage.getItem('avatar')
+		}
+	}
+
+	const storedData = getAvatar() ?? '{}'
+	const phygital = getPhy() ?? '{}'
 
 	const parsedData = JSON.parse(storedData)
 	const phygitalName = JSON.parse(phygital).phygitalName
