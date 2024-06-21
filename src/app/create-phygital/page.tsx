@@ -24,6 +24,9 @@ import { z } from 'zod'
 import Image from 'next/image'
 import { toast, ToastContainer } from 'react-toastify'
 import { useRouter } from 'next/navigation'
+import { NFTStorage } from 'nft.storage'
+const API_KEY = process.env.NEXT_PUBLIC_STORAGE_API!
+const client = new NFTStorage({ token: API_KEY })
 
 const formSchema = z.object({
 	phygitalName: z.string().min(2, {
@@ -163,6 +166,28 @@ export default function CreatePhygital() {
 			setPreview(false)
 		}
 	}, [imageUrl])
+
+	async function uploadImage(e: React.ChangeEvent<HTMLInputElement>) {
+		e.preventDefault()
+		try {
+			setLoading(true)
+			const blobDataImage = new Blob([e.target.files![0]])
+			const metaHash = await client.storeBlob(blobDataImage)
+			setImageUrl(`ipfs://${metaHash}`)
+			toast.success('Upload Completed!', {
+				position: 'top-left',
+			})
+			console.log('profilePictureUrl', metaHash)
+		} catch (error) {
+			console.log('Error uploading file: ', error)
+		} finally {
+			setLoading(false)
+		}
+	}
+
+	const removePrefix = (uri: any) => {
+		return uri.substring(7, uri.length)
+	}
 
 	return (
 		<>
@@ -336,24 +361,26 @@ export default function CreatePhygital() {
 										<UploadIcon />
 										<p>Drag file here to upload. Choose file </p>
 										<p>Recommeded size 512 x 512 px</p>
-										<UploadButton
-											className='block mx-auto uploadthingButton '
-											endpoint='imageUploader'
-											onClientUploadComplete={async (res) => {
-												// Do something with the response
-												const data = res[0]
-												console.log('Files: ', res)
-												setImageUrl(data.url)
-
-												toast.success('Upload Completed!', {
-													position: 'top-left',
-												})
-											}}
-											onUploadError={(error: Error) => {
-												// Do something with the error.
-												alert(`ERROR! ${error.message}`)
-											}}
-										/>
+										<div>
+											<label
+												htmlFor='upload'
+												className='flex flex-row items-center ml-12 cursor-pointer mt-4'
+											>
+												<input
+													id='upload'
+													type='file'
+													className='hidden'
+													onChange={uploadImage}
+													accept='image/*'
+												/>
+												<img
+													src='https://png.pngtree.com/element_our/20190601/ourmid/pngtree-file-upload-icon-image_1344393.jpg'
+													alt=''
+													className='w-10 h-10'
+												/>
+												<div className='text-white ml-1'>Replace</div>
+											</label>
+										</div>
 									</div>
 									{imageError && (
 										<p className='text-red-700'>You have to upload an Image</p>
@@ -362,8 +389,11 @@ export default function CreatePhygital() {
 								<div>
 									<h3 className='text-2xl'>Preview</h3>
 									{preview ? (
-										<Image
-											src={imageUrl}
+										<img
+											// src={imageUrl}
+											src={`${'https://nftstorage.link/ipfs'}/${removePrefix(
+												imageUrl
+											)}`}
 											alt='preview image'
 											height={250}
 											width={350}
