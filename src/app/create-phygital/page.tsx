@@ -380,7 +380,7 @@ export default function CreatePhygital() {
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel className='text-xl font-semibold mb-4'>
-											Product Information for AI
+											Product Information for AI*
 										</FormLabel>
 										<FormDescription>
 											Fill this field if you want to create an AI-powered brand

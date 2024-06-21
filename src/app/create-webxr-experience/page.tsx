@@ -241,25 +241,7 @@ export default function CreateWebxrExperience() {
 									)}
 								</div>
 							</div>
-							<div className='flex gap-12 flex-col'>
-								<h3 className='text-xl'>
-									Allow NFT owners to customize the avatar*
-								</h3>
-								<p>
-									Choose this option if you want your avatars to compete on the
-									leaderboard for increased visibility and weekly rewards.
-								</p>
-								<RadioGroup className='flex'>
-									<div className='flex items-center'>
-										<RadioGroupItem value='yes' />
-										<Label>Yes</Label>
-									</div>
-									<div className='flex items-center'>
-										<RadioGroupItem value='no' />
-										<Label>No</Label>
-									</div>
-								</RadioGroup>
-							</div>
+
 							<div className='flex gap-12 flex-col p-4 border-[#30D8FF] border rounded'>
 								<div className='flex gap-4'>
 									<h3 className='text-xl'>
@@ -316,26 +298,16 @@ export default function CreateWebxrExperience() {
 							</div>
 							<div className='flex gap-12 flex-col'>
 								<h3 className='text-xl'>
-									Give Free NFTs to users who interact with your avatar*
+									Give Free NFTs to users who interact with your avatar
 								</h3>
 								<p>
 									Choose this option if you want your avatars to compete on the
 									leaderboard for increased visibility and weekly rewards.
 								</p>
-								<RadioGroup className='flex'>
-									<div className='flex items-center'>
-										<RadioGroupItem value='yes' />
-										<Label>Yes</Label>
-									</div>
-									<div className='flex items-center'>
-										<RadioGroupItem value='no' />
-										<Label>No</Label>
-									</div>
-								</RadioGroup>
 							</div>
 							<div className='flex gap-12 p-4 border-[#30D8FF] border rounded'>
 								<div>
-									<h3 className='text-2xl'>Upload free NFT image*</h3>
+									<h3 className='text-2xl'>Upload free NFT image</h3>
 									<p>
 										You can upload anything. We recommend uploading an image of
 										your avatar in your background.
