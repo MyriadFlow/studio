@@ -214,7 +214,7 @@ export default function CreateWebxrExperience() {
 										<UploadIcon />
 										<p>Drag file here to upload. Choose file </p>
 										<UploadButton
-											className='block mx-auto'
+											className='block mx-auto uploadthingButton '
 											endpoint='imageUploader'
 											onClientUploadComplete={async (res) => {
 												// Do something with the response
@@ -328,7 +328,7 @@ export default function CreateWebxrExperience() {
 										<p>Drag file here to upload. Choose file </p>
 										<p>Recommeded size 512 x 512 px</p>
 										<UploadButton
-											className='block mx-auto'
+											className='block mx-auto uploadthingButton '
 											endpoint='imageUploader'
 											onClientUploadComplete={async (res) => {
 												// Do something with the response

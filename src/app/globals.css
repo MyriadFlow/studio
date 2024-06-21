@@ -87,3 +87,8 @@
 .connect-button {
 	background-image: linear-gradient(0deg, #a25ff8e3, #30d8ff);
 }
+
+.uploadthingButton {
+	color: black !important;
+	background: black !important;
+}
