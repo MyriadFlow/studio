@@ -21,9 +21,9 @@ model Manager {
 
 model Brand {
   id                  String      @id @default(uuid())
-  managerId           String
-  manager             Manager   @relation(fields: [managerId], references: [walletAddress])
-  brandName                String   @unique
+  managerId           String?
+  manager             Manager?   @relation(fields: [managerId], references: [walletAddress])
+  brandName           String   @unique
   description         String
   logoImage           String
   brandRepresentative String
@@ -31,15 +31,14 @@ model Brand {
   contactPhone        String
   shippingAddress     String
   brandInfo           String
-  collectionsId       String @unique
-  collections         Collection @relation(fields: [collectionsId], references: [collectionName])
+  collections         Collection []
 }
 
 model Collection {
   id                 String      @id @default(uuid())
   collectionName     String   @unique
   brandId            String
-  brand              Brand?
+  brand              Brand?     @relation(fields: [brandId], references: [brandName])
   phygitals          Phygital[] 
 }
 
@@ -53,7 +52,7 @@ model Phygital {
   royalty             String?
   image               String
   productInfo         String
-  colours             String[]
+  colours             String
   size                String
   weight              String
   material            String
@@ -65,6 +64,7 @@ model Phygital {
   contractAddress    String?
   graphURL           String?
   webXR              WebXR[]   // Optional WebXR
+  avatar             Avatar[] 
   collectionId       String
   collection         Collection?@relation(fields: [collectionId], references: [collectionName])
 }
@@ -87,4 +87,13 @@ model WebXR { // Optional WebXR
   bronzeReward      String
   phygitalId        String      // Relation to Phygital
   phygital          Phygital  @relation(fields: [phygitalId], references: [phygitalName])// Optional relation
+}
+
+model Avatar{
+  id          String @id @default(uuid())
+  avatarId    String
+  url         String
+  userId      String
+  phygitalId  String      // Relation to Phygital
+  phygital    Phygital  @relation(fields: [phygitalId], references: [phygitalName])// Optional relation
 }

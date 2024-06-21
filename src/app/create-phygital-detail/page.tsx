@@ -5,8 +5,6 @@ import {
 	Input,
 	Label,
 	Navbar,
-	RadioGroupItem,
-	RadioGroup,
 	Textarea,
 	Form,
 	FormControl,
@@ -17,7 +15,7 @@ import {
 	FormMessage,
 	PlusIcon,
 } from '@/components'
-import { useSearchParams } from 'next/navigation'
+
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -46,14 +44,23 @@ const formSchema = z.object({
 		.min(2, { message: 'Location made must be at least 2 characters' }),
 })
 
+interface FormDataEntry {
+	title: string
+	description: string
+}
+
 export default function CreatePhygitalDetail() {
-	const searchParams = useSearchParams()
+	const isDevelopment = process.env.NODE_ENV === 'development'
 
-	const [formData, setFormData] = useState([])
-	const brandName = searchParams.get('name')
-	const branddesc = searchParams.get('description')
+	const apiUrl = isDevelopment
+		? 'http://localhost:3000' // Local development URL
+		: 'https://studio.myriadflow.com' // Production URL
 
-	console.log(brandName, branddesc)
+	const router = useRouter()
+	const [formData, setFormData] = useState<FormDataEntry[]>([])
+	const [loading, setLoading] = useState(false)
+
+	const storedData = localStorage.getItem('phygitalData') ?? '{}'
 
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
@@ -74,12 +81,61 @@ export default function CreatePhygitalDetail() {
 	}
 
 	async function onSubmit(values: z.infer<typeof formSchema>) {
-		console.log(values)
+		const parsedData = JSON.parse(storedData)
+
+		const phygitalsData = { ...parsedData, ...values }
+
+		const getVariants = () => {
+			if (formData.length > 0) {
+				const variantsData = [
+					{
+						phygitalName: parsedData.phygitalName, // Assuming a single phygital with name "humi"
+						variantData: formData?.map(
+							(item: { title: string; description: string }) => ({
+								variant: item?.title || '', // Convert title to uppercase for variant
+								description: item?.description || '', // Use the full description
+							})
+						),
+					},
+				]
+
+				return variantsData
+			} else {
+				return null
+			}
+		}
+
+		console.log(phygitalsData)
+		const variantData = getVariants()
+
+		try {
+			setLoading(true)
+			const phygitaldata = await fetch(`${apiUrl}/api/create-phygital`, {
+				method: 'POST',
+				body: JSON.stringify(phygitalsData),
+			})
+
+			if (variantData !== null) {
+				await fetch(`${apiUrl}/api/create-phygital/variant`, {
+					method: 'POST',
+					body: JSON.stringify(variantData),
+				})
+			}
+
+			if (phygitaldata.status === 201) {
+				router.push('/create-avatar')
+			}
+		} catch (error) {
+			setLoading(false)
+			console.log(error)
+			toast.warning('error')
+		}
 	}
 
 	return (
 		<>
 			<Navbar />
+			<ToastContainer />
 			<main className='min-h-screen'>
 				<div className='px-16 py-8 border-b text-black border-black'>
 					<h1 className='font-bold uppercase text-3xl mb-4'>
@@ -111,7 +167,7 @@ export default function CreatePhygitalDetail() {
 
 							<div className='flex gap-8'>
 								<FormField
-									name='colours'
+									name='size'
 									control={form.control}
 									render={({ field }) => (
 										<FormItem className='basis-[70%]'>
@@ -261,29 +317,15 @@ export default function CreatePhygitalDetail() {
 									that interact with your customers.
 								</p>
 							</div>
-							<RadioGroup className='flex gap-6'>
-								<div>
-									<div>
-										<RadioGroupItem value='yes' /> <p>Yes</p>
-									</div>
-									<Link href='/create-avatar'>
-										<Button className='bg-[#30D8FF] rounded-full text-black'>
-											Create Avatar
-										</Button>
-									</Link>
-								</div>
-								<div>
-									<div>
-										<RadioGroupItem value='yes' /> <p>Yes</p>
-									</div>
-									<Button
-										type='submit'
-										className='bg-[#30D8FF] rounded-full text-black'
-									>
-										Review Phygital
-									</Button>
-								</div>
-							</RadioGroup>
+
+							<div>
+								<Button
+									type='submit'
+									className='bg-[#30D8FF] rounded-full text-black'
+								>
+									{loading ? 'loading' : 'Next'}
+								</Button>
+							</div>
 						</div>
 					</form>
 				</Form>

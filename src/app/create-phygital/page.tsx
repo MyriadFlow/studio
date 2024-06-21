@@ -91,6 +91,12 @@ const items = [
 ]
 
 export default function CreatePhygital() {
+	const isDevelopment = process.env.NODE_ENV === 'development'
+
+	const apiUrl = isDevelopment
+		? 'http://localhost:3000' // Local development URL
+		: 'https://studio.myriadflow.com' // Production URL
+
 	const router = useRouter()
 	const [imageUrl, setImageUrl] = useState<string>('')
 	const [preview, setPreview] = useState<boolean>(false)
@@ -121,31 +127,27 @@ export default function CreatePhygital() {
 			const brandName = localStorage.getItem('brandName')
 			values.image = imageUrl
 			values.brandName = brandName!
-			console.log(values)
 			localStorage.setItem('phygitalData', JSON.stringify(values))
-			setLoading(true)
 
-			const brand = await fetch(`http://localhost:3000/api/create-collection`, {
-				method: 'POST',
-				body: JSON.stringify([values.phygitalName, values.brandName]),
-			})
+			if (imageUrl !== '') {
+				setLoading(true)
+				const collection = await fetch(`${apiUrl}/api/create-collection`, {
+					method: 'POST',
+					body: JSON.stringify([values.phygitalName, values.brandName]),
+				})
 
-			console.log(brand)
-
-			// if (brand.status === 201) {
-			// 	router.push(
-			// 		`/create-phygital-detail?name=
-			// ${values.phygitalName}&description=
-			// ${values.description}&categories=
-			// ${values.categories}&price=${values.price}
-			// &royalty=${values.royalty}&quantity=${values.quantity}
-			// &productInfo=${values.productInfo}&image=${values.image}
-			// `
-			// 	)
-			// }
+				if (collection.status === 201) {
+					router.push(
+						`/create-phygital-detail
+			`
+					)
+				}
+			} else if (!imageError && imageUrl === '') {
+				toast.warning('Wait for your image to finish upload')
+			}
 		} catch (error) {
-			console.log(error)
-			toast.warning('Failed to create Brand')
+			console.log('Errors' + error)
+			toast.warning('Failed to create Collection')
 			setLoading(false)
 		}
 	}
@@ -340,6 +342,7 @@ export default function CreatePhygital() {
 												const data = res[0]
 												console.log('Files: ', res)
 												setImageUrl(data.url)
+
 												toast.success('Upload Completed!', {
 													position: 'top-left',
 												})
@@ -351,7 +354,7 @@ export default function CreatePhygital() {
 										/>
 									</div>
 									{imageError && (
-										<p className='bg-red-700'>You have to upload an Image</p>
+										<p className='text-red-700'>You have to upload an Image</p>
 									)}
 								</div>
 								<div>
@@ -392,7 +395,7 @@ export default function CreatePhygital() {
 								type='submit'
 								className='w-fit bg-[#30D8FF] rounded-full text-black'
 							>
-								Next
+								{loading ? 'loading' : 'Next'}
 							</Button>
 						</div>
 					</form>

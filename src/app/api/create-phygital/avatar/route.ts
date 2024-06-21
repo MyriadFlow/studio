@@ -2,23 +2,26 @@ import { prisma } from '@/utils/connect'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const POST = async (req: NextRequest) => {
-	try {
-		const body = await req.json()
+	const body = await req.json()
+	console.log(body)
 
-		await prisma.brand.update({
+	try {
+		await prisma.phygital.update({
 			where: {
-				brandName: body[1],
+				phygitalName: body.phygitalName,
 			},
 			data: {
-				collections: {
+				avatar: {
 					create: {
-						collectionName: body[0],
+						avatarId: body.avatarId,
+						url: body.url,
+						userId: body.userId,
 					},
 				},
 			},
 		})
 
-		return new NextResponse(JSON.stringify({ message: 'Collection Created' }), {
+		return new NextResponse(JSON.stringify({ message: 'Avatar Created' }), {
 			status: 201,
 		})
 	} catch (error) {

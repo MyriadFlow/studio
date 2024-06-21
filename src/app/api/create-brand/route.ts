@@ -25,6 +25,20 @@ export const POST = async (req: NextRequest) => {
 			},
 		})
 
+		// await prisma.brand.create({
+		// 	data: {
+		// 		brandName: body.brandName,
+		// 		description: body.description,
+		// 		logoImage: body.logoImage,
+		// 		brandRepresentative: body.brandRepresentative,
+		// 		contactEmail: body.contactEmail,
+		// 		contactPhone: body.contactPhone,
+		// 		shippingAddress: body.shippingAddress,
+		// 		brandInfo: body.brandInfo,
+		// 		managerId: body.walletAddress,
+		// 	},
+		// })
+
 		return new NextResponse(JSON.stringify({ message: 'Brand Created' }), {
 			status: 201,
 		})

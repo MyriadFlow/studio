@@ -57,6 +57,12 @@ const formSchema = z.object({
 })
 
 export default function CreateBrand() {
+	const isDevelopment = process.env.NODE_ENV === 'development'
+
+	const apiUrl = isDevelopment
+		? 'http://localhost:3000' // Local development URL
+		: 'https://studio.myriadflow.com' // Production URL
+
 	const account = useAccount()
 	const router = useRouter()
 	const [imageUrl, setImageUrl] = useState<string>('')
@@ -92,25 +98,21 @@ export default function CreateBrand() {
 				values.walletAddress = account.address!
 				localStorage.setItem('brandName', values.brandName)
 				console.log(values)
-				setLoading(true)
 
-				// const manager = await fetch(
-				// 	`http://localhost:3000/api/create-manager`,
-				// 	{
-				// 		method: 'POST',
-				// 		body: JSON.stringify({ walletAddress: account.address }),
-				// 	}
-				// )
+				if (imageUrl !== '') {
+					setLoading(true)
+					const brand = await fetch(`${apiUrl}/api/create-brand`, {
+						method: 'POST',
+						body: JSON.stringify(values),
+					})
 
-				const brand = await fetch(`http://localhost:3000/api/create-brand`, {
-					method: 'POST',
-					body: JSON.stringify(values),
-				})
-
-				console.log(brand)
-				// console.log(manager)
-				if (brand.status === 201) {
-					router.push(`/congratulations?name=${values.brandName}`)
+					console.log(brand)
+					// console.log(manager)
+					if (brand.status === 201) {
+						router.push(`/congratulations?name=${values.brandName}`)
+					}
+				} else if (!imageError && imageUrl === '') {
+					toast.warning('Wait for your image to finish upload')
 				}
 			} catch (error) {
 				console.log(error)
@@ -208,7 +210,7 @@ export default function CreateBrand() {
 										/>
 									</div>
 									{imageError && (
-										<p className='bg-red-700'>You have to upload a logo</p>
+										<p className='text-red-700'>You have to upload a logo</p>
 									)}
 								</div>
 								<div>
