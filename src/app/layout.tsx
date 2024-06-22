@@ -4,7 +4,14 @@ import './globals.css'
 import 'react-toastify/dist/ReactToastify.css'
 
 import { cn } from '@/lib/utils'
-import { Providers } from '@/lib/providers'
+
+import { headers } from 'next/headers'
+
+import { cookieToInitialState } from 'wagmi'
+import Providers from '@/lib/providers'
+import Web3ModalProvider from '@/lib/providers'
+import { config } from '@/lib/wagmi'
+
 
 const fontSans = FontSans({
 	subsets: ['latin'],
@@ -21,6 +28,7 @@ export default function RootLayout({
 }: Readonly<{
 	children: React.ReactNode
 }>) {
+	const initialState = cookieToInitialState(config, headers().get('cookie'))
 	return (
 		<html lang='en' suppressHydrationWarning>
 			<Providers>
@@ -30,7 +38,7 @@ export default function RootLayout({
 						fontSans.variable
 					)}
 				>
-					{children}
+				<Web3ModalProvider initialState={initialState}>{children}</Web3ModalProvider>
 				</body>
 			</Providers>
 		</html>
