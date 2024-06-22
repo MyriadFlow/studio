@@ -6,7 +6,7 @@ import {
 import { Logo } from './logo'
 import { Button } from './button'
 import Link from 'next/link'
-import { CreateWallet } from './create-wallet'
+
 
 export const Navbar = () => {
 	type NavLink = {
@@ -45,7 +45,7 @@ export const Navbar = () => {
 				{/* <Button className='connect-button rounded-full hover:text-white'>
 					Connect Wallet
 				</Button> */}
-				<CreateWallet />
+				<w3m-button />
 			</NavigationMenuList>
 		</NavigationMenu>
 	)
