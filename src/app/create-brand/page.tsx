@@ -25,6 +25,8 @@ import { toast, ToastContainer } from 'react-toastify'
 import { useRouter } from 'next/navigation'
 import { getBaseUrl } from '@/utils/api'
 import { useAccount } from 'wagmi'
+import { abi } from "@/components/abi/accessmasterABI";
+import { ethers } from 'ethers';
 
 const formSchema = z.object({
 	brandName: z.string().min(2, {
@@ -86,6 +88,23 @@ export default function CreateBrand() {
 			if (!imageUrl) {
 				setImageError(true)
 			}
+
+			if (typeof window !== "undefined" && window.ethereum) {
+				const provider = new ethers.providers.Web3Provider(window.ethereum)
+		  
+				// Create a JavaScript object from the Contract ABI, to interact
+				// with the HelloWorld contract.
+				const contract = new ethers.Contract(
+				  '0xcA1DE631D9Cb2e64C863BF50b83D18249dFb7054',
+				  abi ,
+				  provider.getSigner()
+				)
+		  
+				// const tx = await contract.joinGame(address, ipfsmetahashnfturl);
+				const tx = await contract.grantRole("0xb75d0c3e4b0e01fa592ef743acc55a0b7765ffd271595abd71aa99cbf3518c07" , account.address );
+				const result = await tx.wait();
+				console.log("Result:", result);
+			  }
 
 			try {
 				values.logoImage = imageUrl
