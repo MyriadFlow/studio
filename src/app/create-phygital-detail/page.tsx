@@ -152,7 +152,7 @@ export default function CreatePhygitalDetail() {
 					<form onSubmit={form.handleSubmit(onSubmit)}>
 						<div className='py-4 px-32 flex flex-col gap-12'>
 							<FormField
-								name='colours'
+								name='colour'
 								control={form.control}
 								render={({ field }) => (
 									<FormItem>
@@ -260,7 +260,7 @@ export default function CreatePhygitalDetail() {
 							/>
 
 							<FormField
-								name='uniqueQuality'
+								name='quality'
 								control={form.control}
 								render={({ field }) => (
 									<FormItem>
@@ -298,7 +298,7 @@ export default function CreatePhygitalDetail() {
 								/>
 
 								<FormField
-									name='madeIn'
+									name='origin_country'
 									control={form.control}
 									render={({ field }) => (
 										<FormItem>
