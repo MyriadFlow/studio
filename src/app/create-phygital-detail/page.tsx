@@ -71,14 +71,14 @@ export default function CreatePhygitalDetail() {
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
-			colours: '',
+			colour: '',
 			size: '',
 			weight: '',
 			material: '',
 			usage: '',
-			uniqueQuality: '',
+			quality: '',
 			manufacturer: '',
-			madeIn: '',
+			origin_country: '',
 		},
 	})
 
