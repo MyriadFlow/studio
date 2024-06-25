@@ -26,7 +26,7 @@ import Link from 'next/link'
 import FormRepeater from 'react-form-repeater'
 
 const formSchema = z.object({
-	colours: z.string().min(2, {
+	colour: z.string().min(2, {
 		message: 'colours must be at least 2 characters',
 	}),
 	size: z
@@ -35,11 +35,11 @@ const formSchema = z.object({
 	weight: z.string().min(1, { message: 'Weight must be provided' }),
 	material: z.string().min(1, { message: ' must be provided' }),
 	usage: z.string(),
-	uniqueQuality: z.string(),
+	quality: z.string(),
 	manufacturer: z
 		.string()
 		.min(2, { message: 'Manufacturer must be at least 2 characters' }),
-	madeIn: z
+	origin_country: z
 		.string()
 		.min(2, { message: 'Location made must be at least 2 characters' }),
 })
