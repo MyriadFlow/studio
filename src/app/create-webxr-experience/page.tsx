@@ -23,7 +23,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ToastContainer, toast } from 'react-toastify'
-import { UploadButton } from '@/utils/uploadthing'
+// import { UploadButton } from '@/utils/uploadthing'
 import { Avatar } from '@readyplayerme/visage'
 import { NFTStorage } from 'nft.storage'
 import { v4 as uuidv4 } from 'uuid';
@@ -78,11 +78,8 @@ const items = [
 ]
 
 export default function CreateWebxrExperience() {
-	const isDevelopment = process.env.NODE_ENV === 'development'
 
-	const apiUrl = isDevelopment
-		? 'http://localhost:3000' // Local development URL
-		: 'https://studio.myriadflow.com' // Production URL
+    const apiUrl = process.env.NEXT_PUBLIC_URI;
 
 	const router = useRouter()
 	const [imageUrl, setImageUrl] = useState<string>('')
@@ -153,11 +150,16 @@ export default function CreateWebxrExperience() {
 					body: JSON.stringify({
 						id: brandId,
 						phygitalName,
-						...values,
+						image360: values.image360,
+						free_nft_image: values.free_nft_image,
+						gold_reward: values.gold_reward,
+						silver_reward: values.silver_reward,
+						bronze_reward: values.bronze_reward,
+						customizations: { data:values.customizations },
 					}),
 				})
 
-				await fetch(`${apiUrl}/avatar`, {
+				await fetch(`${apiUrl}/avatars`, {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
@@ -170,7 +172,7 @@ export default function CreateWebxrExperience() {
 					}),
 				})
 
-				if (webxr.status === 201) {
+				if (webxr.status === 200) {
 					router.push('/review')
 				}
 			}
@@ -184,7 +186,8 @@ export default function CreateWebxrExperience() {
 	useEffect(() => {
 		if (imageUrl) {
 			setPreview(true)
-		} else if (nftImageUrl) {
+		} 
+		 if (nftImageUrl) {
 			setNftPreview(true)
 		}
 
@@ -195,6 +198,24 @@ export default function CreateWebxrExperience() {
 	}, [imageUrl, nftImageUrl])
 
 	async function uploadImage(e: React.ChangeEvent<HTMLInputElement>) {
+		e.preventDefault()
+		try {
+			setLoading(true)
+			const blobDataImage = new Blob([e.target.files![0]])
+			const metaHash = await client.storeBlob(blobDataImage)
+			setImageUrl(`ipfs://${metaHash}`)
+			toast.success('Upload Completed!', {
+				position: 'top-left',
+			})
+			console.log('profilePictureUrl', metaHash)
+		} catch (error) {
+			console.log('Error uploading file: ', error)
+		} finally {
+			setLoading(false)
+		}
+	}
+
+	async function uploadFreeImage(e: React.ChangeEvent<HTMLInputElement>) {
 		e.preventDefault()
 		try {
 			setLoading(true)
@@ -376,14 +397,14 @@ export default function CreateWebxrExperience() {
 										<p>Recommeded size 512 x 512 px</p>
 										<div>
 											<label
-												htmlFor='upload'
+												htmlFor='uploadFree'
 												className='flex flex-row items-center ml-12 cursor-pointer mt-4'
 											>
 												<input
-													id='upload'
+													id='uploadFree'
 													type='file'
 													className='hidden'
-													onChange={uploadImage}
+													onChange={uploadFreeImage}
 													accept='image/*'
 												/>
 												<img

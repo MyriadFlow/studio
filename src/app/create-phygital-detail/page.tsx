@@ -50,10 +50,9 @@ interface FormDataEntry {
 }
 
 export default function CreatePhygitalDetail() {
-	const isDevelopment = process.env.NODE_ENV === 'development'
-	const apiUrl = isDevelopment
-		? 'http://localhost:3000' // Local development URL
-		: 'https://studio.myriadflow.com' // Production URL
+
+    const apiUrl = process.env.NEXT_PUBLIC_URI;
+
 
 	const router = useRouter()
 	const [formData, setFormData] = useState<FormDataEntry[]>([])
@@ -100,8 +99,14 @@ export default function CreatePhygitalDetail() {
 				},
 				body: JSON.stringify({
 					id: brandId,
-					...parsedData,
-					...values,
+					color: values.color,
+					size: values.size,
+					weight: parseInt(values.weight),
+					material: values.material,
+					usage: values.usage,
+					quality: values.quality,
+					manufacturer: values.manufacturer,
+					origin_country: values.origin_country,
 				}),
 			})
 
@@ -111,7 +116,7 @@ export default function CreatePhygitalDetail() {
 					description: item.description || '',
 				}))
 
-				await fetch(`${apiUrl}/variant`, {
+				await fetch(`${apiUrl}/variants`, {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
@@ -124,7 +129,7 @@ export default function CreatePhygitalDetail() {
 				})
 			}
 
-			if (phygitalResponse.status === 201) {
+			if (phygitalResponse.status === 200) {
 				router.push('/create-avatar')
 			} else {
 				toast.warning('Failed to create phygital data')

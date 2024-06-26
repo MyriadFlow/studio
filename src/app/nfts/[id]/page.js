@@ -7,7 +7,7 @@ const NFTPage = ({ params }) => {
     const id = params?.id;
 
 
-    const [activeTab, setActiveTab] = useState('Color'); // Default tab
+    const [activeTab, setActiveTab] = useState('Color');
 
     const tabs = ['Color', 'Size', 'Weight', 'Material', 'Usage', 'Unique Qualities', 'Manufacturer', 'Made In'];
 
@@ -18,18 +18,13 @@ const NFTPage = ({ params }) => {
         }, 6000); // Pop-over will disappear after 3 seconds
     };
 
-
-    const isDevelopment = process.env.NEXT_PUBLIC_NODE_ENV === 'development'
-
-    const apiUrl = isDevelopment
-        ? 'http://localhost:3000' // Local development URL
-        : 'https://discover-two.vercel.app' // Production URL
+    const apiUrl = process.env.NEXT_PUBLIC_URI;
 
     const [onephygital, setonePhygital] = useState([]);
 
     const getBrands = async () => {
 
-        const phyres = await fetch(`http://localhost:3000/brands${id}`)
+        const phyres = await fetch(`${apiUrl}/collections${id}`)
 
         const phyresult = await phyres.json()
 
@@ -90,81 +85,6 @@ const NFTPage = ({ params }) => {
                     <div className="text-4xl font-bold">{onephygital.brand_name}</div>
                     <div className="text-lg mt-10 font-bold">Base Network</div>
                     <div className="mt-4">Created by {onephygital.manager_id}</div>
-
-                    {/* --------------------------------------- user perspective --------------------------------------------------------- */}
-
-                   
-
-
-
-                    {/* ------------------------------------------------- owner perspective------------------------------------- */}
-
-                    {/* <div style={{ display: "flex", justifyContent:'end' , marginTop:'100px', gap:'20px'}}>
-            <div 
-          className="w-1/2"
-          >
-            </div>
-          <button
-             className="w-1/2"
-              style={{
-                paddingTop: "10px",
-                paddingBottom: "10px",
-                paddingLeft: "70px",
-                paddingRight: "70px",
-                border: "2px solid black",
-              }}
-            >
-              SHARE
-            </button>
-          </div>
-
-          <div className="mt-10" style={{ display: "flex", gap: "20px" }}>
-            <button
-              className="w-1/2"
-              style={{
-                backgroundColor: "#30D8FF",
-                paddingTop: "10px",
-                paddingBottom: "10px",
-                paddingLeft: "70px",
-                paddingRight: "70px",
-                position:'relative'
-              }}
-              onClick={handleClaimClick}
-            >
-              CLAIM NOW
-              {showPopover && (
-          <div className="w-full"
-            style={{
-              position: 'absolute',
-              bottom: '80px', // Adjust based on button height
-              // left: '50%',
-              transform: 'translateX(-15%)',
-              color: 'black',
-              padding: '10px 10px',
-              borderRadius: '10px',
-              zIndex: 1,
-              border: '1px solid black'
-            }}
-          >
-            To claim this phygital, scan the NFC tag on your product
-          </div>
-        )}
-            </button>
-            <button
-             className="w-1/2"
-              style={{
-                paddingTop: "10px",
-                paddingBottom: "10px",
-                paddingLeft: "70px",
-                paddingRight: "70px",
-                border: "2px solid black",
-              }}
-            >
-              VIEW ON SHOPIFY
-            </button>
-          </div> */}
-
-
                 </div>
             </div>
 

@@ -11,7 +11,6 @@ export default function Review() {
 		setActiveButton(buttonLabel)
 	}
 
-	const isDevelopment = process.env.NODE_ENV === 'development'
 
 	const getData = () => {
 		if (typeof window !== 'undefined' && localStorage) {
@@ -54,12 +53,10 @@ export default function Review() {
 	const parsedWebxrData = JSON.parse(storedWebxrData)
 	console.log(parsedWebxrData);
 
-	const apiUrl = isDevelopment
-		? 'http://localhost:3000' // Local development URL
-		: 'https://studio.myriadflow.com' // Production URL
+    const apiUrl = process.env.NEXT_PUBLIC_URI;
 
 	const getPhygital = async () => {
-		const res = await fetch(`${apiUrl}/phygitals`)
+		const res = await fetch(`${apiUrl}/phygitals/all`)
 
 		const result = await res.json()
 		console.log(result)

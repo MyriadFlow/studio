@@ -17,7 +17,7 @@ import {
 	FormLabel,
 	FormMessage,
 } from '@/components'
-import { UploadButton } from '@/utils/uploadthing'
+// import { UploadButton } from '@/utils/uploadthing'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -95,11 +95,9 @@ const items = [
 ]
 
 export default function CreatePhygital() {
-	const isDevelopment = process.env.NODE_ENV === 'development'
 
-	const apiUrl = isDevelopment
-		? 'http://localhost:3000' // Local development URL
-		: 'https://studio.myriadflow.com' // Production URL
+    const apiUrl = process.env.NEXT_PUBLIC_URI;
+
 
 	const router = useRouter()
 	const [imageUrl, setImageUrl] = useState<string>('')
@@ -151,18 +149,18 @@ export default function CreatePhygital() {
 							deployer_address: walletAddress,
 							name: values.name,
 							brand_name: values.brand_name,
-							category: values.category,
+							category: { data: values.category },
 							description: values.description,
-							price: values.price,
-							quantity: values.quantity,
-							royality: values.royality,
+							price: parseInt(values.price),
+							quantity: parseInt(values.quantity),
+							royality: parseInt(values.royality),
 							product_info: values.product_info,
 							image: values.image,
 						}),
 					})
 
 
-					if (collection.status === 201) {
+					if (collection.status === 200) {
 						router.push(
 							`/create-phygital-detail
 			`
@@ -246,7 +244,7 @@ export default function CreatePhygital() {
 							/>
 							<div>
 								<Label className='text-xl mb-6'>
-									categories*
+									Categories*
 									<span className='text-[#757575] text-base'>
 										Choose all that apply <Checkbox checked={true} />
 									</span>

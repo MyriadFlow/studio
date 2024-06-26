@@ -16,7 +16,7 @@ import {
 	FormLabel,
 	FormMessage,
 } from '@/components'
-import { UploadButton } from '@/utils/uploadthing'
+// import { UploadButton } from '@/utils/uploadthing'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -36,7 +36,7 @@ const API_KEY = process.env.NEXT_PUBLIC_STORAGE_API!
 const client = new NFTStorage({ token: API_KEY })
 
 const formSchema = z.object({
-	brand_name: z.string().min(2, {
+	name: z.string().min(2, {
 		message: 'Brand name must be at least 2 characters',
 	}),
 	description: z
@@ -208,23 +208,23 @@ function getNumber() public view returns (uint256) {
 			return false;
 		}
 	}
-	const isDevelopment = process.env.NODE_ENV === 'development'
 
-	const apiUrl = isDevelopment
-		? 'http://localhost:3000' // Local development URL
-		: 'https://studio.myriadflow.com' // Production URL
+
+	const apiUrl = process.env.NEXT_PUBLIC_URI;
 
 	const account = useAccount()
 	const router = useRouter()
 	const [imageUrl, setImageUrl] = useState<string>('')
+	const [coverImageUrl, setCoverImageUrl] = useState<string>('')
 	const [preview, setPreview] = useState<boolean>(false)
+	const [previewCover, setCoverPreview] = useState<boolean>(false)
 	const [loading, setLoading] = useState<boolean>(false)
 	const [imageError, setImageError] = useState<boolean>(false)
 
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
-			brand_name: '',
+			name: '',
 			description: '',
 			representative: '',
 			contact_email: '',
@@ -247,14 +247,14 @@ function getNumber() public view returns (uint256) {
 
 			try {
 				values.logo_image = imageUrl
-				values.cover_image = imageUrl
+				values.cover_image = coverImageUrl
 				values.manager_id = account.address!
-				localStorage.setItem('brand_name', values.brand_name)
+				localStorage.setItem('brand_name', values.name)
 				console.log(values)
 
 				if (imageUrl !== '') {
 					setLoading(true)
-					const res = await fetch('http://localhost:3000/users')
+					const res = await fetch(`${apiUrl}/users/all`)
 					
 					if (!res.ok) {
 						throw new Error('Network response was not ok');
@@ -268,14 +268,14 @@ function getNumber() public view returns (uint256) {
 					if (!addressExists) {
 						const brandId = uuidv4()
 						localStorage.setItem("BrandId", brandId);
-						const brand = await fetch('http://localhost:3000/brands', {
+						const brand = await fetch(`${apiUrl}/brands`, {
 							method: 'POST',
 							headers: {
 								'Content-Type': 'application/json',
 							},
 							body: JSON.stringify({
 								id: brandId,
-								brand_name: values.brand_name,
+								name: values.name,
 								description: values.description,
 								logo_image: values.logo_image,
 								cover_image: values.cover_image,
@@ -289,12 +289,12 @@ function getNumber() public view returns (uint256) {
 						})
 						console.log(brand)
 						
-						if (brand.status === 201) {
+						if (brand.status === 200) {
 							const deploySuccess = await handleDeploy();
 							if (deploySuccess) {
 								// const verifySuccess = await handleVerify();
 								// if (verifySuccess) {
-								const users = await fetch('http://localhost:3000/users',
+								const users = await fetch(`${apiUrl}/users`,
 								{
 									method: 'POST',
 									headers: {
@@ -305,7 +305,7 @@ function getNumber() public view returns (uint256) {
 									}),
 								})
 								console.log(users);
-								router.push(`/congratulations?bramd_name=${values.brand_name}`);
+								router.push(`/congratulations?bramd_name=${values.name}`);
 							// }
 							}
 						}
@@ -329,10 +329,15 @@ function getNumber() public view returns (uint256) {
 			setPreview(true)
 		}
 
+		if (coverImageUrl) {
+			setCoverPreview(true)
+		}
+
+
 		return () => {
 			setPreview(false)
 		}
-	}, [imageUrl])
+	}, [imageUrl, coverImageUrl])
 
 	async function uploadImage(e: React.ChangeEvent<HTMLInputElement>) {
 		e.preventDefault()
@@ -341,6 +346,24 @@ function getNumber() public view returns (uint256) {
 			const blobDataImage = new Blob([e.target.files![0]])
 			const metaHash = await client.storeBlob(blobDataImage)
 			setImageUrl(`ipfs://${metaHash}`)
+			toast.success('Upload Completed!', {
+				position: 'top-left',
+			})
+			console.log('profilePictureUrl', metaHash)
+		} catch (error) {
+			console.log('Error uploading file: ', error)
+		} finally {
+			setLoading(false)
+		}
+	}
+
+	async function uploadCover(e: React.ChangeEvent<HTMLInputElement>) {
+		e.preventDefault()
+		try {
+			setLoading(true)
+			const blobDataImage = new Blob([e.target.files![0]])
+			const metaHash = await client.storeBlob(blobDataImage)
+			setCoverImageUrl(`ipfs://${metaHash}`)
 			toast.success('Upload Completed!', {
 				position: 'top-left',
 			})
@@ -372,7 +395,7 @@ function getNumber() public view returns (uint256) {
 						<div className='py-4 px-32 flex flex-col gap-12'>
 							<FormField
 								control={form.control}
-								name='brand_name'
+								name='name'
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel className='text-xl font-semibold mb-4'>
@@ -410,7 +433,7 @@ function getNumber() public view returns (uint256) {
 
 							<div className='flex gap-12'>
 								<div>
-									<h3 className='text-2xl'>Upload Logo*</h3>
+									<h3 className='text-2xl'>Upload Image*</h3>
 									<div className='border border-dashed border-black h-60 w-[32rem] flex flex-col items-center justify-center p-6'>
 										<UploadIcon />
 										<p>Drag file here to upload. Choose file </p>
@@ -466,17 +489,17 @@ function getNumber() public view returns (uint256) {
 									<div className='border border-dashed border-black h-60 w-[32rem] flex flex-col items-center justify-center p-6'>
 										<UploadIcon />
 										<p>Drag file here to upload. Choose file </p>
-										<p>Recommeded size 512 x 512 px</p>
+										<p>Recommeded size 1920 x 1080 px</p>
 										<div>
 											<label
-												htmlFor='upload'
+												htmlFor='uploadCover'
 												className='flex flex-row items-center ml-12 cursor-pointer mt-4'
 											>
 												<input
-													id='upload'
+													id='uploadCover'
 													type='file'
 													className='hidden'
-													onChange={uploadImage}
+													onChange={uploadCover}
 													accept='image/*'
 												/>
 												<img
@@ -494,11 +517,11 @@ function getNumber() public view returns (uint256) {
 								</div>
 								<div>
 									<h3 className='text-2xl'>Preview</h3>
-									{preview ? (
+									{previewCover ? (
 										<img
 											// src={imageUrl}
 											src={`${'https://nftstorage.link/ipfs'}/${removePrefix(
-												imageUrl
+												coverImageUrl
 											)}`}
 											alt='preview image'
 											height={250}

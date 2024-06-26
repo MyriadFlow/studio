@@ -17,7 +17,7 @@ import {
     FormLabel,
     FormMessage,
 } from '@/components'
-import { UploadButton } from '@/utils/uploadthing'
+// import { UploadButton } from '@/utils/uploadthing'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -101,16 +101,15 @@ export default function CreateCollection() {
         `0x${string}` | undefined
     >()
 
-    const isDevelopment = process.env.NODE_ENV === 'development'
 
-    const apiUrl = isDevelopment
-        ? 'http://localhost:3000' // Local development URL
-        : 'https://studio.myriadflow.com' // Production URL
+    const apiUrl = process.env.NEXT_PUBLIC_URI;
 
     const account = useAccount()
     const router = useRouter()
     const [imageUrl, setImageUrl] = useState<string>('')
+	const [coverImageUrl, setCoverImageUrl] = useState<string>('')
     const [preview, setPreview] = useState<boolean>(false)
+	const [previewCover, setCoverPreview] = useState<boolean>(false)
     const [loading, setLoading] = useState<boolean>(false)
     const [imageError, setImageError] = useState<boolean>(false)
 
@@ -121,7 +120,7 @@ export default function CreateCollection() {
             description: '',
             logo_image: '',
             cover_image: '',
-            category: [],
+            category:[],
         },
     })
 
@@ -153,14 +152,14 @@ export default function CreateCollection() {
                             id: brandId,
                             brand_id: BrandId,
                             name: values.name,
-                            category: values.category,
+                            category: { data: values.category },
                             description: values.description,
                             logo_image: values.logo_image,
                             cover_image: values.cover_image,
                         }),
                     })
 
-                    if (collection.status === 201) {
+                    if (collection.status === 200) {
                         router.push(
                             `/collection-congratulation`
                         )
@@ -180,11 +179,14 @@ export default function CreateCollection() {
         if (imageUrl) {
             setPreview(true)
         }
+        if (coverImageUrl) {
+			setCoverPreview(true)
+		}
 
         return () => {
             setPreview(false)
         }
-    }, [imageUrl])
+    }, [imageUrl , coverImageUrl])
 
     async function uploadImage(e: React.ChangeEvent<HTMLInputElement>) {
         e.preventDefault()
@@ -203,6 +205,24 @@ export default function CreateCollection() {
             setLoading(false)
         }
     }
+
+    async function uploadCover(e: React.ChangeEvent<HTMLInputElement>) {
+		e.preventDefault()
+		try {
+			setLoading(true)
+			const blobDataImage = new Blob([e.target.files![0]])
+			const metaHash = await client.storeBlob(blobDataImage)
+			setCoverImageUrl(`ipfs://${metaHash}`)
+			toast.success('Upload Completed!', {
+				position: 'top-left',
+			})
+			console.log('profilePictureUrl', metaHash)
+		} catch (error) {
+			console.log('Error uploading file: ', error)
+		} finally {
+			setLoading(false)
+		}
+	}
 
     const removePrefix = (uri: any) => {
         return uri.substring(7, uri.length)
@@ -262,7 +282,7 @@ export default function CreateCollection() {
 
                             <div className='flex gap-12'>
                                 <div>
-                                    <h3 className='text-2xl'>Upload Logo*</h3>
+                                    <h3 className='text-2xl'>Upload Image*</h3>
                                     <div className='border border-dashed border-black h-60 w-[32rem] flex flex-col items-center justify-center p-6'>
                                         <UploadIcon />
                                         <p>Drag file here to upload. Choose file </p>
@@ -318,17 +338,17 @@ export default function CreateCollection() {
                                     <div className='border border-dashed border-black h-60 w-[32rem] flex flex-col items-center justify-center p-6'>
                                         <UploadIcon />
                                         <p>Drag file here to upload. Choose file </p>
-                                        <p>Recommeded size 512 x 512 px</p>
+                                        <p>Recommeded size 1920 x 1080 px</p>
                                         <div>
                                             <label
-                                                htmlFor='upload'
+                                                htmlFor='uploadCover'
                                                 className='flex flex-row items-center ml-12 cursor-pointer mt-4'
                                             >
                                                 <input
-                                                    id='upload'
+                                                    id='uploadCover'
                                                     type='file'
                                                     className='hidden'
-                                                    onChange={uploadImage}
+                                                    onChange={uploadCover}
                                                     accept='image/*'
                                                 />
                                                 <img
@@ -346,11 +366,11 @@ export default function CreateCollection() {
                                 </div>
                                 <div>
                                     <h3 className='text-2xl'>Preview</h3>
-                                    {preview ? (
+                                    {previewCover ? (
                                         <img
                                             // src={imageUrl}
                                             src={`${'https://nftstorage.link/ipfs'}/${removePrefix(
-                                                imageUrl
+                                                coverImageUrl
                                             )}`}
                                             alt='preview image'
                                             height={250}
@@ -364,12 +384,17 @@ export default function CreateCollection() {
                                     )}
                                 </div>
                             </div>
-
+                            <Label className='text-xl'>
+									Categories*
+									<span className='text-[#757575] text-base'>
+										Choose all that apply <Checkbox checked={true} />
+									</span>
+								</Label>
                             <FormField
 									control={form.control}
 									name='category'
 									render={() => (
-										<FormItem className='flex justify-between mt-8 flex-wrap'>
+										<FormItem className='flex justify-between flex-wrap'>
 											{items.map((item) => (
 												<FormField
 													key={item.id}
