@@ -23,13 +23,20 @@ import { z } from 'zod'
 import Image from 'next/image'
 import { toast, ToastContainer } from 'react-toastify'
 import { useRouter } from 'next/navigation'
-import { useAccount } from 'wagmi'
+import { useAccount, useChainId, useWalletClient } from 'wagmi'
 import { NFTStorage } from 'nft.storage'
+import { Hex, createPublicClient, http } from 'viem'
+import { baseSepolia } from 'viem/chains'
+import axios from 'axios'
+
+import Simplestore from "@/lib/Simplestore.json"
+import { v4 as uuidv4 } from 'uuid';
+
 const API_KEY = process.env.NEXT_PUBLIC_STORAGE_API!
 const client = new NFTStorage({ token: API_KEY })
 
 const formSchema = z.object({
-	brandName: z.string().min(2, {
+	brand_name: z.string().min(2, {
 		message: 'Brand name must be at least 2 characters',
 	}),
 	description: z
@@ -38,27 +45,169 @@ const formSchema = z.object({
 		.max(50, {
 			message: 'Brand description should be less than ',
 		}),
-	brandRepresentative: z
+	representative: z
 		.string()
 		.min(2, { message: 'Brand Representative must be at least 2 characters' }),
-	contactEmail: z
+	contact_email: z
 		.string()
 		.email()
 		.min(2, { message: 'Contact email must be a valid email' }),
-	contactPhone: z
+	contact_phone: z
 		.string()
 		.min(2, { message: 'Contact phone number must be a valid pnone number' }),
-	shippingAddress: z
+	shipping_address: z
 		.string()
 		.min(2, { message: 'Shipping Address must be at least 2 characters' }),
-	brandInfo: z
+	additional_info: z
 		.string()
 		.min(2, { message: 'Brand Information must be at least 2 characters' }),
-	logoImage: z.string(),
-	walletAddress: z.string(),
+	logo_image: z.string(),
+	cover_image: z.string(),
+	manager_id: z.string(),
 })
 
 export default function CreateBrand() {
+	const { address: walletAddress } = useAccount()
+	const [contractAddress, setContractAddress] = useState<
+		`0x${string}` | undefined
+	>()
+
+
+	const [error, setError] = useState<string | null>(null)
+	const [isDeployed, setIsDeployed] = useState(false)
+	const chainId = useChainId()
+	const { data: walletClient } = useWalletClient({ chainId })
+	const publicClient = createPublicClient({
+		chain: baseSepolia,
+		transport: http(),
+	})
+
+	async function verifyContract(
+		contractAddress: string,
+		contractSourceCode: string,
+		contractName: string,
+		compilerVersion: string,
+		constructorArguments: string,
+		licenseType: string
+	): Promise<boolean> {
+		const apiKey = '7CU2HZAY6VD1CIG7C5DD8N4TKWZ7JJ7SVT'
+
+		const params = new URLSearchParams()
+		params.append('apikey', apiKey)
+		params.append('module', 'contract')
+		params.append('action', 'verifysourcecode')
+		params.append('contractaddress', contractAddress)
+		params.append('sourceCode', contractSourceCode)
+		params.append('codeformat', 'solidity-single-file')
+		params.append('contractname', contractName)
+		params.append('compilerversion', compilerVersion)
+		params.append('optimizationUsed', '0') // Change to '1' if optimization was used
+		params.append('runs', '200') // Change to the number of runs if optimization was used
+		params.append('constructorArguments', constructorArguments),
+		params.append('licenseType', licenseType)
+
+		try {
+			const response = await axios.post(
+				'https://api-sepolia.basescan.org/api',
+				params.toString()
+			)
+			console.log(apiKey)
+			console.log(contractAddress)
+			console.log(contractSourceCode)
+			console.log(contractName)
+			console.log(compilerVersion)
+			if (response.data.status === '1') {
+				console.log('Contract verified successfully')
+				console.log('Verification response:', response)
+				console.log('Verification Guid:', response.data.result)
+				return true;
+			} else {
+				console.log('Failed to verify contract:', response.data.result)
+				return false;
+			}
+		} catch (error) {
+			console.error('Error verifying contract:', error)
+			return false;
+		}
+	}
+
+	const deployContract = async () => {
+		if (!walletClient) {
+			throw new Error('Wallet client not available')
+		}
+
+		try {
+			const hash = await walletClient.deployContract({
+				abi: Simplestore.abi,
+				bytecode: Simplestore.bytecode as Hex,
+				account: walletAddress,
+			})
+
+			if (!hash) {
+				throw new Error('Failed to execute deploy contract transaction')
+			}
+
+			const txn = await publicClient.waitForTransactionReceipt({ hash })
+			setContractAddress(txn.contractAddress as `0x${string}`)
+			setIsDeployed(true)
+
+			return txn.contractAddress
+		} catch (error) {
+			console.error('Deployment error:', error)
+			setError('Error deploying contract: ' + error)
+		}
+	};
+
+	const handleDeploy = async (): Promise<boolean> => {
+		try {
+			const address = await deployContract();
+			console.log('Contract deployed at:', address);
+			return address !== null;
+		} catch (error) {
+			console.error('Error deploying contract:', error);
+			setError('Error deploying contract: ' + error);
+			return false;
+		}
+	};
+
+	const handleVerify = async (): Promise<boolean> => {
+		if (!contractAddress) {
+			setError('No contract address found to verify.')
+			return false;
+		}
+		const contractSourceCode = `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract SimpleStorage {
+// Private state variable to store a number
+uint256 private number;
+
+// Setter function to set the value of the number
+function setNumber(uint256 _number) public {
+	number = _number;
+}
+
+// Getter function to get the value of the number
+function getNumber() public view returns (uint256) {
+	return number;
+}
+}`;
+		try {
+			const success = verifyContract(
+				contractAddress as string,
+				contractSourceCode,
+				'SimpleStorage', // Contract name
+				'v0.8.26+commit.8a97fa7a', // Compiler version
+				'',
+				'MIT'
+			);
+			return success;
+		} catch (error) {
+			setError('Error verifying contract: ' + error)
+			console.error('Error verifying contract:', error)
+			return false;
+		}
+	}
 	const isDevelopment = process.env.NODE_ENV === 'development'
 
 	const apiUrl = isDevelopment
@@ -75,15 +224,16 @@ export default function CreateBrand() {
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
-			brandName: '',
+			brand_name: '',
 			description: '',
-			brandRepresentative: '',
-			contactEmail: '',
-			contactPhone: '',
-			shippingAddress: '',
-			brandInfo: '',
-			logoImage: '',
-			walletAddress: '',
+			representative: '',
+			contact_email: '',
+			contact_phone: '',
+			shipping_address: '',
+			additional_info: '',
+			logo_image: '',
+			cover_image: '',
+			manager_id: '',
 		},
 	})
 
@@ -96,23 +246,73 @@ export default function CreateBrand() {
 			}
 
 			try {
-				values.logoImage = imageUrl
-				values.walletAddress = account.address!
-				localStorage.setItem('brandName', values.brandName)
+				values.logo_image = imageUrl
+				values.cover_image = imageUrl
+				values.manager_id = account.address!
+				localStorage.setItem('brand_name', values.brand_name)
 				console.log(values)
 
 				if (imageUrl !== '') {
 					setLoading(true)
-					const brand = await fetch(`${apiUrl}/api/create-brand`, {
-						method: 'POST',
-						body: JSON.stringify(values),
-					})
-
-					console.log(brand)
-					// console.log(manager)
-					if (brand.status === 201) {
-						router.push(`/congratulations?name=${values.brandName}`)
+					const res = await fetch('http://localhost:3000/users')
+					
+					if (!res.ok) {
+						throw new Error('Network response was not ok');
 					}
+					
+					const result = await res.json();
+					console.log(result);
+					
+					const addressExists = result.some((user: { wallet_address: string | undefined }) => user.wallet_address === account.address);
+					
+					if (!addressExists) {
+						const brandId = uuidv4()
+						localStorage.setItem("BrandId", brandId);
+						const brand = await fetch('http://localhost:3000/brands', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+							},
+							body: JSON.stringify({
+								id: brandId,
+								brand_name: values.brand_name,
+								description: values.description,
+								logo_image: values.logo_image,
+								cover_image: values.cover_image,
+								representative: values.representative,
+								contact_email: values.contact_email,
+								contact_phone: values.contact_phone,
+								shipping_address: values.shipping_address,
+								additional_info: values.additional_info,
+								manager_id: values.manager_id,
+							}),
+						})
+						console.log(brand)
+						
+						if (brand.status === 201) {
+							const deploySuccess = await handleDeploy();
+							if (deploySuccess) {
+								// const verifySuccess = await handleVerify();
+								// if (verifySuccess) {
+								const users = await fetch('http://localhost:3000/users',
+								{
+									method: 'POST',
+									headers: {
+										'Content-Type': 'application/json',
+									},body: JSON.stringify({
+										id: brandId,
+										wallet_address: account.address,
+									}),
+								})
+								console.log(users);
+								router.push(`/congratulations?bramd_name=${values.brand_name}`);
+							// }
+							}
+						}
+					}else{
+					toast.warning('With one address only one Brand can be created')
+					}
+
 				} else if (!imageError && imageUrl === '') {
 					toast.warning('Wait for your image to finish upload')
 				}
@@ -172,7 +372,7 @@ export default function CreateBrand() {
 						<div className='py-4 px-32 flex flex-col gap-12'>
 							<FormField
 								control={form.control}
-								name='brandName'
+								name='brand_name'
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel className='text-xl font-semibold mb-4'>
@@ -260,8 +460,60 @@ export default function CreateBrand() {
 									)}
 								</div>
 							</div>
+							<div className='flex gap-12'>
+								<div>
+									<h3 className='text-2xl'>Upload Cover Image*</h3>
+									<div className='border border-dashed border-black h-60 w-[32rem] flex flex-col items-center justify-center p-6'>
+										<UploadIcon />
+										<p>Drag file here to upload. Choose file </p>
+										<p>Recommeded size 512 x 512 px</p>
+										<div>
+											<label
+												htmlFor='upload'
+												className='flex flex-row items-center ml-12 cursor-pointer mt-4'
+											>
+												<input
+													id='upload'
+													type='file'
+													className='hidden'
+													onChange={uploadImage}
+													accept='image/*'
+												/>
+												<img
+													src='https://png.pngtree.com/element_our/20190601/ourmid/pngtree-file-upload-icon-image_1344393.jpg'
+													alt=''
+													className='w-10 h-10'
+												/>
+												<div className='text-white ml-1'>Replace</div>
+											</label>
+										</div>
+									</div>
+									{imageError && (
+										<p className='text-red-700'>You have to upload a Image</p>
+									)}
+								</div>
+								<div>
+									<h3 className='text-2xl'>Preview</h3>
+									{preview ? (
+										<img
+											// src={imageUrl}
+											src={`${'https://nftstorage.link/ipfs'}/${removePrefix(
+												imageUrl
+											)}`}
+											alt='preview image'
+											height={250}
+											width={350}
+										/>
+									) : (
+										<div className='border border-[#D9D8D8] h-60 w-80 flex flex-col items-center justify-center p-6'>
+											<PreviewIcon />
+											<p>Preview after upload</p>
+										</div>
+									)}
+								</div>
+							</div>
 							<FormField
-								name='brandRepresentative'
+								name='representative'
 								control={form.control}
 								render={({ field }) => (
 									<FormItem>
@@ -281,7 +533,7 @@ export default function CreateBrand() {
 							/>
 
 							<FormField
-								name='contactEmail'
+								name='contact_email'
 								control={form.control}
 								render={({ field }) => (
 									<FormItem>
@@ -300,7 +552,7 @@ export default function CreateBrand() {
 							/>
 
 							<FormField
-								name='contactPhone'
+								name='contact_phone'
 								control={form.control}
 								render={({ field }) => (
 									<FormItem>
@@ -317,7 +569,7 @@ export default function CreateBrand() {
 							/>
 
 							<FormField
-								name='shippingAddress'
+								name='shipping_address'
 								control={form.control}
 								render={({ field }) => (
 									<FormItem>
@@ -336,7 +588,7 @@ export default function CreateBrand() {
 							/>
 
 							<FormField
-								name='brandInfo'
+								name='additional_info'
 								control={form.control}
 								render={({ field }) => (
 									<FormItem>

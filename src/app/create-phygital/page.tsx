@@ -25,14 +25,15 @@ import Image from 'next/image'
 import { toast, ToastContainer } from 'react-toastify'
 import { useRouter } from 'next/navigation'
 import { NFTStorage } from 'nft.storage'
+import { v4 as uuidv4 } from 'uuid';
 const API_KEY = process.env.NEXT_PUBLIC_STORAGE_API!
 const client = new NFTStorage({ token: API_KEY })
 
 const formSchema = z.object({
-	phygitalName: z.string().min(2, {
+	name: z.string().min(2, {
 		message: 'Phygital name must be at least 2 characters',
 	}),
-	categories: z
+	category: z
 		.array(z.string())
 		.refine((value) => value.some((item) => item), {
 			message: 'You have to select at least one category.',
@@ -46,12 +47,12 @@ const formSchema = z.object({
 		}),
 	price: z.string().min(1, { message: 'Price must be provided' }),
 	quantity: z.string().min(1, { message: 'Quantity must be provided' }),
-	royalty: z.string(),
-	productInfo: z
+	royality: z.string(),
+	product_info: z
 		.string()
 		.min(2, { message: 'Product Information must be at least 2 characters' }),
 	image: z.string(),
-	brandName: z.string(),
+	brand_name: z.string(),
 })
 
 const items = [
@@ -109,15 +110,15 @@ export default function CreatePhygital() {
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
-			phygitalName: '',
-			categories: [],
+			name: '',
+			category: [],
 			description: '',
 			price: '',
 			quantity: '',
-			royalty: '',
-			productInfo: '',
+			royality: '',
+			product_info: '',
 			image: '',
-			brandName: '',
+			brand_name: '',
 		},
 	})
 
@@ -128,17 +129,38 @@ export default function CreatePhygital() {
 
 		try {
 			if (typeof window !== 'undefined' && localStorage) {
-				const brandName = localStorage.getItem('brandName')
+				const brand_name = localStorage.getItem('brand_name')
 				values.image = imageUrl
-				values.brandName = brandName!
+				values.brand_name = brand_name!
 				localStorage.setItem('phygitalData', JSON.stringify(values))
 
 				if (imageUrl !== '') {
 					setLoading(true)
-					const collection = await fetch(`${apiUrl}/api/create-collection`, {
+					const brandId = uuidv4()
+					localStorage.setItem("PhygitalId", brandId);
+					const CollectionId = localStorage.getItem("CollectionId")
+					const walletAddress = localStorage.getItem("walletAddress")
+					const collection = await fetch(`${apiUrl}/phygitals`, {
 						method: 'POST',
-						body: JSON.stringify([values.phygitalName, values.brandName]),
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify({
+							id: brandId,
+							collection_id: CollectionId,
+							deployer_address: walletAddress,
+							name: values.name,
+							brand_name: values.brand_name,
+							category: values.category,
+							description: values.description,
+							price: values.price,
+							quantity: values.quantity,
+							royality: values.royality,
+							product_info: values.product_info,
+							image: values.image,
+						}),
 					})
+
 
 					if (collection.status === 201) {
 						router.push(
@@ -205,7 +227,7 @@ export default function CreatePhygital() {
 						<div className='py-4 px-32 flex flex-col gap-12'>
 							<h2 className='text-xl font-bold'>Chain: Base Network</h2>
 							<FormField
-								name='phygitalName'
+								name='name'
 								control={form.control}
 								render={({ field }) => (
 									<FormItem>
@@ -231,14 +253,14 @@ export default function CreatePhygital() {
 								</Label>
 								<FormField
 									control={form.control}
-									name='categories'
+									name='category'
 									render={() => (
 										<FormItem className='flex justify-between mt-8 flex-wrap'>
 											{items.map((item) => (
 												<FormField
 													key={item.id}
 													control={form.control}
-													name='categories'
+													name='category'
 													render={({ field }) => {
 														return (
 															<FormItem
@@ -251,14 +273,14 @@ export default function CreatePhygital() {
 																		onCheckedChange={(checked) => {
 																			return checked
 																				? field.onChange([
-																						...field.value,
-																						item.id,
-																				  ])
+																					...field.value,
+																					item.id,
+																				])
 																				: field.onChange(
-																						field.value?.filter(
-																							(value: any) => value !== item.id
-																						)
-																				  )
+																					field.value?.filter(
+																						(value: any) => value !== item.id
+																					)
+																				)
 																		}}
 																	/>
 																</FormControl>
@@ -335,11 +357,11 @@ export default function CreatePhygital() {
 								/>
 
 								<FormField
-									name='royalty'
+									name='royality'
 									control={form.control}
 									render={({ field }) => (
 										<FormItem>
-											<FormLabel className='text-xl mb-6'>Royalty</FormLabel>
+											<FormLabel className='text-xl mb-6'>royality</FormLabel>
 											<div className='flex gap-2'>
 												<FormControl>
 													<Input
@@ -407,7 +429,7 @@ export default function CreatePhygital() {
 								</div>
 							</div>
 							<FormField
-								name='productInfo'
+								name='product_info'
 								control={form.control}
 								render={({ field }) => (
 									<FormItem>
