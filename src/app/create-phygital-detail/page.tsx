@@ -15,7 +15,6 @@ import {
 	FormMessage,
 	PlusIcon,
 } from '@/components'
-
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -24,16 +23,17 @@ import { toast, ToastContainer } from 'react-toastify'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import FormRepeater from 'react-form-repeater'
+import { v4 as uuidv4 } from 'uuid'
 
 const formSchema = z.object({
-	colour: z.string().min(2, {
-		message: 'colours must be at least 2 characters',
+	color: z.string().min(2, {
+		message: 'Color must be at least 2 characters',
 	}),
 	size: z
 		.string()
-		.min(1, { message: 'Description must be at least 2 characters' }),
+		.min(1, { message: 'Size must be at least 1 character' }),
 	weight: z.string().min(1, { message: 'Weight must be provided' }),
-	material: z.string().min(1, { message: ' must be provided' }),
+	material: z.string().min(1, { message: 'Material must be provided' }),
 	usage: z.string(),
 	quality: z.string(),
 	manufacturer: z
@@ -41,7 +41,7 @@ const formSchema = z.object({
 		.min(2, { message: 'Manufacturer must be at least 2 characters' }),
 	origin_country: z
 		.string()
-		.min(2, { message: 'Location made must be at least 2 characters' }),
+		.min(2, { message: 'Country of origin must be at least 2 characters' }),
 })
 
 interface FormDataEntry {
@@ -50,11 +50,9 @@ interface FormDataEntry {
 }
 
 export default function CreatePhygitalDetail() {
-	const isDevelopment = process.env.NODE_ENV === 'development'
 
-	const apiUrl = isDevelopment
-		? 'http://localhost:3000' // Local development URL
-		: 'https://studio.myriadflow.com' // Production URL
+	const apiUrl = process.env.NEXT_PUBLIC_URI;
+
 
 	const router = useRouter()
 	const [formData, setFormData] = useState<FormDataEntry[]>([])
@@ -64,14 +62,16 @@ export default function CreatePhygitalDetail() {
 		if (typeof window !== 'undefined' && localStorage) {
 			return localStorage.getItem('phygitalData')
 		}
+		return null
 	}
 
-	const storedData = getData() ?? '{}'
+	const storedData = getData()
+	const parsedData = storedData ? JSON.parse(storedData) : {}
 
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
 		defaultValues: {
-			colour: '',
+			color: '',
 			size: '',
 			weight: '',
 			material: '',
@@ -82,59 +82,74 @@ export default function CreatePhygitalDetail() {
 		},
 	})
 
-	const handleFormChange = (newFormData: any) => {
+	const handleFormChange = (newFormData: FormDataEntry[]) => {
 		setFormData(newFormData)
 	}
 
 	async function onSubmit(values: z.infer<typeof formSchema>) {
-		const parsedData = JSON.parse(storedData)
-
-		const phygitalsData = { ...parsedData, ...values }
-
-		const getVariants = () => {
-			if (formData.length > 0) {
-				const variantsData = [
-					{
-						phygitalName: parsedData.phygitalName, // Assuming a single phygital with name "humi"
-						variantData: formData?.map(
-							(item: { title: string; description: string }) => ({
-								variant: item?.title || '', // Convert title to uppercase for variant
-								description: item?.description || '', // Use the full description
-							})
-						),
-					},
-				]
-
-				return variantsData
-			} else {
-				return null
-			}
-		}
-
-		console.log(phygitalsData)
-		const variantData = getVariants()
-
 		try {
+			localStorage.setItem('phygitalDetailsData', JSON.stringify(values))
 			setLoading(true)
-			const phygitaldata = await fetch(`${apiUrl}/api/create-phygital`, {
-				method: 'POST',
-				body: JSON.stringify(phygitalsData),
+			
+			const phygitalId = localStorage.getItem("PhygitalId");
+			const CollectionId = localStorage.getItem("CollectionId")
+			const phygitalResponse = await fetch(`${apiUrl}/phygitals/${phygitalId}`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					id: phygitalId,
+					collection_id:CollectionId,
+					color: values.color,
+					size: values.size,
+					weight: parseInt(values.weight),
+					material: values.material,
+					usage: values.usage,
+					quality: values.quality,
+					manufacturer: values.manufacturer,
+					origin_country: values.origin_country,
+					name: parsedData.name,
+					brand_name: parsedData.brand_name,
+					category: { data: parsedData.category },
+					description: parsedData.description,
+					price: parseInt(parsedData.price),
+					quantity: parseInt(parsedData.quantity),
+					royality: parseInt(parsedData.royality),
+					product_info: parsedData.product_info,
+					image: parsedData.image,
+				}),
 			})
 
-			if (variantData !== null) {
-				await fetch(`${apiUrl}/api/create-phygital/variant`, {
+			if (formData.length > 0) {
+				const variantData = formData.map((item: FormDataEntry) => ({
+					variant: item.title.toUpperCase() || '',
+					description: item.description || '',
+				}))
+				const variantId = uuidv4()
+				await fetch(`${apiUrl}/variants`, {
 					method: 'POST',
-					body: JSON.stringify(variantData),
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						id: variantId,
+						phygital_id:phygitalId,
+						variantData,
+					}),
 				})
 			}
 
-			if (phygitaldata.status === 201) {
+			if (phygitalResponse.status === 200) {
 				router.push('/create-avatar')
+			} else {
+				toast.warning('Failed to create phygital data')
 			}
 		} catch (error) {
+			console.error(error)
+			toast.error('An error occurred while creating phygital data')
+		} finally {
 			setLoading(false)
-			console.log(error)
-			toast.warning('error')
 		}
 	}
 
@@ -152,7 +167,7 @@ export default function CreatePhygitalDetail() {
 					<form onSubmit={form.handleSubmit(onSubmit)}>
 						<div className='py-4 px-32 flex flex-col gap-12'>
 							<FormField
-								name='colour'
+								name='color'
 								control={form.control}
 								render={({ field }) => (
 									<FormItem>
