@@ -42,8 +42,8 @@ const formSchema = z.object({
 	description: z
 		.string()
 		.min(2, { message: 'Description must be at least 2 characters' })
-		.max(50, {
-			message: 'Brand description should be less than ',
+		.max(1000, {
+			message: 'Brand description should be less than 1000 words',
 		}),
 	price: z.string().min(1, { message: 'Price must be provided' }),
 	quantity: z.string().min(1, { message: 'Quantity must be provided' }),

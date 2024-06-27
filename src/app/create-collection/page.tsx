@@ -43,8 +43,8 @@ const formSchema = z.object({
     description: z
         .string()
         .min(2, { message: 'Brand description must be at least 2 characters' })
-        .max(50, {
-            message: 'Brand description should be less than ',
+        .max(1000, {
+            message: 'Brand description should be less than 1000 words',
         }),
     logo_image: z.string(),
     cover_image: z.string(),
