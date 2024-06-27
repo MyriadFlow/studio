@@ -105,7 +105,7 @@ export default function Review() {
 					<div className='border border-black bg-white p-8'>
 						<div>
 							<h1 className='text-2xl '>Phygital</h1>
-							{/* <p className='text-xl mt-8'>Chain: Base network</p> */}
+							<p className='text-xl mt-8'>Chain: Base network</p>
 						</div>
 						<div className='flex gap-8'>
 							<div>
