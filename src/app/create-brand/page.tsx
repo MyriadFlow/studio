@@ -254,18 +254,18 @@ function getNumber() public view returns (uint256) {
 
 				if (imageUrl !== '') {
 					setLoading(true)
-					const res = await fetch(`${apiUrl}/users/all`)
+					// const res = await fetch(`${apiUrl}/users/all`)
 					
-					if (!res.ok) {
-						throw new Error('Network response was not ok');
-					}
+					// if (!res.ok) {
+					// 	throw new Error('Network response was not ok');
+					// }
 					
-					const result = await res.json();
-					console.log(result);
+					// const result = await res.json();
+					// console.log(result);
 					
-					const addressExists = result.some((user: { wallet_address: string | undefined }) => user.wallet_address === account.address);
+					// const addressExists = result.some((user: { wallet_address: string | undefined }) => user.wallet_address === account.address);
 					
-					if (!addressExists) {
+					// if (!addressExists) {
 						const brandId = uuidv4()
 						const response = await fetch(`${apiUrl}/brands`, {
 							method: 'POST',
@@ -310,9 +310,9 @@ function getNumber() public view returns (uint256) {
 							// }
 							}
 						}
-					}else{
-					toast.warning('With one address only one Brand can be created')
-					}
+					// }else{
+					// toast.warning('With one address only one Brand can be created')
+					// }
 
 				} else if (!imageError && imageUrl === '') {
 					toast.warning('Wait for your image to finish upload')
