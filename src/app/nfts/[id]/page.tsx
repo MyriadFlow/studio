@@ -41,7 +41,7 @@ const NFTPage = ({ params}: any) => {
                         <a key={collection.id} href={`/nfts/${collection.id}`}>
                             <div className='shadow-lg rounded-lg p-6'>
                                 <img
-                                    src={`https://nftstorage.link/${brand.logo_image.replace('ipfs://', 'ipfs/')}`}
+                                    src={`https://nftstorage.link/${collection.logo_image.replace('ipfs://', 'ipfs/')}`}
                                     alt={collection.name}
                                     className='mb-4'
                                 />

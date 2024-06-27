@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useAccount } from 'wagmi'
 import { toast, ToastContainer } from 'react-toastify'
-import Footer from '@/components/Footer'
+import Footer from '@/components/footer'
 
 interface Brand {
   id: string; // UUID type

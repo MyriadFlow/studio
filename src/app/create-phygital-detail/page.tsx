@@ -93,8 +93,8 @@ export default function CreatePhygitalDetail() {
 			
 			const phygitalId = localStorage.getItem("PhygitalId");
 			const CollectionId = localStorage.getItem("CollectionId")
-			const phygitalResponse = await fetch(`${apiUrl}/phygitals/${phygitalId}`, {
-				method: 'PUT',
+			const phygitalResponse = await fetch(`${apiUrl}/phygitals`, {
+				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 				},
