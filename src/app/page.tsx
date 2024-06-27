@@ -71,6 +71,29 @@ export default function Home() {
                 </Button>
               </Link>
             </div>
+            {brands.length == 0 && (
+              <div className='h-screen flex-col flex text-black text-center gap-12 justify-center relative'>
+              <h1 className='text-6xl font-bold mb-6 uppercase'>
+                Myriadflow studio
+              </h1>
+              <h2 className='text-2xl '>
+                <span className='inline-block'>
+                  Welcome to MyriadFlow Studio, your one-stop shop
+                </span>
+                <span>for creating groundbreaking phygital NFTs!</span>
+              </h2>
+              <div className='flex flex-col gap-14 justify-center items-center'>
+                <p>
+                  You have not created any brands yet. Ready to start your journey?
+                </p>
+                <Link href='/create-brand'>
+                <Button className='bg-[#30D8FF] rounded-full text-black'>
+                  Create Brand
+                </Button>
+              </Link>
+              </div>
+            </div>
+            )}
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6'>
               {brands.map((brand) => (
                 <a key={brand.id} href={`/nfts/${brand.id}`}>
