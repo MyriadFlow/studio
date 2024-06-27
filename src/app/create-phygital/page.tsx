@@ -222,7 +222,7 @@ export default function CreatePhygital() {
 				<Form {...form}>
 					<form onSubmit={form.handleSubmit(onSubmit)}>
 						<div className='py-4 px-32 flex flex-col gap-12'>
-							<h2 className='text-xl font-bold'>Chain: Base Network</h2>
+							<h2 className='text-xl font-bold'>Chain: Polygon</h2>
 							<FormField
 								name='name'
 								control={form.control}
