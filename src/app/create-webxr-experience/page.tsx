@@ -23,24 +23,25 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ToastContainer, toast } from 'react-toastify'
-import { UploadButton } from '@/utils/uploadthing'
+// import { UploadButton } from '@/utils/uploadthing'
 import { Avatar } from '@readyplayerme/visage'
 import { NFTStorage } from 'nft.storage'
+import { v4 as uuidv4 } from 'uuid';
 const API_KEY = process.env.NEXT_PUBLIC_STORAGE_API!
 const client = new NFTStorage({ token: API_KEY })
 
 const formSchema = z.object({
 	image360: z.string(),
-	customizaton: z
-		.array(z.string())
-		.refine((value) => value.some((item) => item))
-		.optional(),
-	freeNftImage: z.string(),
-	goldReward: z.string().min(1, { message: 'Gold reward must be provided' }),
-	silverReward: z
+	customizations: z
+		.array(z.string()),
+		// .refine((value) => value.some((item) => item))
+		// .optional(),
+	free_nft_image: z.string(),
+	gold_reward: z.string().min(1, { message: 'Gold reward must be provided' }),
+	silver_reward: z
 		.string()
 		.min(1, { message: 'Silver reward must be provided' }),
-	bronzeReward: z
+	bronze_reward: z
 		.string()
 		.min(1, { message: 'Bronze reward must be provided' }),
 })
@@ -77,17 +78,14 @@ const items = [
 ]
 
 export default function CreateWebxrExperience() {
-	const isDevelopment = process.env.NODE_ENV === 'development'
 
-	const apiUrl = isDevelopment
-		? 'http://localhost:3000' // Local development URL
-		: 'https://studio.myriadflow.com' // Production URL
+    const apiUrl = process.env.NEXT_PUBLIC_URI;
 
 	const router = useRouter()
 	const [imageUrl, setImageUrl] = useState<string>('')
-	const [nftImageUrl, setNftImageUrl] = useState<string>('')
+	const [freeImageUrl, setFreeImageUrl] = useState<string>('')
 	const [preview, setPreview] = useState<boolean>(false)
-	const [nftPreview, setNftPreview] = useState<boolean>(false)
+	const [freePreview, setFreePreview] = useState<boolean>(false)
 	const [loading, setLoading] = useState<boolean>(false)
 	const [imageError, setImageError] = useState<boolean>(false)
 
@@ -102,8 +100,15 @@ export default function CreateWebxrExperience() {
 		}
 	}
 
+	const getPhygitalId = () => {
+		if (typeof window !== 'undefined' && localStorage) {
+			return localStorage.getItem('PhygitalId')
+		}
+	}
+
 	const storedData = getAvatar() ?? '{}'
 	const phygital = getPhy() ?? '{}'
+	const PhygitalId = getPhygitalId() ?? '{}'
 
 	const parsedData = JSON.parse(storedData)
 	const phygitalName = JSON.parse(phygital).phygitalName
@@ -112,11 +117,11 @@ export default function CreateWebxrExperience() {
 		resolver: zodResolver(formSchema),
 		defaultValues: {
 			image360: '',
-			customizaton: [],
-			freeNftImage: '',
-			goldReward: '',
-			silverReward: '',
-			bronzeReward: '',
+			customizations: [],
+			free_nft_image: '',
+			gold_reward: '',
+			silver_reward: '',
+			bronze_reward: '',
 		},
 	})
 
@@ -129,29 +134,47 @@ export default function CreateWebxrExperience() {
 		}
 		try {
 			values.image360 = imageUrl
-			values.freeNftImage = nftImageUrl ?? nftImageUrl
+			values.free_nft_image = freeImageUrl
+			localStorage.setItem('webxrData', JSON.stringify(values))
 
 			console.log(values)
 
 			if (imageUrl !== '') {
 				setLoading(true)
-				const webxr = await fetch(`${apiUrl}/api/create-phygital/webxr`, {
+				const brandId = uuidv4()
+				const webxr = await fetch(`${apiUrl}/webxr`, {
 					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
 					body: JSON.stringify({
+						id: brandId,
 						phygitalName,
-						...values,
+						phygital_id: PhygitalId,
+						image360: values.image360,
+						free_nft_image: values.free_nft_image,
+						gold_reward: values.gold_reward,
+						silver_reward: values.silver_reward,
+						bronze_reward: values.bronze_reward,
+						customizations: { data:values.customizations },
 					}),
 				})
 
-				await fetch(`${apiUrl}/api/create-phygital/avatar`, {
+				const walletAddress = localStorage.getItem("walletAddress");
+				await fetch(`${apiUrl}/avatars`, {
 					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
 					body: JSON.stringify({
-						phygitalName,
+						id: brandId,
+						phygital_id: PhygitalId,
+						user_id:walletAddress,
 						...parsedData,
 					}),
 				})
 
-				if (webxr.status === 201) {
+				if (webxr.status === 200) {
 					router.push('/review')
 				}
 			}
@@ -165,15 +188,16 @@ export default function CreateWebxrExperience() {
 	useEffect(() => {
 		if (imageUrl) {
 			setPreview(true)
-		} else if (nftImageUrl) {
-			setNftPreview(true)
+		} 
+		 if (freeImageUrl) {
+			setFreePreview(true)
 		}
 
 		return () => {
 			setPreview(false)
-			setNftPreview(false)
+			setFreePreview(false)
 		}
-	}, [imageUrl, nftImageUrl])
+	}, [imageUrl, freeImageUrl])
 
 	async function uploadImage(e: React.ChangeEvent<HTMLInputElement>) {
 		e.preventDefault()
@@ -182,6 +206,24 @@ export default function CreateWebxrExperience() {
 			const blobDataImage = new Blob([e.target.files![0]])
 			const metaHash = await client.storeBlob(blobDataImage)
 			setImageUrl(`ipfs://${metaHash}`)
+			toast.success('Upload Completed!', {
+				position: 'top-left',
+			})
+			console.log('profilePictureUrl', metaHash)
+		} catch (error) {
+			console.log('Error uploading file: ', error)
+		} finally {
+			setLoading(false)
+		}
+	}
+
+	async function uploadFreeImage(e: React.ChangeEvent<HTMLInputElement>) {
+		e.preventDefault()
+		try {
+			setLoading(true)
+			const blobDataImage = new Blob([e.target.files![0]])
+			const metaHash = await client.storeBlob(blobDataImage)
+			setFreeImageUrl(`ipfs://${metaHash}`)
 			toast.success('Upload Completed!', {
 				position: 'top-left',
 			})
@@ -284,21 +326,21 @@ export default function CreateWebxrExperience() {
 							<div className='flex gap-12 flex-col p-4 border-[#30D8FF] border rounded'>
 								<div className='flex gap-4'>
 									<h3 className='text-xl'>
-										Choose available customization options for the avatars*
+										Choose available customizations options for the avatars
 									</h3>
 									<span>Choose all that apply</span>
 									<Checkbox />
 								</div>
 								<FormField
 									control={form.control}
-									name='customizaton'
+									name='customizations'
 									render={() => (
 										<FormItem className='flex justify-between mt-8 flex-wrap'>
 											{items.map((item) => (
 												<FormField
 													key={item.id}
 													control={form.control}
-													name='customizaton'
+													name='customizations'
 													render={({ field }) => {
 														return (
 															<FormItem
@@ -311,14 +353,14 @@ export default function CreateWebxrExperience() {
 																		onCheckedChange={(checked) => {
 																			return checked
 																				? field.onChange([
-																						...field.value!,
-																						item.id,
-																				  ])
+																					...field.value!,
+																					item.id,
+																				])
 																				: field.onChange(
-																						field.value?.filter(
-																							(value) => value !== item.id
-																						)
-																				  )
+																					field.value?.filter(
+																						(value) => value !== item.id
+																					)
+																				)
 																		}}
 																	/>
 																</FormControl>
@@ -355,30 +397,34 @@ export default function CreateWebxrExperience() {
 										<UploadIcon />
 										<p>Drag file here to upload. Choose file </p>
 										<p>Recommeded size 512 x 512 px</p>
-										<UploadButton
-											className='block mx-auto uploadthingButton '
-											endpoint='imageUploader'
-											onClientUploadComplete={async (res) => {
-												// Do something with the response
-												const data = res[0]
-												console.log('Files: ', res)
-												setNftImageUrl(data.url)
-												toast.success('Nft Upload Completed!', {
-													position: 'top-left',
-												})
-											}}
-											onUploadError={(error: Error) => {
-												// Do something with the error.
-												alert(`ERROR! ${error.message}`)
-											}}
-										/>
+										<div>
+											<label
+												htmlFor='uploadFree'
+												className='flex flex-row items-center ml-12 cursor-pointer mt-4'
+											>
+												<input
+													id='uploadFree'
+													type='file'
+													className='hidden'
+													onChange={uploadFreeImage}
+													accept='image/*'
+												/>
+												<img
+													src='https://png.pngtree.com/element_our/20190601/ourmid/pngtree-file-upload-icon-image_1344393.jpg'
+													alt=''
+													className='w-10 h-10'
+												/>
+												<div className='text-white ml-1'>Replace</div>
+											</label>
+										</div>
 									</div>
 								</div>
 								<div>
 									<h3 className='text-2xl'>Preview</h3>
-									{nftPreview ? (
-										<Image
-											src={nftImageUrl}
+									{freePreview ? (
+										<img
+											src={`${'https://nftstorage.link/ipfs'}/${removePrefix(
+												freeImageUrl)}`}
 											alt='preview image'
 											height={250}
 											width={350}
@@ -400,7 +446,7 @@ export default function CreateWebxrExperience() {
 								</h3>
 								<div className='flex items-center justify-between'>
 									<FormField
-										name='goldReward'
+										name='gold_reward'
 										control={form.control}
 										render={({ field }) => (
 											<FormItem>
@@ -418,7 +464,7 @@ export default function CreateWebxrExperience() {
 										)}
 									/>
 									<FormField
-										name='silverReward'
+										name='silver_reward'
 										control={form.control}
 										render={({ field }) => (
 											<FormItem>
@@ -436,7 +482,7 @@ export default function CreateWebxrExperience() {
 										)}
 									/>
 									<FormField
-										name='bronzeReward'
+										name='bronze_reward'
 										control={form.control}
 										render={({ field }) => (
 											<FormItem>
