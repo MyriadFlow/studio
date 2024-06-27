@@ -8,11 +8,13 @@ import { createWeb3Modal } from '@web3modal/wagmi/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import { State, WagmiProvider } from 'wagmi'
-import { config, projectId } from './wagmi'
+import { config } from './wagmi'
 
 
 // Setup queryClient
 const queryClient = new QueryClient()
+
+const projectId = "c26b357532f63f7ba31efebac88d0eed";
 
 if (!projectId) throw new Error('Wallet Connect Project ID is not defined')
 
