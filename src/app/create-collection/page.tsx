@@ -49,10 +49,10 @@ const formSchema = z.object({
     logo_image: z.string(),
     cover_image: z.string(),
     category: z
-        .array(z.string())
-        .refine((value) => value.some((item) => item), {
-            message: 'You have to select at least one category.',
-        }),
+        .array(z.string()),
+        // .refine((value) => value.some((item) => item), {
+        //     message: 'You have to select at least one category.',
+        // }),
 })
 
 
@@ -135,21 +135,20 @@ export default function CreateCollection() {
             try {
                 values.logo_image = imageUrl
                 values.cover_image= imageUrl
-                localStorage.setItem('name', values.name)
+                localStorage.setItem('collection_name', values.name)
                 console.log(values)
 
                 if (imageUrl !== '') {
                     setLoading(true)
-                    const brandId = uuidv4()
-                    localStorage.setItem("CollectionId", brandId);
-                   const BrandId= localStorage.getItem("BrandId");
-                    const collection = await fetch(`${apiUrl}/collections`, {
+                    const collectionId = uuidv4()
+                    const BrandId= localStorage.getItem("BrandId");
+                    const response = await fetch(`${apiUrl}/collections`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            id: brandId,
+                            id: collectionId,
                             brand_id: BrandId,
                             name: values.name,
                             category: { data: values.category },
@@ -159,7 +158,10 @@ export default function CreateCollection() {
                         }),
                     })
 
-                    if (collection.status === 200) {
+					const collection = await response.json(); 
+                    localStorage.setItem("CollectionId", collection.id);
+
+                    if (response.status === 200) {
                         router.push(
                             `/collection-congratulation`
                         )
@@ -385,7 +387,7 @@ export default function CreateCollection() {
                                 </div>
                             </div>
                             <Label className='text-xl'>
-									Categories*
+									Categories
 									<span className='text-[#757575] text-base'>
 										Choose all that apply <Checkbox checked={true} />
 									</span>

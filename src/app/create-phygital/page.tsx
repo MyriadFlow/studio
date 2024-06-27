@@ -34,10 +34,10 @@ const formSchema = z.object({
 		message: 'Phygital name must be at least 2 characters',
 	}),
 	category: z
-		.array(z.string())
-		.refine((value) => value.some((item) => item), {
-			message: 'You have to select at least one category.',
-		}),
+		.array(z.string()),
+		// .refine((value) => value.some((item) => item), {
+		// 	message: 'You have to select at least one category.',
+		// }),
 
 	description: z
 		.string()
@@ -134,17 +134,16 @@ export default function CreatePhygital() {
 
 				if (imageUrl !== '') {
 					setLoading(true)
-					const brandId = uuidv4()
-					localStorage.setItem("PhygitalId", brandId);
+					const phygitalId = uuidv4()
 					const CollectionId = localStorage.getItem("CollectionId")
 					const walletAddress = localStorage.getItem("walletAddress")
-					const collection = await fetch(`${apiUrl}/phygitals`, {
+					const response = await fetch(`${apiUrl}/phygitals`, {
 						method: 'POST',
 						headers: {
 							'Content-Type': 'application/json',
 						},
 						body: JSON.stringify({
-							id: brandId,
+							id: phygitalId,
 							collection_id: CollectionId,
 							deployer_address: walletAddress,
 							name: values.name,
@@ -158,9 +157,9 @@ export default function CreatePhygital() {
 							image: values.image,
 						}),
 					})
-
-
-					if (collection.status === 200) {
+					const phygital = await response.json(); 
+					localStorage.setItem("PhygitalId", phygital.id);
+					if (response.status === 200) {
 						router.push(
 							`/create-phygital-detail
 			`
@@ -244,7 +243,7 @@ export default function CreatePhygital() {
 							/>
 							<div>
 								<Label className='text-xl mb-6'>
-									Categories*
+									Categories
 									<span className='text-[#757575] text-base'>
 										Choose all that apply <Checkbox checked={true} />
 									</span>

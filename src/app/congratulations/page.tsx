@@ -5,9 +5,8 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 
 export default function Congratulations() {
-	const searchParams = useSearchParams()
 
-	const brand_name = searchParams.get('brand_name')
+	const brand_name = localStorage.getItem('brand_name')
 
 	return (
 		<Suspense>

@@ -51,7 +51,7 @@ interface FormDataEntry {
 
 export default function CreatePhygitalDetail() {
 
-    const apiUrl = process.env.NEXT_PUBLIC_URI;
+	const apiUrl = process.env.NEXT_PUBLIC_URI;
 
 
 	const router = useRouter()
@@ -90,15 +90,17 @@ export default function CreatePhygitalDetail() {
 		try {
 			localStorage.setItem('phygitalDetailsData', JSON.stringify(values))
 			setLoading(true)
-			const brandId = uuidv4()
-
-			const phygitalResponse = await fetch(`${apiUrl}/phygitals`, {
-				method: 'POST',
+			
+			const phygitalId = localStorage.getItem("PhygitalId");
+			const CollectionId = localStorage.getItem("CollectionId")
+			const phygitalResponse = await fetch(`${apiUrl}/phygitals/${phygitalId}`, {
+				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
-					id: brandId,
+					id: phygitalId,
+					collection_id:CollectionId,
 					color: values.color,
 					size: values.size,
 					weight: parseInt(values.weight),
@@ -107,6 +109,15 @@ export default function CreatePhygitalDetail() {
 					quality: values.quality,
 					manufacturer: values.manufacturer,
 					origin_country: values.origin_country,
+					name: parsedData.name,
+					brand_name: parsedData.brand_name,
+					category: { data: parsedData.category },
+					description: parsedData.description,
+					price: parseInt(parsedData.price),
+					quantity: parseInt(parsedData.quantity),
+					royality: parseInt(parsedData.royality),
+					product_info: parsedData.product_info,
+					image: parsedData.image,
 				}),
 			})
 
@@ -115,15 +126,15 @@ export default function CreatePhygitalDetail() {
 					variant: item.title.toUpperCase() || '',
 					description: item.description || '',
 				}))
-
+				const variantId = uuidv4()
 				await fetch(`${apiUrl}/variants`, {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
 					},
 					body: JSON.stringify({
-						id: brandId,
-						phygitalName: parsedData.phygitalName,
+						id: variantId,
+						phygital_id:phygitalId,
 						variantData,
 					}),
 				})

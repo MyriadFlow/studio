@@ -33,9 +33,9 @@ const client = new NFTStorage({ token: API_KEY })
 const formSchema = z.object({
 	image360: z.string(),
 	customizations: z
-		.array(z.string())
-		.refine((value) => value.some((item) => item))
-		.optional(),
+		.array(z.string()),
+		// .refine((value) => value.some((item) => item))
+		// .optional(),
 	free_nft_image: z.string(),
 	gold_reward: z.string().min(1, { message: 'Gold reward must be provided' }),
 	silver_reward: z
@@ -83,9 +83,9 @@ export default function CreateWebxrExperience() {
 
 	const router = useRouter()
 	const [imageUrl, setImageUrl] = useState<string>('')
-	const [nftImageUrl, setNftImageUrl] = useState<string>('')
+	const [freeImageUrl, setFreeImageUrl] = useState<string>('')
 	const [preview, setPreview] = useState<boolean>(false)
-	const [nftPreview, setNftPreview] = useState<boolean>(false)
+	const [freePreview, setFreePreview] = useState<boolean>(false)
 	const [loading, setLoading] = useState<boolean>(false)
 	const [imageError, setImageError] = useState<boolean>(false)
 
@@ -134,7 +134,7 @@ export default function CreateWebxrExperience() {
 		}
 		try {
 			values.image360 = imageUrl
-			values.free_nft_image = nftImageUrl ?? nftImageUrl
+			values.free_nft_image = freeImageUrl
 			localStorage.setItem('webxrData', JSON.stringify(values))
 
 			console.log(values)
@@ -150,6 +150,7 @@ export default function CreateWebxrExperience() {
 					body: JSON.stringify({
 						id: brandId,
 						phygitalName,
+						phygital_id: PhygitalId,
 						image360: values.image360,
 						free_nft_image: values.free_nft_image,
 						gold_reward: values.gold_reward,
@@ -159,6 +160,7 @@ export default function CreateWebxrExperience() {
 					}),
 				})
 
+				const walletAddress = localStorage.getItem("walletAddress");
 				await fetch(`${apiUrl}/avatars`, {
 					method: 'POST',
 					headers: {
@@ -166,8 +168,8 @@ export default function CreateWebxrExperience() {
 					},
 					body: JSON.stringify({
 						id: brandId,
-						phygital_id: getPhygitalId,
-						phygitalName,
+						phygital_id: PhygitalId,
+						user_id:walletAddress,
 						...parsedData,
 					}),
 				})
@@ -187,15 +189,15 @@ export default function CreateWebxrExperience() {
 		if (imageUrl) {
 			setPreview(true)
 		} 
-		 if (nftImageUrl) {
-			setNftPreview(true)
+		 if (freeImageUrl) {
+			setFreePreview(true)
 		}
 
 		return () => {
 			setPreview(false)
-			setNftPreview(false)
+			setFreePreview(false)
 		}
-	}, [imageUrl, nftImageUrl])
+	}, [imageUrl, freeImageUrl])
 
 	async function uploadImage(e: React.ChangeEvent<HTMLInputElement>) {
 		e.preventDefault()
@@ -221,7 +223,7 @@ export default function CreateWebxrExperience() {
 			setLoading(true)
 			const blobDataImage = new Blob([e.target.files![0]])
 			const metaHash = await client.storeBlob(blobDataImage)
-			setImageUrl(`ipfs://${metaHash}`)
+			setFreeImageUrl(`ipfs://${metaHash}`)
 			toast.success('Upload Completed!', {
 				position: 'top-left',
 			})
@@ -324,7 +326,7 @@ export default function CreateWebxrExperience() {
 							<div className='flex gap-12 flex-col p-4 border-[#30D8FF] border rounded'>
 								<div className='flex gap-4'>
 									<h3 className='text-xl'>
-										Choose available customizations options for the avatars*
+										Choose available customizations options for the avatars
 									</h3>
 									<span>Choose all that apply</span>
 									<Checkbox />
@@ -419,10 +421,10 @@ export default function CreateWebxrExperience() {
 								</div>
 								<div>
 									<h3 className='text-2xl'>Preview</h3>
-									{nftPreview ? (
+									{freePreview ? (
 										<img
 											src={`${'https://nftstorage.link/ipfs'}/${removePrefix(
-												nftImageUrl)}`}
+												freeImageUrl)}`}
 											alt='preview image'
 											height={250}
 											width={350}

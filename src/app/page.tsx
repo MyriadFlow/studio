@@ -55,16 +55,16 @@ export default function Home() {
       <main className='flex-col flex text-black text-center gap-12 justify-center relative'>
         <Navbar />
         <ToastContainer />
-        <Image
+        {/* <Image
           src='/images/blob-3.png'
           alt='blob'
           height={350}
           width={350}
           className='absolute top-0 right-0'
-        />
+        /> */}
         {hasAddress ? (
           <div className='p-8'>
-            <div className=''>
+            <div className='absolute top-0 right-0 mt-32 mr-8'>
               <Link href='/create-brand'>
                 <Button className='bg-[#30D8FF] rounded-full text-black'>
                   Create Brand
@@ -73,7 +73,7 @@ export default function Home() {
             </div>
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6'>
               {brands.map((brand) => (
-                <Link key={brand.id} href={`/nfts/${brand.id}`}>
+                <a key={brand.id} href={`/nfts/${brand.id}`}>
                   <div className='shadow-lg rounded-lg p-6'>
                     <img
                       src={`https://nftstorage.link/${brand.logo_image.replace('ipfs://', 'ipfs/')}`}
@@ -83,7 +83,7 @@ export default function Home() {
                     <h3 className='text-xl font-bold'>{brand.brand_name}</h3>
                     <p className='text-gray-700'>{brand.description}</p>
                   </div>
-                </Link>
+                </a>
               ))}
             </div>
           </div>
@@ -108,7 +108,7 @@ export default function Home() {
             </div>
           </div>
         )}
-        <Image
+        {/* <Image
           src='/images/blob-2.png'
           alt='blob'
           height={350}
@@ -121,7 +121,7 @@ export default function Home() {
           height={350}
           width={350}
           className='absolute bottom-0 left-0'
-        />
+        /> */}
         <Footer />
       </main>
     </>

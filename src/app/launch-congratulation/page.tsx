@@ -18,7 +18,12 @@ export default function Congratulations() {
                 and WebXR experience! </p>
 				<Link href='/create-phygital'>
 					<Button className='w-fit bg-[#30D8FF] hover:text-white rounded-full text-black text-2xl'>
-						Launch Another
+						Launch Another Phygital
+					</Button>
+				</Link>
+				<Link href='/create-collection'>
+					<Button className='w-fit bg-[#30D8FF] hover:text-white rounded-full text-black text-2xl'>
+						Launch Another Collection
 					</Button>
 				</Link>
 				<Button className='w-fit bg-[#30D8FF] hover:text-white rounded-full text-black text-2xl'>

@@ -267,8 +267,7 @@ function getNumber() public view returns (uint256) {
 					
 					if (!addressExists) {
 						const brandId = uuidv4()
-						localStorage.setItem("BrandId", brandId);
-						const brand = await fetch(`${apiUrl}/brands`, {
+						const response = await fetch(`${apiUrl}/brands`, {
 							method: 'POST',
 							headers: {
 								'Content-Type': 'application/json',
@@ -287,9 +286,10 @@ function getNumber() public view returns (uint256) {
 								manager_id: values.manager_id,
 							}),
 						})
+						const brand = await response.json(); 
 						console.log(brand)
-						
-						if (brand.status === 200) {
+						localStorage.setItem("BrandId", brand.id);
+						if (response.status === 200) {
 							const deploySuccess = await handleDeploy();
 							if (deploySuccess) {
 								// const verifySuccess = await handleVerify();
@@ -305,6 +305,7 @@ function getNumber() public view returns (uint256) {
 									}),
 								})
 								console.log(users);
+								toast.success('Your Brand has been created')
 								router.push(`/congratulations?bramd_name=${values.name}`);
 							// }
 							}

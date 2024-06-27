@@ -2,6 +2,7 @@
 import { Button, Input, Label, Navbar, Textarea } from '@/components'
 import Image from 'next/image'
 import Link from 'next/link'
+import { Avatar } from '@readyplayerme/visage'
 import { AwaitedReactNode, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useEffect, useState } from 'react'
 
 export default function Review() {
@@ -41,7 +42,7 @@ export default function Review() {
 	console.log(parsedData);
 
 
-	const storedAvaterData = getData() ?? '{}'
+	const storedAvaterData = getAvatarData() ?? '{}'
 	const parsedAvatarData = JSON.parse(storedAvaterData)
 	console.log(parsedAvatarData);
 
@@ -286,12 +287,16 @@ export default function Review() {
 							<div className='flex gap-8'>
 								<div className='flex flex-col gap-12'>
 									<h2 className='text-xl'>Your Avatar</h2>
-									<img
-										// src={`https://nftstorage.link/${parsedAvatarData.url.replace('ipfs://', 'ipfs/')}`}
-										alt='preview'
-										height={200}
-										width={200}
-									/>
+									{parsedAvatarData.url ? (
+										<Avatar
+											modelSrc={parsedAvatarData.url}
+											cameraInitialDistance={1.5}
+										/>
+									) : (
+										<h2 className='text-2xl flex-col flex items-center '>
+											<span>Avatar</span> <span>image</span> <span>here</span>
+										</h2>
+									)}
 								</div>
 								<div className='flex flex-col gap-12 w-full'>
 									<h2 className='text-xl'>Your WebXR Background</h2>
