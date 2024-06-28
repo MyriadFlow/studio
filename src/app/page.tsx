@@ -10,7 +10,7 @@ import Footer from '@/components/footer'
 interface Brand {
   id: string; // UUID type
   logo_image: string;
-  brand_name: string;
+  name: string;
   description: string;
 }
 
@@ -96,17 +96,17 @@ export default function Home() {
             )}
             <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6'>
               {brands.map((brand) => (
-                <a key={brand.id} href={`/nfts/${brand.id}`}>
-                  <div className='shadow-lg rounded-lg p-6'>
+                // <a key={brand.id} href={`/nfts/${brand.id}`}>
+                  <div className='shadow-lg rounded-lg p-6' key={brand.id}>
                     <img
                       src={`https://nftstorage.link/${brand.logo_image.replace('ipfs://', 'ipfs/')}`}
-                      alt={brand.brand_name}
+                      alt={brand.name}
                       className='mb-4'
                     />
-                    <h3 className='text-xl font-bold'>{brand.brand_name}</h3>
+                    <h3 className='text-xl font-bold'>{brand.name}</h3>
                     <p className='text-gray-700'>{brand.description}</p>
                   </div>
-                </a>
+                // </a>
               ))}
             </div>
           </div>
