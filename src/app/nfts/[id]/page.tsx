@@ -20,10 +20,10 @@ const NFTPage = ({ params}: any) => {
 
     const getCollection = async () => {
 
-        const response = await fetch(`${apiUrl}/collections${id}`)
+        const response = await fetch(`${apiUrl}/collections/brand-id/${id}`)
 
         const result: Collection[] = await response.json();
-        console.log(response);
+        console.log(result);
         setCollections(result)
     }
 
@@ -37,7 +37,7 @@ const NFTPage = ({ params}: any) => {
                 <Navbar />
                 <h1 className="text-5xl text-center mt-10">Your Collections</h1>
                 <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6'>
-                    {collections.map((collection) => (
+                    {collections?.map((collection) => (
                         <a key={collection.id} href={`/nfts/${collection.id}`}>
                             <div className='shadow-lg rounded-lg p-6'>
                                 <img
