@@ -237,7 +237,9 @@ function getNumber() public view returns (uint256) {
 
 	async function onSubmit(values: z.infer<typeof formSchema>) {
 		if (!account.addresses) {
-			toast.warning('Connect your wallet')
+			toast.warning('Connect your wallet', {
+				position: 'top-left',
+			})
 		} else {
 			if (!imageUrl) {
 				setImageError(true)
@@ -288,15 +290,21 @@ function getNumber() public view returns (uint256) {
 					console.log(brand)
 					localStorage.setItem("BrandId", brand.id);
 					if (response.status === 200) {
-						toast.warning('Now we are deploying AccessMaster to manage out brand')
+						toast.warning('Now we are deploying AccessMaster to manage out brand', {
+							position: 'top-left',
+						})
 						const deploySuccess = await handleDeploy();
 						if (deploySuccess) {
 							// const verifySuccess = await handleVerify();
 							// if (verifySuccess) {
-							toast.warning('Now we will deploy TradeHub ')
+							toast.warning('Now we will deploy TradeHub ', {
+								position: 'top-left',
+							})
 							const deployTradeHub = await handleDeploy();
 							if(deployTradeHub){
-							toast.success('Deploy Successful')
+							toast.success('Deploy Successful', {
+								position: 'top-left',
+							})
 							const users = await fetch(`${apiUrl}/users`,
 								{
 									method: 'POST',
@@ -308,7 +316,9 @@ function getNumber() public view returns (uint256) {
 									}),
 								})
 							console.log(users);
-							toast.success('Your Brand has been created')
+							toast.success('Your Brand has been created', {
+								position: 'top-left',
+							})
 							router.push(`/congratulations?bramd_name=${values.name}`);
 							// }
 							}
@@ -319,11 +329,15 @@ function getNumber() public view returns (uint256) {
 					// }
 
 				} else if (!imageError && imageUrl === '') {
-					toast.warning('Wait for your image to finish upload')
+					toast.warning('Wait for your image to finish upload', {
+						position: 'top-left',
+					})
 				}
 			} catch (error) {
 				console.log(error)
-				toast.warning('Failed to create Brand')
+				toast.warning('Failed to create Brand', {
+					position: 'top-left',
+				})
 				setLoading(false)
 			}
 		}

@@ -285,18 +285,26 @@ function getNumber() public view returns (uint256) {
 			}
 
 			if (phygitalResponse.status === 200) {
-				toast.warning('Now we are deploing phygital to launch your nft collection')
+				toast.warning('Now we are deploing phygital to launch your nft collection', {
+					position: 'top-left',
+				})
 				const deploySuccess = await handleDeploy();
 				if (deploySuccess) {
-					toast.success('Deploy Successful')
+					toast.success('Deploy Successful', {
+						position: 'top-left',
+					})
 				router.push('/create-avatar')
 				}
 			} else {
-				toast.warning('Failed to create phygital data')
+				toast.warning('Failed to create phygital data', {
+					position: 'top-left',
+				})
 			}
 		} catch (error) {
 			console.error(error)
-			toast.error('An error occurred while creating phygital data')
+			toast.error('An error occurred while creating phygital data', {
+				position: 'top-left',
+			})
 		} finally {
 			setLoading(false)
 		}
