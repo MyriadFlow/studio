@@ -35,9 +35,9 @@ const formSchema = z.object({
 	}),
 	category: z
 		.array(z.string()),
-		// .refine((value) => value.some((item) => item), {
-		// 	message: 'You have to select at least one category.',
-		// }),
+	// .refine((value) => value.some((item) => item), {
+	// 	message: 'You have to select at least one category.',
+	// }),
 
 	description: z
 		.string()
@@ -96,9 +96,19 @@ const items = [
 
 export default function CreatePhygital() {
 
-    const apiUrl = process.env.NEXT_PUBLIC_URI;
+	const apiUrl = process.env.NEXT_PUBLIC_URI;
 
+	const [showForm, setShowForm] = useState(false)
+	const [productURL, setProductURL] = useState('')
 
+	const handleSubmit = async () => {
+		if (!productURL) {
+			toast.warning('Product URL is required.')
+			return
+		}else{
+			localStorage.setItem("producturl", productURL )
+		}
+	}
 	const router = useRouter()
 	const [imageUrl, setImageUrl] = useState<string>('')
 	const [preview, setPreview] = useState<boolean>(false)
@@ -137,6 +147,7 @@ export default function CreatePhygital() {
 					const phygitalId = uuidv4()
 					const CollectionId = localStorage.getItem("CollectionId")
 					const walletAddress = localStorage.getItem("walletAddress")
+					const productUrl = localStorage.getItem("producturl")
 					const response = await fetch(`${apiUrl}/phygitals`, {
 						method: 'POST',
 						headers: {
@@ -146,18 +157,19 @@ export default function CreatePhygital() {
 							id: phygitalId,
 							collection_id: CollectionId,
 							deployer_address: walletAddress,
+							product_url: productUrl,
 							name: values.name,
 							brand_name: values.brand_name,
 							category: { data: values.category },
 							description: values.description,
-							price: parseInt(values.price),
+							price: parseFloat(values.price),
 							quantity: parseInt(values.quantity),
 							royality: parseInt(values.royality),
 							product_info: values.product_info,
 							image: values.image,
 						}),
 					})
-					const phygital = await response.json(); 
+					const phygital = await response.json();
 					localStorage.setItem("PhygitalId", phygital.id);
 					if (response.status === 200) {
 						router.push(
@@ -223,6 +235,35 @@ export default function CreatePhygital() {
 					<form onSubmit={form.handleSubmit(onSubmit)}>
 						<div className='py-4 px-32 flex flex-col gap-12'>
 							<h2 className='text-xl font-bold'>Chain: Base Network</h2>
+
+							<Button
+								className='w-fit bg-[#30D8FF] hover:text-white rounded-full text-black text-2xl'
+								onClick={() => setShowForm(true)}
+							>
+								I’m already selling the product on Shopify
+							</Button>
+							{showForm && (
+								<div className='mt-6'>
+									<div className='flex flex-col gap-4'>
+										<label>
+											Product URL*
+											<input
+												type='text'
+												className='border rounded px-2 py-1'
+												value={productURL}
+												onChange={(e) => setProductURL(e.target.value)}
+												required
+											/>
+										</label>
+										<Button
+											className='w-fit bg-[#30D8FF] hover:text-white rounded-full text-black text-2xl mt-4'
+										onClick={handleSubmit}
+										>
+											Save and continue
+										</Button>
+									</div>
+								</div>
+							)}
 							<FormField
 								name='name'
 								control={form.control}

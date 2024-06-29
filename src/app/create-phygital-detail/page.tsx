@@ -24,6 +24,12 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import FormRepeater from 'react-form-repeater'
 import { v4 as uuidv4 } from 'uuid'
+import { useAccount, useChainId, useWalletClient } from 'wagmi'
+import { NFTStorage } from 'nft.storage'
+import { Hex, createPublicClient, http } from 'viem'
+import { baseSepolia } from 'viem/chains'
+import axios from 'axios'
+import Simplestore from "@/lib/Simplestore.json"
 
 const formSchema = z.object({
 	color: z.string().min(2, {
@@ -50,9 +56,148 @@ interface FormDataEntry {
 }
 
 export default function CreatePhygitalDetail() {
+	const { address: walletAddress } = useAccount()
+	const [contractAddress, setContractAddress] = useState<`0x${string}` | undefined>()
+	const [error, setError] = useState<string | null>(null)
+	const [isDeployed, setIsDeployed] = useState(false)
+	const chainId = useChainId()
+	const { data: walletClient } = useWalletClient({ chainId })
+	const publicClient = createPublicClient({
+		chain: baseSepolia,
+		transport: http(),
+	})
+
+	async function verifyContract(
+		contractAddress: string,
+		contractSourceCode: string,
+		contractName: string,
+		compilerVersion: string,
+		constructorArguments: string,
+		licenseType: string
+	): Promise<boolean> {
+		const apiKey = '7CU2HZAY6VD1CIG7C5DD8N4TKWZ7JJ7SVT'
+
+		const params = new URLSearchParams()
+		params.append('apikey', apiKey)
+		params.append('module', 'contract')
+		params.append('action', 'verifysourcecode')
+		params.append('contractaddress', contractAddress)
+		params.append('sourceCode', contractSourceCode)
+		params.append('codeformat', 'solidity-single-file')
+		params.append('contractname', contractName)
+		params.append('compilerversion', compilerVersion)
+		params.append('optimizationUsed', '0') // Change to '1' if optimization was used
+		params.append('runs', '200') // Change to the number of runs if optimization was used
+		params.append('constructorArguments', constructorArguments),
+			params.append('licenseType', licenseType)
+
+		try {
+			const response = await axios.post(
+				'https://api-sepolia.basescan.org/api',
+				params.toString()
+			)
+			console.log(apiKey)
+			console.log(contractAddress)
+			console.log(contractSourceCode)
+			console.log(contractName)
+			console.log(compilerVersion)
+			if (response.data.status === '1') {
+				console.log('Contract verified successfully')
+				console.log('Verification response:', response)
+				console.log('Verification Guid:', response.data.result)
+				return true;
+			} else {
+				console.log('Failed to verify contract:', response.data.result)
+				return false;
+			}
+		} catch (error) {
+			console.error('Error verifying contract:', error)
+			return false;
+		}
+	}
+
+	const deployContract = async () => {
+		if (!walletClient) {
+			throw new Error('Wallet client not available')
+		}
+
+		try {
+			const hash = await walletClient.deployContract({
+				abi: Simplestore.abi,
+				bytecode: Simplestore.bytecode as Hex,
+				account: walletAddress,
+			})
+
+			if (!hash) {
+				throw new Error('Failed to execute deploy contract transaction')
+			}
+
+			const txn = await publicClient.waitForTransactionReceipt({ hash })
+			setContractAddress(txn.contractAddress as `0x${string}`)
+			setIsDeployed(true)
+
+			return txn.contractAddress
+		} catch (error) {
+			console.error('Deployment error:', error)
+			setError('Error deploying contract: ' + error)
+		}
+	};
+
+	const handleDeploy = async (): Promise<boolean> => {
+		try {
+			const address = await deployContract();
+			console.log('Contract deployed at:', address);
+			return address !== null;
+		} catch (error) {
+			console.error('Error deploying contract:', error);
+			setError('Error deploying contract: ' + error);
+			return false;
+		}
+	};
+
+	const handleVerify = async (): Promise<boolean> => {
+		if (!contractAddress) {
+			setError('No contract address found to verify.')
+			return false;
+		}
+		const contractSourceCode = `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract SimpleStorage {
+// Private state variable to store a number
+uint256 private number;
+
+// Setter function to set the value of the number
+function setNumber(uint256 _number) public {
+	number = _number;
+}
+
+// Getter function to get the value of the number
+function getNumber() public view returns (uint256) {
+	return number;
+}
+}`;
+		try {
+			const success = verifyContract(
+				contractAddress as string,
+				contractSourceCode,
+				'SimpleStorage', // Contract name
+				'v0.8.26+commit.8a97fa7a', // Compiler version
+				'',
+				'MIT'
+			);
+			return success;
+		} catch (error) {
+			setError('Error verifying contract: ' + error)
+			console.error('Error verifying contract:', error)
+			return false;
+		}
+	}
+
 
 	const apiUrl = process.env.NEXT_PUBLIC_URI;
 
+	const account = useAccount()
 
 	const router = useRouter()
 	const [formData, setFormData] = useState<FormDataEntry[]>([])
@@ -102,7 +247,7 @@ export default function CreatePhygitalDetail() {
 					collection_id:CollectionId,
 					color: values.color,
 					size: values.size,
-					weight: parseInt(values.weight),
+					weight: parseFloat(values.weight),
 					material: values.material,
 					usage: values.usage,
 					quality: values.quality,
@@ -112,7 +257,7 @@ export default function CreatePhygitalDetail() {
 					brand_name: parsedData.brand_name,
 					category: { data: parsedData.category },
 					description: parsedData.description,
-					price: parseInt(parsedData.price),
+					price: parseFloat(parsedData.price),
 					quantity: parseInt(parsedData.quantity),
 					royality: parseInt(parsedData.royality),
 					product_info: parsedData.product_info,
@@ -140,7 +285,12 @@ export default function CreatePhygitalDetail() {
 			}
 
 			if (phygitalResponse.status === 200) {
+				toast.warning('Now we are deploing phygital to launch your nft collection')
+				const deploySuccess = await handleDeploy();
+				if (deploySuccess) {
+					toast.success('Deploy Successful')
 				router.push('/create-avatar')
+				}
 			} else {
 				toast.warning('Failed to create phygital data')
 			}
