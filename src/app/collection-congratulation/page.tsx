@@ -5,37 +5,6 @@ import { Suspense, useState } from 'react'
 import { toast, ToastContainer } from 'react-toastify'
 
 export default function Congratulations() {
-	const [showForm, setShowForm] = useState(false)
-	const [productURL, setProductURL] = useState('')
-	const [error, setError] = useState('')
-
-	const handleSubmit = async () => {
-		if (!productURL) {
-			setError('Product URL is required.')
-			toast.warning('Product URL is required.')
-			return
-		}
-
-
-		// try {
-		// 	const response = await fetch(url, {
-		// 		method: 'POST',
-		// 		headers: headers,
-		// 		body: JSON.stringify(),
-		// 	})
-
-		// 	if (!response.ok) {
-		// 		throw new Error('Network response was not ok')
-		// 	}
-
-		// 	const data = await response.json()
-
-
-		// } catch (error) {
-		// 	console.error('Error:', error)
-		// }
-	}
-
 	return (
 		<Suspense>
 			<Navbar />
@@ -51,34 +20,6 @@ export default function Congratulations() {
 						Create phygital
 					</Button>
 				</Link>
-				<Button
-					className='w-fit bg-[#30D8FF] hover:text-white rounded-full text-black text-2xl'
-					onClick={() => setShowForm(true)}
-				>
-					I’m already selling the product on Shopify
-				</Button>
-				{showForm && (
-					<div className='mt-6'>
-						<div className='flex flex-col gap-4'>
-							<label>
-								Product URL*
-								<input
-									type='text'
-									className='border rounded px-2 py-1'
-									value={productURL}
-									onChange={(e) => setProductURL(e.target.value)}
-									required
-								/>
-							</label>
-							<Button
-								className='w-fit bg-[#30D8FF] hover:text-white rounded-full text-black text-2xl mt-4'
-								onClick={handleSubmit}
-							>
-								Save
-							</Button>
-						</div>
-					</div>
-				)}
 			</main>
 		</Suspense>
 	)

@@ -68,9 +68,7 @@ const formSchema = z.object({
 
 export default function CreateBrand() {
 	const { address: walletAddress } = useAccount()
-	const [contractAddress, setContractAddress] = useState<
-		`0x${string}` | undefined
-	>()
+	const [contractAddress, setContractAddress] = useState<`0x${string}` | undefined>()
 
 
 	const [error, setError] = useState<string | null>(null)
@@ -255,61 +253,67 @@ function getNumber() public view returns (uint256) {
 				if (imageUrl !== '') {
 					setLoading(true)
 					// const res = await fetch(`${apiUrl}/users/all`)
-					
+
 					// if (!res.ok) {
 					// 	throw new Error('Network response was not ok');
 					// }
-					
+
 					// const result = await res.json();
 					// console.log(result);
-					
+
 					// const addressExists = result.some((user: { wallet_address: string | undefined }) => user.wallet_address === account.address);
-					
+
 					// if (!addressExists) {
-						const brandId = uuidv4()
-						const response = await fetch(`${apiUrl}/brands`, {
-							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json',
-							},
-							body: JSON.stringify({
-								id: brandId,
-								name: values.name,
-								description: values.description,
-								logo_image: values.logo_image,
-								cover_image: values.cover_image,
-								representative: values.representative,
-								contact_email: values.contact_email,
-								contact_phone: values.contact_phone,
-								shipping_address: values.shipping_address,
-								additional_info: values.additional_info,
-								manager_id: values.manager_id,
-							}),
-						})
-						const brand = await response.json(); 
-						console.log(brand)
-						localStorage.setItem("BrandId", brand.id);
-						if (response.status === 200) {
-							const deploySuccess = await handleDeploy();
-							if (deploySuccess) {
-								// const verifySuccess = await handleVerify();
-								// if (verifySuccess) {
-								const users = await fetch(`${apiUrl}/users`,
+					const brandId = uuidv4()
+					const response = await fetch(`${apiUrl}/brands`, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify({
+							id: brandId,
+							name: values.name,
+							description: values.description,
+							logo_image: values.logo_image,
+							cover_image: values.cover_image,
+							representative: values.representative,
+							contact_email: values.contact_email,
+							contact_phone: values.contact_phone,
+							shipping_address: values.shipping_address,
+							additional_info: values.additional_info,
+							manager_id: values.manager_id,
+						}),
+					})
+					const brand = await response.json();
+					console.log(brand)
+					localStorage.setItem("BrandId", brand.id);
+					if (response.status === 200) {
+						toast.warning('Now we are deploying AccessMaster to manage out brand')
+						const deploySuccess = await handleDeploy();
+						if (deploySuccess) {
+							// const verifySuccess = await handleVerify();
+							// if (verifySuccess) {
+							toast.warning('Now we will deploy TradeHub ')
+							const deployTradeHub = await handleDeploy();
+							if(deployTradeHub){
+							toast.success('Deploy Successful')
+							const users = await fetch(`${apiUrl}/users`,
 								{
 									method: 'POST',
 									headers: {
 										'Content-Type': 'application/json',
-									},body: JSON.stringify({
+									}, body: JSON.stringify({
 										id: brandId,
 										wallet_address: account.address,
 									}),
 								})
-								console.log(users);
-								toast.success('Your Brand has been created')
-								router.push(`/congratulations?bramd_name=${values.name}`);
+							console.log(users);
+							toast.success('Your Brand has been created')
+							router.push(`/congratulations?bramd_name=${values.name}`);
 							// }
 							}
 						}
+					}
 					// }else{
 					// toast.warning('With one address only one Brand can be created')
 					// }
