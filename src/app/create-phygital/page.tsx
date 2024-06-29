@@ -101,14 +101,21 @@ export default function CreatePhygital() {
 	const [showForm, setShowForm] = useState(false)
 	const [productURL, setProductURL] = useState('')
 
-	const handleSubmit = async () => {
+	const handleSubmit =  () => {
 		if (!productURL) {
 			toast.warning('Product URL is required.')
 			return
-		}else{
-			localStorage.setItem("producturl", productURL )
+		} else {
+			localStorage.setItem("producturl", productURL)
 		}
 	}
+
+
+	const handleCheckboxChange = () => {
+		setShowForm(!showForm);
+	};
+
+
 	const router = useRouter()
 	const [imageUrl, setImageUrl] = useState<string>('')
 	const [preview, setPreview] = useState<boolean>(false)
@@ -236,34 +243,38 @@ export default function CreatePhygital() {
 						<div className='py-4 px-32 flex flex-col gap-12'>
 							<h2 className='text-xl font-bold'>Chain: Base Network</h2>
 
-							<Button
-								className='w-fit bg-[#30D8FF] hover:text-white rounded-full text-black text-2xl'
-								onClick={() => setShowForm(true)}
-							>
-								I’m already selling the product on Shopify
-							</Button>
-							{showForm && (
-								<div className='mt-6'>
-									<div className='flex flex-col gap-4'>
-										<label>
-											Product URL*
-											<input
-												type='text'
-												className='border rounded px-2 py-1'
-												value={productURL}
-												onChange={(e) => setProductURL(e.target.value)}
-												required
-											/>
-										</label>
-										<Button
-											className='w-fit bg-[#30D8FF] hover:text-white rounded-full text-black text-2xl mt-4'
-										onClick={handleSubmit}
-										>
-											Save and continue
-										</Button>
-									</div>
-								</div>
-							)}
+							<div>
+								<label className='flex items-center text-xl'>
+									<input
+										type='checkbox'
+										checked={showForm}
+										onChange={handleCheckboxChange}
+										className='mr-2 '
+									/>
+									I’m already selling the product on Shopify
+								</label>
+								{showForm && (
+									<div className='mt-6'>
+										<div className='flex flex-col gap-4'>
+											<label>
+												Product URL*
+												<input
+													type='text'
+													className='border rounded px-2 py-1 border border-black ml-2 w-96'
+													value={productURL}
+													onChange={(e) => setProductURL(e.target.value)}
+													required
+												/>
+											</label>
+											<button
+												className='w-fit border border-black bg-[#0000001A] rounded-lg text-black text-2xl mt-4 px-6'
+												onClick={handleSubmit}
+											>
+												Save
+											</button>
+										</div>
+									</div>)}
+							</div>
 							<FormField
 								name='name'
 								control={form.control}
