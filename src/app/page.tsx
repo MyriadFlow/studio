@@ -23,7 +23,7 @@ export default function Home() {
 
   const getBrands = async () => {
     try {
-      const res = await fetch(`${apiUrl}/brands/all`)
+      const res = await fetch(`${apiUrl}/brands/manager/${walletAddress}`)
       if (!res.ok) {
         throw new Error('Network response was not ok');
       }
