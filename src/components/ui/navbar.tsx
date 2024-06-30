@@ -17,7 +17,7 @@ export const Navbar = () => {
 	const navlinks: NavLink[] = [
 		{
 			title: 'Home',
-			path: '/',
+			path: 'https://myriadflow.com',
 		},
 		{
 			title: 'Discover',
