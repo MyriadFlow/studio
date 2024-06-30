@@ -21,15 +21,15 @@ export const Navbar = () => {
 		},
 		{
 			title: 'Discover',
-			path: '/',
+			path: 'https://discover-two.vercel.app',
 		},
 		{
 			title: 'Studio',
-			path: '/',
+			path: 'https://studio-one-sigma.vercel.app/',
 		},
 		{
 			title: 'WebXR',
-			path: '/',
+			path: 'https://webxr-3d.vercel.app',
 		},
 	]
 
