@@ -101,7 +101,7 @@ export default function CreatePhygital() {
 	const [showForm, setShowForm] = useState(false)
 	const [productURL, setProductURL] = useState('')
 
-	const handleSubmit =  () => {
+	const handleSubmit = () => {
 		if (!productURL) {
 			toast.warning('Product URL is required.')
 			return
@@ -149,7 +149,7 @@ export default function CreatePhygital() {
 				values.brand_name = brand_name!
 				localStorage.setItem('phygitalData', JSON.stringify(values))
 
-				if (imageUrl !== '') {
+				// if (imageUrl !== '') {
 					setLoading(true)
 					const phygitalId = uuidv4()
 					const CollectionId = localStorage.getItem("CollectionId")
@@ -180,13 +180,12 @@ export default function CreatePhygital() {
 					localStorage.setItem("PhygitalId", phygital.id);
 					if (response.status === 200) {
 						router.push(
-							`/create-phygital-detail
-			`
+							`/create-phygital-detail`
 						)
 					}
-				}
-			} else if (!imageError && imageUrl === '') {
-				toast.warning('Wait for your image to finish upload')
+				// }
+			// } else if (!imageError && imageUrl === '') {
+			// 	toast.warning('Wait for your image to finish upload')
 			}
 		} catch (error) {
 			console.log('Errors' + error)
@@ -498,7 +497,8 @@ export default function CreatePhygital() {
 								type='submit'
 								className='w-fit bg-[#30D8FF] rounded-full text-black'
 							>
-								{loading ? 'loading' : 'Next'}
+								{/* {loading ? 'loading' : 'Next'} */}
+								Next
 							</Button>
 						</div>
 					</form>
