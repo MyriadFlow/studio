@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, ChangeEvent } from 'react'
 import {
     Button,
     Input,
@@ -65,10 +65,10 @@ const formSchema = z.object({
     logo_image: z.string(),
     cover_image: z.string(),
     manager_id: z.string(),
-    access_master:z.string(),
+    access_master: z.string(),
     trade_hub: z.string(),
-    payout_address:z.string(),
-    chain_id :z.string(),
+    payout_address: z.string(),
+    chain_id: z.string(),
 })
 
 export default function CreateBrand() {
@@ -83,6 +83,57 @@ export default function CreateBrand() {
         chain: baseSepolia,
         transport: http(),
     })
+
+    const [file, setFile] = useState<File | null>(null);
+    const [cid, setCid] = useState("");
+    const [cidCover, setCidCover] = useState("");
+    const [uploading, setUploading] = useState(false);
+
+    const inputFile = useRef(null);
+    const uploadFile = async (fileToUpload: string | Blob) => {
+        try {
+            setUploading(true);
+            const data = new FormData();
+            data.set("file", fileToUpload);
+            const res = await fetch("/api/files", {
+                method: "POST",
+                body: data,
+            });
+            const resData = await res.json();
+            setCid(resData.IpfsHash);
+            toast.success('Upload Completed!', {
+				position: 'top-left',
+			})
+            console.log(resData.IpfsHash);
+            setUploading(false);
+        } catch (e) {
+            console.log(e);
+            setUploading(false);
+            alert("Trouble uploading file");
+        }
+    };
+    const uploadCoverFile = async (fileToUpload: string | Blob) => {
+        try {
+            setUploading(true);
+            const data = new FormData();
+            data.set("file", fileToUpload);
+            const res = await fetch("/api/files", {
+                method: "POST",
+                body: data,
+            });
+            const resData = await res.json();
+            setCidCover(resData.IpfsHash);
+            toast.success('Upload Completed!', {
+				position: 'top-left',
+			})
+            console.log(resData.IpfsHash);
+            setUploading(false);
+        } catch (e) {
+            console.log(e);
+            setUploading(false);
+            alert("Trouble uploading file");
+        }
+    };
 
     const deployContract = async () => {
         if (!walletClient) {
@@ -126,7 +177,7 @@ export default function CreateBrand() {
                 abi: tradehub.abi,
                 bytecode: tradehub.bytecode as Hex,
                 account: walletAddress,
-                args: [platformFee , memory_name, `${AccessMasterAddress}`]
+                args: [platformFee, memory_name, `${AccessMasterAddress}`]
             })
 
             if (!hash) {
@@ -158,7 +209,7 @@ export default function CreateBrand() {
 
     const TradehubDeploy = async (): Promise<boolean> => {
         try {
-            const address = await deployTradehubContract(30,'NFT BAZAAR');
+            const address = await deployTradehubContract(30, 'NFT BAZAAR');
             localStorage.setItem("TradehubAddress", address as `0x${string}`)
             console.log('Contract deployed at:', address);
             return address !== null;
@@ -173,10 +224,6 @@ export default function CreateBrand() {
 
     const account = useAccount()
     const router = useRouter()
-    const [imageUrl, setImageUrl] = useState<string>('')
-    const [coverImageUrl, setCoverImageUrl] = useState<string>('')
-    const [preview, setPreview] = useState<boolean>(false)
-    const [previewCover, setCoverPreview] = useState<boolean>(false)
     const [loading, setLoading] = useState<boolean>(false)
     const [imageError, setImageError] = useState<boolean>(false)
 
@@ -193,10 +240,10 @@ export default function CreateBrand() {
             logo_image: '',
             cover_image: '',
             manager_id: '',
-            access_master:'',
-            trade_hub:'',
-            payout_address:'',
-            chain_id :'',
+            access_master: '',
+            trade_hub: '',
+            payout_address: '',
+            chain_id: '',
         },
     })
 
@@ -206,103 +253,103 @@ export default function CreateBrand() {
                 position: 'top-left',
             })
         } else {
-            if (!imageUrl) {
+            if (!cid) {
                 setImageError(true)
             }
 
             try {
-                values.logo_image = imageUrl
-                values.cover_image = coverImageUrl
+                values.logo_image = "ipfs://" + cid
+                values.cover_image = "ipfs://" + cidCover                             
                 values.manager_id = account.address!
                 localStorage.setItem('brand_name', values.name)
                 console.log(values)
 
-                // if (imageUrl !== '') {
-                // 	setLoading(true)
-                // const res = await fetch(`${apiUrl}/users/all`)
+                if (cid !== '') {
+                    setLoading(true)
+                    // const res = await fetch(`${apiUrl}/users/all`)
 
-                // if (!res.ok) {
-                // 	throw new Error('Network response was not ok');
-                // }
+                    // if (!res.ok) {
+                    // 	throw new Error('Network response was not ok');
+                    // }
 
-                // const result = await res.json();
-                // console.log(result);
+                    // const result = await res.json();
+                    // console.log(result);
 
-                // const addressExists = result.some((user: { wallet_address: string | undefined }) => user.wallet_address === account.address);
+                    // const addressExists = result.some((user: { wallet_address: string | undefined }) => user.wallet_address === account.address);
 
-                // if (!addressExists) {
-                toast.warning('Now we are deploying AccessMaster to manage out brand', {
+                    // if (!addressExists) {
+                    toast.warning('Now we are deploying AccessMaster to manage out brand', {
                         position: 'top-left',
                     })
-                const deploySuccess = await handleDeploy();
-                if (deploySuccess) {
-                    const AccessMasterAddress = localStorage.getItem("AccessMasterAddress");
-                    console.log('Contract deployed at:', AccessMasterAddress);
-                    toast.warning('Now we will deploy TradeHub ', {
-                        position: 'top-left',
-                    })
-                    const deployTradeHub = await TradehubDeploy();
-                    if (deployTradeHub) {
-                    const TradehubAddress = localStorage.getItem("TradehubAddress");
-                    console.log('Contract deployed at:',TradehubAddress)
-                        toast.success('Deploy Successful', {
+                    const deploySuccess = await handleDeploy();
+                    if (deploySuccess) {
+                        const AccessMasterAddress = localStorage.getItem("AccessMasterAddress");
+                        console.log('Contract deployed at:', AccessMasterAddress);
+                        toast.warning('Now we will deploy TradeHub ', {
                             position: 'top-left',
                         })
-                        const brandId = uuidv4()
-                        const response = await fetch(`${apiUrl}/brands`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                id: brandId,
-                                name: values.name,
-                                description: values.description,
-                                logo_image: values.logo_image,
-                                cover_image: values.cover_image,
-                                representative: values.representative,
-                                contact_email: values.contact_email,
-                                contact_phone: values.contact_phone,
-                                shipping_address: values.shipping_address,
-                                additional_info: values.additional_info,
-                                manager_id: values.manager_id,
-                                access_master: AccessMasterAddress,
-                                trade_hub:TradehubAddress,
-                                payout_address: account.address,
-                                chain_id :"84532"
-                            }),
-                        })
-                        const brand = await response.json();
-                        console.log(brand)
-                        localStorage.setItem("BrandId", brand.id);
-                        if (response.status === 200) {
-                            const users = await fetch(`${apiUrl}/users`,
-                                {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    }, body: JSON.stringify({
-                                        id: brandId,
-                                        wallet_address: account.address,
-                                    }),
-                                })
-                            console.log(users);
-                            toast.success('Your Brand has been created', {
+                        const deployTradeHub = await TradehubDeploy();
+                        if (deployTradeHub) {
+                            const TradehubAddress = localStorage.getItem("TradehubAddress");
+                            console.log('Contract deployed at:', TradehubAddress)
+                            toast.success('Deploy Successful', {
                                 position: 'top-left',
                             })
-                            router.push(`/congratulations?bramd_name=${values.name}`);
+                            const brandId = uuidv4()
+                            const response = await fetch(`${apiUrl}/brands`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    id: brandId,
+                                    name: values.name,
+                                    description: values.description,
+                                    logo_image: values.logo_image,
+                                    cover_image: values.cover_image,
+                                    representative: values.representative,
+                                    contact_email: values.contact_email,
+                                    contact_phone: values.contact_phone,
+                                    shipping_address: values.shipping_address,
+                                    additional_info: values.additional_info,
+                                    manager_id: values.manager_id,
+                                    access_master: AccessMasterAddress,
+                                    trade_hub: TradehubAddress,
+                                    payout_address: account.address,
+                                    chain_id: "84532"
+                                }),
+                            })
+                            const brand = await response.json();
+                            console.log(brand)
+                            localStorage.setItem("BrandId", brand.id);
+                            if (response.status === 200) {
+                                const users = await fetch(`${apiUrl}/users`,
+                                    {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                        }, body: JSON.stringify({
+                                            id: brandId,
+                                            wallet_address: account.address,
+                                        }),
+                                    })
+                                console.log(users);
+                                toast.success('Your Brand has been created', {
+                                    position: 'top-left',
+                                })
+                                router.push(`/congratulations?bramd_name=${values.name}`);
+                            }
                         }
                     }
-                }
-                // }else{
-                // toast.warning('With one address only one Brand can be created')
-                // }
+                    // }else{
+                    // toast.warning('With one address only one Brand can be created')
+                    // }
 
-                // } else if (!imageError && imageUrl === '') {
-                // 	toast.warning('Wait for your image to finish upload', {
-                // 		position: 'top-left',
-                // 	})
-                // }
+                } else if (!imageError && cid === '') {
+                    toast.warning('Wait for your image to finish upload', {
+                        position: 'top-left',
+                    })
+                }
             } catch (error) {
                 console.log(error)
                 toast.warning('Failed to create Brand', {
@@ -313,54 +360,19 @@ export default function CreateBrand() {
         }
     }
 
-    useEffect(() => {
-        if (imageUrl) {
-            setPreview(true)
+    const uploadImage = (e: ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            setFile(files[0]);
+            uploadFile(files[0]);
         }
+    };
 
-        if (coverImageUrl) {
-            setCoverPreview(true)
-        }
-
-
-        return () => {
-            setPreview(false)
-        }
-    }, [imageUrl, coverImageUrl])
-
-    async function uploadImage(e: React.ChangeEvent<HTMLInputElement>) {
-        e.preventDefault()
-        try {
-            setLoading(true)
-            const blobDataImage = new Blob([e.target.files![0]])
-            const metaHash = await client.storeBlob(blobDataImage)
-            setImageUrl(`ipfs://${metaHash}`)
-            toast.success('Upload Completed!', {
-                position: 'top-left',
-            })
-            console.log('profilePictureUrl', metaHash)
-        } catch (error) {
-            console.log('Error uploading file: ', error)
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    async function uploadCover(e: React.ChangeEvent<HTMLInputElement>) {
-        e.preventDefault()
-        try {
-            setLoading(true)
-            const blobDataImage = new Blob([e.target.files![0]])
-            const metaHash = await client.storeBlob(blobDataImage)
-            setCoverImageUrl(`ipfs://${metaHash}`)
-            toast.success('Upload Completed!', {
-                position: 'top-left',
-            })
-            console.log('profilePictureUrl', metaHash)
-        } catch (error) {
-            console.log('Error uploading file: ', error)
-        } finally {
-            setLoading(false)
+    const uploadCover = (e: ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            setFile(files[0]);
+            uploadCoverFile(files[0]);
         }
     }
 
@@ -436,6 +448,7 @@ export default function CreateBrand() {
                                                     id='upload'
                                                     type='file'
                                                     className='hidden'
+                                                    ref={inputFile}
                                                     onChange={uploadImage}
                                                     accept='image/*'
                                                 />
@@ -454,12 +467,10 @@ export default function CreateBrand() {
                                 </div>
                                 <div>
                                     <h3 className='text-2xl'>Preview</h3>
-                                    {preview ? (
+                                    {cid ? (
                                         <img
-                                            // src={imageUrl}
-                                            src={`${'https://nftstorage.link/ipfs'}/${removePrefix(
-                                                imageUrl
-                                            )}`}
+                                            // src={cid}
+                                            src={`${process.env.NEXT_PUBLIC_GATEWAY_URL}/ipfs/${cid}`}
                                             alt='preview image'
                                             height={250}
                                             width={350}
@@ -488,6 +499,7 @@ export default function CreateBrand() {
                                                     id='uploadCover'
                                                     type='file'
                                                     className='hidden'
+                                                    ref={inputFile}
                                                     onChange={uploadCover}
                                                     accept='image/*'
                                                 />
@@ -506,12 +518,10 @@ export default function CreateBrand() {
                                 </div>
                                 <div>
                                     <h3 className='text-2xl'>Preview</h3>
-                                    {previewCover ? (
+                                    {cidCover ? (
                                         <img
-                                            // src={imageUrl}
-                                            src={`${'https://nftstorage.link/ipfs'}/${removePrefix(
-                                                coverImageUrl
-                                            )}`}
+                                            // src={cid}
+                                            src={`${process.env.NEXT_PUBLIC_GATEWAY_URL}/ipfs/${cidCover}`}
                                             alt='preview image'
                                             height={250}
                                             width={350}
@@ -626,8 +636,7 @@ export default function CreateBrand() {
                                 type='submit'
                                 className='w-fit bg-[#30D8FF] text-black hover:text-white rounded-full'
                             >
-                                {/* {loading ? 'loading...' : 'Launch brand'} */}
-                                Launch
+                                {loading ? 'loading...' : 'Launch brand'}
                             </Button>
                         </div>
                     </form>

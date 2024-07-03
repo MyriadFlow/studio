@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, ChangeEvent } from 'react'
 import {
 	Button,
 	Checkbox,
@@ -79,6 +79,56 @@ const items = [
 
 export default function CreateWebxrExperience() {
 
+	const [file, setFile] = useState<File | null>(null);
+    const [cid, setCid] = useState("");
+    const [cidCover, setCidCover] = useState("");
+    const [uploading, setUploading] = useState(false);
+
+    const inputFile = useRef(null);
+    const uploadFile = async (fileToUpload: string | Blob) => {
+        try {
+            setUploading(true);
+            const data = new FormData();
+            data.set("file", fileToUpload);
+            const res = await fetch("/api/files", {
+                method: "POST",
+                body: data,
+            });
+            const resData = await res.json();
+            setCid(resData.IpfsHash);
+			toast.success('Upload Completed!', {
+				position: 'top-left',
+			})
+            console.log(resData.IpfsHash);
+            setUploading(false);
+        } catch (e) {
+            console.log(e);
+            setUploading(false);
+            alert("Trouble uploading file");
+        }
+    };
+    const uploadCoverFile = async (fileToUpload: string | Blob) => {
+        try {
+            setUploading(true);
+            const data = new FormData();
+            data.set("file", fileToUpload);
+            const res = await fetch("/api/files", {
+                method: "POST",
+                body: data,
+            });
+            const resData = await res.json();
+            setCidCover(resData.IpfsHash);
+			toast.success('Upload Completed!', {
+				position: 'top-left',
+			})
+            console.log(resData.IpfsHash);
+            setUploading(false);
+        } catch (e) {
+            console.log(e);
+            setUploading(false);
+            alert("Trouble uploading file");
+        }
+    };
     const apiUrl = process.env.NEXT_PUBLIC_URI;
 
 	const router = useRouter()
@@ -129,17 +179,17 @@ export default function CreateWebxrExperience() {
 		console.log(parsedData)
 		console.log(phygitalName)
 
-		if (!imageUrl) {
+		if (!cid) {
 			setImageError(true)
 		}
 		try {
-			values.image360 = imageUrl
-			values.free_nft_image = freeImageUrl
+			values.image360 = "ipfs://" + cid
+			values.free_nft_image = "ipfs://" + cidCover
 			localStorage.setItem('webxrData', JSON.stringify(values))
 
 			console.log(values)
 
-			if (imageUrl !== '') {
+			if (cid !== '') {
 				setLoading(true)
 				const brandId = uuidv4()
 				const webxr = await fetch(`${apiUrl}/webxr`, {
@@ -185,55 +235,21 @@ export default function CreateWebxrExperience() {
 		}
 	}
 
-	useEffect(() => {
-		if (imageUrl) {
-			setPreview(true)
-		} 
-		 if (freeImageUrl) {
-			setFreePreview(true)
-		}
+    const uploadImage = (e: ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            setFile(files[0]);
+            uploadFile(files[0]);
+        }
+    };
 
-		return () => {
-			setPreview(false)
-			setFreePreview(false)
-		}
-	}, [imageUrl, freeImageUrl])
-
-	async function uploadImage(e: React.ChangeEvent<HTMLInputElement>) {
-		e.preventDefault()
-		try {
-			setLoading(true)
-			const blobDataImage = new Blob([e.target.files![0]])
-			const metaHash = await client.storeBlob(blobDataImage)
-			setImageUrl(`ipfs://${metaHash}`)
-			toast.success('Upload Completed!', {
-				position: 'top-left',
-			})
-			console.log('profilePictureUrl', metaHash)
-		} catch (error) {
-			console.log('Error uploading file: ', error)
-		} finally {
-			setLoading(false)
-		}
-	}
-
-	async function uploadFreeImage(e: React.ChangeEvent<HTMLInputElement>) {
-		e.preventDefault()
-		try {
-			setLoading(true)
-			const blobDataImage = new Blob([e.target.files![0]])
-			const metaHash = await client.storeBlob(blobDataImage)
-			setFreeImageUrl(`ipfs://${metaHash}`)
-			toast.success('Upload Completed!', {
-				position: 'top-left',
-			})
-			console.log('profilePictureUrl', metaHash)
-		} catch (error) {
-			console.log('Error uploading file: ', error)
-		} finally {
-			setLoading(false)
-		}
-	}
+    const uploadCover = (e: ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            setFile(files[0]);
+            uploadCoverFile(files[0]);
+        }
+    }
 
 	const removePrefix = (uri: any) => {
 		return uri.substring(7, uri.length)
@@ -287,6 +303,7 @@ export default function CreateWebxrExperience() {
 													id='upload'
 													type='file'
 													className='hidden'
+                                                    ref={inputFile}
 													onChange={uploadImage}
 													accept='image/*'
 												/>
@@ -305,12 +322,10 @@ export default function CreateWebxrExperience() {
 								</div>
 								<div>
 									<h3 className='text-2xl'>Preview</h3>
-									{preview ? (
+									{cid ? (
 										<img
-											// src={imageUrl}
-											src={`${'https://nftstorage.link/ipfs'}/${removePrefix(
-												imageUrl
-											)}`}
+											// src={cid}
+											src={`${process.env.NEXT_PUBLIC_GATEWAY_URL}/ipfs/${cid}`}
 											alt='preview image'
 											height={250}
 											width={350}
@@ -399,14 +414,15 @@ export default function CreateWebxrExperience() {
 										<p>Recommeded size 512 x 512 px</p>
 										<div>
 											<label
-												htmlFor='uploadFree'
+												htmlFor='uploadCover'
 												className='flex flex-row items-center ml-12 cursor-pointer mt-4'
 											>
 												<input
-													id='uploadFree'
+													id='uploadCover'
 													type='file'
 													className='hidden'
-													onChange={uploadFreeImage}
+                                                    ref={inputFile}
+													onChange={uploadCover}
 													accept='image/*'
 												/>
 												<img
@@ -421,10 +437,9 @@ export default function CreateWebxrExperience() {
 								</div>
 								<div>
 									<h3 className='text-2xl'>Preview</h3>
-									{freePreview ? (
+									{cidCover ? (
 										<img
-											src={`${'https://nftstorage.link/ipfs'}/${removePrefix(
-												freeImageUrl)}`}
+											src={`${process.env.NEXT_PUBLIC_GATEWAY_URL}/ipfs/${cidCover}`}
 											alt='preview image'
 											height={250}
 											width={350}

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect,useRef, ChangeEvent  } from 'react'
 import {
 	Button,
 	Checkbox,
@@ -115,6 +115,34 @@ export default function CreatePhygital() {
 		setShowForm(!showForm);
 	};
 
+	const [file, setFile] = useState<File | null>(null);
+    const [cid, setCid] = useState("");
+    const [cidCover, setCidCover] = useState("");
+    const [uploading, setUploading] = useState(false);
+
+    const inputFile = useRef(null);
+    const uploadFile = async (fileToUpload: string | Blob) => {
+        try {
+            setUploading(true);
+            const data = new FormData();
+            data.set("file", fileToUpload);
+            const res = await fetch("/api/files", {
+                method: "POST",
+                body: data,
+            });
+            const resData = await res.json();
+            setCid(resData.IpfsHash);
+			toast.success('Upload Completed!', {
+				position: 'top-left',
+			})
+            console.log(resData.IpfsHash);
+            setUploading(false);
+        } catch (e) {
+            console.log(e);
+            setUploading(false);
+            alert("Trouble uploading file");
+        }
+    };
 
 	const router = useRouter()
 	const [imageUrl, setImageUrl] = useState<string>('')
@@ -138,18 +166,18 @@ export default function CreatePhygital() {
 	})
 
 	async function onSubmit(values: z.infer<typeof formSchema>) {
-		if (!imageUrl) {
+		if (!cid) {
 			setImageError(true)
 		}
 
 		try {
 			if (typeof window !== 'undefined' && localStorage) {
 				const brand_name = localStorage.getItem('brand_name')
-				values.image = imageUrl
+				values.image = "ipfs://" + cid
 				values.brand_name = brand_name!
 				localStorage.setItem('phygitalData', JSON.stringify(values))
 
-				// if (imageUrl !== '') {
+				if (cid !== '') {
 					setLoading(true)
 					const phygitalId = uuidv4()
 					const CollectionId = localStorage.getItem("CollectionId")
@@ -183,9 +211,9 @@ export default function CreatePhygital() {
 							`/create-phygital-detail`
 						)
 					}
-				// }
-			// } else if (!imageError && imageUrl === '') {
-			// 	toast.warning('Wait for your image to finish upload')
+				}
+			} else if (!imageError && cid === '') {
+				toast.warning('Wait for your image to finish upload')
 			}
 		} catch (error) {
 			console.log('Errors' + error)
@@ -194,33 +222,14 @@ export default function CreatePhygital() {
 		}
 	}
 
-	useEffect(() => {
-		if (imageUrl) {
-			setPreview(true)
-		}
 
-		return () => {
-			setPreview(false)
-		}
-	}, [imageUrl])
-
-	async function uploadImage(e: React.ChangeEvent<HTMLInputElement>) {
-		e.preventDefault()
-		try {
-			setLoading(true)
-			const blobDataImage = new Blob([e.target.files![0]])
-			const metaHash = await client.storeBlob(blobDataImage)
-			setImageUrl(`ipfs://${metaHash}`)
-			toast.success('Upload Completed!', {
-				position: 'top-left',
-			})
-			console.log('profilePictureUrl', metaHash)
-		} catch (error) {
-			console.log('Error uploading file: ', error)
-		} finally {
-			setLoading(false)
-		}
-	}
+    const uploadImage = (e: ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            setFile(files[0]);
+            uploadFile(files[0]);
+        }
+    };
 
 	const removePrefix = (uri: any) => {
 		return uri.substring(7, uri.length)
@@ -440,6 +449,7 @@ export default function CreatePhygital() {
 													id='upload'
 													type='file'
 													className='hidden'
+                                                    ref={inputFile}
 													onChange={uploadImage}
 													accept='image/*'
 												/>
@@ -458,12 +468,10 @@ export default function CreatePhygital() {
 								</div>
 								<div>
 									<h3 className='text-2xl'>Preview</h3>
-									{preview ? (
+									{cid ? (
 										<img
-											// src={imageUrl}
-											src={`${'https://nftstorage.link/ipfs'}/${removePrefix(
-												imageUrl
-											)}`}
+											// src={cid}
+											src={`${process.env.NEXT_PUBLIC_GATEWAY_URL}/ipfs/${cid}`}
 											alt='preview image'
 											height={250}
 											width={350}
@@ -497,8 +505,7 @@ export default function CreatePhygital() {
 								type='submit'
 								className='w-fit bg-[#30D8FF] rounded-full text-black'
 							>
-								{/* {loading ? 'loading' : 'Next'} */}
-								Next
+								{loading ? 'loading' : 'Next'}
 							</Button>
 						</div>
 					</form>
