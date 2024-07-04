@@ -38,6 +38,7 @@ export const Navbar = () => {
 	const Notification = () => {
 		if (!account.address) {
 			toast.warning("Currently works with Metamask and Coinbase Wallet Extension. We are working on Smart Wallet functionality.", {
+				containerId:"containerA",
 				position: 'top-left',
 			}
 			)
@@ -46,8 +47,8 @@ export const Navbar = () => {
 
 	return (
 		<>
-		<ToastContainer className="absolute top-0 right-0 "/>
-			<NavigationMenu className='nav max-w-screen flex items-center justify-between px-8 py-6 relative -mt-12'>
+	
+			<NavigationMenu className='nav max-w-screen flex items-center justify-between px-8 py-6 relative'>
 				<Logo />
 				<NavigationMenuList className='flex gap-8 items-center text-white'>
 					{navlinks.map((link, index) => (
@@ -61,6 +62,7 @@ export const Navbar = () => {
 					{/* <w3m-button /> */}
 				</NavigationMenuList>
 			</NavigationMenu>
+			<ToastContainer className="absolute top-0 right-0 " containerId="containerA"/>
 		</>
 
 	)
