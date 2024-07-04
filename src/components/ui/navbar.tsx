@@ -46,8 +46,8 @@ export const Navbar = () => {
 
 	return (
 		<>
-			<ToastContainer className="absolute top-10 right-0"/>
-			<NavigationMenu className='nav max-w-screen flex items-center justify-between px-8 py-6'>
+		<ToastContainer className="absolute top-0 right-0 "/>
+			<NavigationMenu className='nav max-w-screen flex items-center justify-between px-8 py-6 relative -mt-12'>
 				<Logo />
 				<NavigationMenuList className='flex gap-8 items-center text-white'>
 					{navlinks.map((link, index) => (
