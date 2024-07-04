@@ -111,7 +111,7 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <div className='h-screen flex-col flex text-black text-center gap-12 justify-center relative'>
+          <div className='h-screen flex-col flex text-black text-center gap-12 justify-center relative -mt-14'>
             <h1 className='text-6xl font-bold mb-6 uppercase'>
               Myriadflow studio
             </h1>
