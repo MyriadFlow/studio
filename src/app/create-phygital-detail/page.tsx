@@ -117,7 +117,7 @@ export default function CreatePhygitalDetail() {
 
 			console.log(contractDetails);
 
-			const address = await deployContract("Alice Clothing", "AC", contractDetails, "www.xyz.com");
+			const address = await deployContract(`${parsedData.name}`, "AC", contractDetails, "www.baseuri.com");
             localStorage.setItem("PhygitalAddress", address as `0x${string}`)
 			console.log('Contract deployed at:', address);
 			return address !== null;
