@@ -35,30 +35,33 @@ export const Navbar = () => {
 		},
 	]
 
-	const Notification =()=>{
-		if(!account.address){
-		toast.warning("Currently works with Metamask and Coinbase Wallet Extension. We are working on Smart Wallet functionality.",{
-			position: 'top-left',
+	const Notification = () => {
+		if (!account.address) {
+			toast.warning("Currently works with Metamask and Coinbase Wallet Extension. We are working on Smart Wallet functionality.", {
+				position: 'top-left',
+			}
+			)
 		}
-		)
 	}
-}
-	
+
 	return (
-		<NavigationMenu className='nav max-w-screen flex items-center justify-between px-8 py-6'>
-			 <ToastContainer />
-			<Logo />
-			<NavigationMenuList className='flex gap-8 items-center text-white'>
-				{navlinks.map((link, index) => (
-					<Link href={link.path} key={index}>
-						<NavigationMenuItem>{link.title}</NavigationMenuItem>
-					</Link>
-				))}
-				<Button className='connect-button rounded-full hover:text-white' onClick={()=>Notification()}>
-					<w3m-button />
-				</Button>
-				{/* <w3m-button /> */}
-			</NavigationMenuList>
-		</NavigationMenu>
+		<>
+			<ToastContainer className="absolute top-10 right-0"/>
+			<NavigationMenu className='nav max-w-screen flex items-center justify-between px-8 py-6'>
+				<Logo />
+				<NavigationMenuList className='flex gap-8 items-center text-white'>
+					{navlinks.map((link, index) => (
+						<Link href={link.path} key={index}>
+							<NavigationMenuItem>{link.title}</NavigationMenuItem>
+						</Link>
+					))}
+					<div onClick={() => Notification()}>
+						<w3m-button />
+					</div>
+					{/* <w3m-button /> */}
+				</NavigationMenuList>
+			</NavigationMenu>
+		</>
+
 	)
 }
