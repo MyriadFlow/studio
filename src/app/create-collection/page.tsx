@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, ChangeEvent, useRef } from 'react'
 import {
     Button,
     Input,
@@ -101,7 +101,56 @@ export default function CreateCollection() {
         `0x${string}` | undefined
     >()
 
+    const [file, setFile] = useState<File | null>(null);
+    const [cid, setCid] = useState("");
+    const [cidCover, setCidCover] = useState("");
+    const [uploading, setUploading] = useState(false);
 
+    const inputFile = useRef(null);
+    const uploadFile = async (fileToUpload: string | Blob) => {
+        try {
+            setUploading(true);
+            const data = new FormData();
+            data.set("file", fileToUpload);
+            const res = await fetch("/api/files", {
+                method: "POST",
+                body: data,
+            });
+            const resData = await res.json();
+            setCid(resData.IpfsHash);
+            toast.success('Upload Completed!', {
+				position: 'top-left',
+			})
+            console.log(resData.IpfsHash);
+            setUploading(false);
+        } catch (e) {
+            console.log(e);
+            setUploading(false);
+            alert("Trouble uploading file");
+        }
+    };
+    const uploadCoverFile = async (fileToUpload: string | Blob) => {
+        try {
+            setUploading(true);
+            const data = new FormData();
+            data.set("file", fileToUpload);
+            const res = await fetch("/api/files", {
+                method: "POST",
+                body: data,
+            });
+            const resData = await res.json();
+            setCidCover(resData.IpfsHash);
+            toast.success('Upload Completed!', {
+				position: 'top-left',
+			})
+            console.log(resData.IpfsHash);
+            setUploading(false);
+        } catch (e) {
+            console.log(e);
+            setUploading(false);
+            alert("Trouble uploading file");
+        }
+    };
     const apiUrl = process.env.NEXT_PUBLIC_URI;
 
     const account = useAccount()
@@ -128,17 +177,17 @@ export default function CreateCollection() {
         if (!account.addresses) {
             toast.warning('Connect your wallet')
         } else {
-            if (!imageUrl) {
+            if (!cid) {
                 setImageError(true)
             }
 
             try {
-                values.logo_image = imageUrl
-                values.cover_image= imageUrl
+                values.logo_image = "ipfs://" + cid
+                values.cover_image = "ipfs://" + cidCover 
                 localStorage.setItem('collection_name', values.name)
                 console.log(values)
 
-                if (imageUrl !== '') {
+                if (cid !== '') {
                     setLoading(true)
                     const collectionId = uuidv4()
                     const BrandId= localStorage.getItem("BrandId");
@@ -177,54 +226,22 @@ export default function CreateCollection() {
         }
     }
 
-    useEffect(() => {
-        if (imageUrl) {
-            setPreview(true)
-        }
-        if (coverImageUrl) {
-			setCoverPreview(true)
-		}
 
-        return () => {
-            setPreview(false)
+    const uploadImage = (e: ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            setFile(files[0]);
+            uploadFile(files[0]);
         }
-    }, [imageUrl , coverImageUrl])
+    };
 
-    async function uploadImage(e: React.ChangeEvent<HTMLInputElement>) {
-        e.preventDefault()
-        try {
-            setLoading(true)
-            const blobDataImage = new Blob([e.target.files![0]])
-            const metaHash = await client.storeBlob(blobDataImage)
-            setImageUrl(`ipfs://${metaHash}`)
-            toast.success('Upload Completed!', {
-                position: 'top-left',
-            })
-            console.log('profilePictureUrl', metaHash)
-        } catch (error) {
-            console.log('Error uploading file: ', error)
-        } finally {
-            setLoading(false)
+    const uploadCover = (e: ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (files && files.length > 0) {
+            setFile(files[0]);
+            uploadCoverFile(files[0]);
         }
     }
-
-    async function uploadCover(e: React.ChangeEvent<HTMLInputElement>) {
-		e.preventDefault()
-		try {
-			setLoading(true)
-			const blobDataImage = new Blob([e.target.files![0]])
-			const metaHash = await client.storeBlob(blobDataImage)
-			setCoverImageUrl(`ipfs://${metaHash}`)
-			toast.success('Upload Completed!', {
-				position: 'top-left',
-			})
-			console.log('profilePictureUrl', metaHash)
-		} catch (error) {
-			console.log('Error uploading file: ', error)
-		} finally {
-			setLoading(false)
-		}
-	}
 
     const removePrefix = (uri: any) => {
         return uri.substring(7, uri.length)
@@ -298,6 +315,7 @@ export default function CreateCollection() {
                                                     id='upload'
                                                     type='file'
                                                     className='hidden'
+                                                    ref={inputFile}
                                                     onChange={uploadImage}
                                                     accept='image/*'
                                                 />
@@ -316,12 +334,10 @@ export default function CreateCollection() {
                                 </div>
                                 <div>
                                     <h3 className='text-2xl'>Preview</h3>
-                                    {preview ? (
+                                    {cid ? (
                                         <img
-                                            // src={imageUrl}
-                                            src={`${'https://nftstorage.link/ipfs'}/${removePrefix(
-                                                imageUrl
-                                            )}`}
+                                            // src={cid}
+                                            src={`${process.env.NEXT_PUBLIC_GATEWAY_URL}/ipfs/${cid}`}
                                             alt='preview image'
                                             height={250}
                                             width={350}
@@ -350,6 +366,7 @@ export default function CreateCollection() {
                                                     id='uploadCover'
                                                     type='file'
                                                     className='hidden'
+                                                    ref={inputFile}
                                                     onChange={uploadCover}
                                                     accept='image/*'
                                                 />
@@ -368,12 +385,10 @@ export default function CreateCollection() {
                                 </div>
                                 <div>
                                     <h3 className='text-2xl'>Preview</h3>
-                                    {previewCover ? (
+                                    {cidCover ? (
                                         <img
-                                            // src={imageUrl}
-                                            src={`${'https://nftstorage.link/ipfs'}/${removePrefix(
-                                                coverImageUrl
-                                            )}`}
+                                            // src={cid}
+                                            src={`${process.env.NEXT_PUBLIC_GATEWAY_URL}/ipfs/${cidCover}`}
                                             alt='preview image'
                                             height={250}
                                             width={350}

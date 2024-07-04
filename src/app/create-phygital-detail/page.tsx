@@ -29,7 +29,7 @@ import { NFTStorage } from 'nft.storage'
 import { Hex, createPublicClient, http } from 'viem'
 import { baseSepolia } from 'viem/chains'
 import axios from 'axios'
-import Simplestore from "@/lib/Simplestore.json"
+import phygital from "@/lib/phygital.json"
 
 const formSchema = z.object({
 	color: z.string().min(2, {
@@ -48,6 +48,7 @@ const formSchema = z.object({
 	origin_country: z
 		.string()
 		.min(2, { message: 'Country of origin must be at least 2 characters' }),
+	contract_address:z.string()
 })
 
 interface FormDataEntry {
@@ -57,7 +58,6 @@ interface FormDataEntry {
 
 export default function CreatePhygitalDetail() {
 	const { address: walletAddress } = useAccount()
-	const [contractAddress, setContractAddress] = useState<`0x${string}` | undefined>()
 	const [error, setError] = useState<string | null>(null)
 	const [isDeployed, setIsDeployed] = useState(false)
 	const chainId = useChainId()
@@ -67,65 +67,26 @@ export default function CreatePhygitalDetail() {
 		transport: http(),
 	})
 
-	async function verifyContract(
-		contractAddress: string,
-		contractSourceCode: string,
-		contractName: string,
-		compilerVersion: string,
-		constructorArguments: string,
-		licenseType: string
-	): Promise<boolean> {
-		const apiKey = '7CU2HZAY6VD1CIG7C5DD8N4TKWZ7JJ7SVT'
 
-		const params = new URLSearchParams()
-		params.append('apikey', apiKey)
-		params.append('module', 'contract')
-		params.append('action', 'verifysourcecode')
-		params.append('contractaddress', contractAddress)
-		params.append('sourceCode', contractSourceCode)
-		params.append('codeformat', 'solidity-single-file')
-		params.append('contractname', contractName)
-		params.append('compilerversion', compilerVersion)
-		params.append('optimizationUsed', '0') // Change to '1' if optimization was used
-		params.append('runs', '200') // Change to the number of runs if optimization was used
-		params.append('constructorArguments', constructorArguments),
-			params.append('licenseType', licenseType)
-
-		try {
-			const response = await axios.post(
-				'https://api-sepolia.basescan.org/api',
-				params.toString()
-			)
-			console.log(apiKey)
-			console.log(contractAddress)
-			console.log(contractSourceCode)
-			console.log(contractName)
-			console.log(compilerVersion)
-			if (response.data.status === '1') {
-				console.log('Contract verified successfully')
-				console.log('Verification response:', response)
-				console.log('Verification Guid:', response.data.result)
-				return true;
-			} else {
-				console.log('Failed to verify contract:', response.data.result)
-				return false;
-			}
-		} catch (error) {
-			console.error('Error verifying contract:', error)
-			return false;
-		}
-	}
-
-	const deployContract = async () => {
+	const deployContract = async (
+		name: string,
+		symbol: string,
+		contractDetails: (string | number)[],
+		baseUri: string
+	) => {
 		if (!walletClient) {
 			throw new Error('Wallet client not available')
 		}
-
+		const AccessMasterAddress = localStorage.getItem("AccessMasterAddress");
+		const TradehubAddress = localStorage.getItem("TradehubAddress");
+		console.log("access" ,AccessMasterAddress)
+		console.log("trade" ,TradehubAddress)
 		try {
 			const hash = await walletClient.deployContract({
-				abi: Simplestore.abi,
-				bytecode: Simplestore.bytecode as Hex,
+				abi: phygital.abi,
+				bytecode: phygital.bytecode as Hex,
 				account: walletAddress,
+				args: [name, symbol, `${TradehubAddress}`, `${AccessMasterAddress}`, '0xe6b8a5CF854791412c1f6EFC7CAf629f5Df1c747', contractDetails, baseUri]
 			})
 
 			if (!hash) {
@@ -133,7 +94,6 @@ export default function CreatePhygitalDetail() {
 			}
 
 			const txn = await publicClient.waitForTransactionReceipt({ hash })
-			setContractAddress(txn.contractAddress as `0x${string}`)
 			setIsDeployed(true)
 
 			return txn.contractAddress
@@ -143,9 +103,22 @@ export default function CreatePhygitalDetail() {
 		}
 	};
 
-	const handleDeploy = async (): Promise<boolean> => {
+	const PhygitalDeploy = async (): Promise<boolean> => {
 		try {
-			const address = await deployContract();
+			const contractDetailsString = ["10000000000000000", 100, 300, 6];
+			const contractDetails = contractDetailsString.map((item, index) => {
+				if (index === 0) {
+					return item; // Keep the first element as a string
+				} else {
+					const num = Number(item);
+					return isNaN(num) ? item : num;
+				}
+			});
+
+			console.log(contractDetails);
+
+			const address = await deployContract(`${parsedData.name}`, "AC", contractDetails, "www.baseuri.com");
+            localStorage.setItem("PhygitalAddress", address as `0x${string}`)
 			console.log('Contract deployed at:', address);
 			return address !== null;
 		} catch (error) {
@@ -154,45 +127,6 @@ export default function CreatePhygitalDetail() {
 			return false;
 		}
 	};
-
-	const handleVerify = async (): Promise<boolean> => {
-		if (!contractAddress) {
-			setError('No contract address found to verify.')
-			return false;
-		}
-		const contractSourceCode = `// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
-
-contract SimpleStorage {
-// Private state variable to store a number
-uint256 private number;
-
-// Setter function to set the value of the number
-function setNumber(uint256 _number) public {
-	number = _number;
-}
-
-// Getter function to get the value of the number
-function getNumber() public view returns (uint256) {
-	return number;
-}
-}`;
-		try {
-			const success = verifyContract(
-				contractAddress as string,
-				contractSourceCode,
-				'SimpleStorage', // Contract name
-				'v0.8.26+commit.8a97fa7a', // Compiler version
-				'',
-				'MIT'
-			);
-			return success;
-		} catch (error) {
-			setError('Error verifying contract: ' + error)
-			console.error('Error verifying contract:', error)
-			return false;
-		}
-	}
 
 
 	const apiUrl = process.env.NEXT_PUBLIC_URI;
@@ -224,6 +158,7 @@ function getNumber() public view returns (uint256) {
 			quality: '',
 			manufacturer: '',
 			origin_country: '',
+			contract_address:'',
 		},
 	})
 
@@ -235,65 +170,68 @@ function getNumber() public view returns (uint256) {
 		try {
 			localStorage.setItem('phygitalDetailsData', JSON.stringify(values))
 			setLoading(true)
-			
-			const phygitalId = localStorage.getItem("PhygitalId");
-			const CollectionId = localStorage.getItem("CollectionId")
-			const phygitalResponse = await fetch(`${apiUrl}/phygitals/${phygitalId}`, {
-				method: 'PUT',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify({
-					collection_id:CollectionId,
-					color: values.color,
-					size: values.size,
-					weight: parseFloat(values.weight),
-					material: values.material,
-					usage: values.usage,
-					quality: values.quality,
-					manufacturer: values.manufacturer,
-					origin_country: values.origin_country,
-					name: parsedData.name,
-					brand_name: parsedData.brand_name,
-					category: { data: parsedData.category },
-					description: parsedData.description,
-					price: parseFloat(parsedData.price),
-					quantity: parseInt(parsedData.quantity),
-					royality: parseInt(parsedData.royality),
-					product_info: parsedData.product_info,
-					image: parsedData.image,
-				}),
-			})
 
-			if (formData.length > 0) {
-				const variantData = formData.map((item: FormDataEntry) => ({
-					variant: item.title.toUpperCase() || '',
-					description: item.description || '',
-				}))
-				const variantId = uuidv4()
-				await fetch(`${apiUrl}/variants`, {
-					method: 'POST',
+
+			toast.warning('Now we are deploing phygital to launch your nft collection', {
+				position: 'top-left',
+			})
+			const deploySuccess = await PhygitalDeploy();
+			if (deploySuccess) {
+				const phygitalId = localStorage.getItem("PhygitalId");
+				const CollectionId = localStorage.getItem("CollectionId")
+				const PhygitalAddress = localStorage.getItem("PhygitalAddress")
+				const phygitalResponse = await fetch(`${apiUrl}/phygitals/${phygitalId}`, {
+					method: 'PUT',
 					headers: {
 						'Content-Type': 'application/json',
 					},
 					body: JSON.stringify({
-						id: variantId,
-						phygital_id:phygitalId,
-						variantData,
+						collection_id: CollectionId,
+						color: values.color,
+						size: values.size,
+						weight: parseFloat(values.weight),
+						material: values.material,
+						usage: values.usage,
+						quality: values.quality,
+						manufacturer: values.manufacturer,
+						origin_country: values.origin_country,
+						name: parsedData.name,
+						brand_name: parsedData.brand_name,
+						category: { data: parsedData.category },
+						description: parsedData.description,
+						price: parseFloat(parsedData.price),
+						quantity: parseInt(parsedData.quantity),
+						royality: parseInt(parsedData.royality),
+						product_info: parsedData.product_info,
+						image: parsedData.image,
+						contract_address:PhygitalAddress,
 					}),
 				})
-			}
 
-			if (phygitalResponse.status === 200) {
-				toast.warning('Now we are deploing phygital to launch your nft collection', {
-					position: 'top-left',
-				})
-				const deploySuccess = await handleDeploy();
-				if (deploySuccess) {
+				if (formData.length > 0) {
+					const variantData = formData.map((item: FormDataEntry) => ({
+						variant: item.title.toUpperCase() || '',
+						description: item.description || '',
+					}))
+					const variantId = uuidv4()
+					await fetch(`${apiUrl}/variants`, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify({
+							id: variantId,
+							phygital_id: phygitalId,
+							variantData,
+						}),
+					})
+				}
+
+				if (phygitalResponse.status === 200) {
 					toast.success('Deploy Successful', {
 						position: 'top-left',
 					})
-				router.push('/create-avatar')
+					router.push('/create-avatar')
 				}
 			} else {
 				toast.warning('Failed to create phygital data', {
