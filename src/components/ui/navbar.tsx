@@ -27,11 +27,11 @@ export const Navbar = () => {
 		},
 		{
 			title: 'Studio',
-			path: 'https://studio-one-sigma.vercel.app/',
+			path: 'https://studio-one-sigma.vercel.app',
 		},
 		{
 			title: 'WebXR',
-			path: 'https://webxr-3d.vercel.app',
+			path: 'https://webxr-ebon.vercel.app',
 		},
 	]
 
