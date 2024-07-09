@@ -19,8 +19,36 @@ const fontSans = FontSans({
 	variable: '--font-sans',
 })
 export const metadata: Metadata = {
-	title: 'Myriadflow Studio',
-	description: 'Create your brand phygital and NFTs',
+	title: 'Studio | MyriadFlow',
+	description: 'Bring your brand to the future! MyriadFlow Studio empowers you to launch and manage brands, collections, and phygital NFTs with WebXR experiences – all without coding.',
+	openGraph: {
+		type: 'website',
+		url: 'https://studio-one-sigma.vercel.app',
+		title: 'Studio | MyriadFlow',
+		description: 'Bring your brand to the future! MyriadFlow Studio empowers you to launch and manage brands, collections, and phygital NFTs with WebXR experiences – all without coding.',
+		images: [
+			{
+				url: '/metaimg.png',
+				width: 1200,
+				height: 630,
+				alt: 'MyriadFlow Studio',
+			},
+		],
+	},
+	twitter: {
+		card: 'summary_large_image',
+		site: '@MyriadFlow',
+		title: 'Studio | MyriadFlow',
+		description: 'Bring your brand to the future! MyriadFlow Studio empowers you to launch and manage brands, collections, and phygital NFTs with WebXR experiences – all without coding.',
+		images: [
+			{
+				url: '/metaimg.png',
+				width: 1200,
+				height: 630,
+				alt: 'MyriadFlow Studio',
+			},
+		],
+	},
 }
 
 export default function RootLayout({
