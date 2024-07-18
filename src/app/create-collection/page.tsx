@@ -48,6 +48,7 @@ const formSchema = z.object({
         }),
     logo_image: z.string(),
     cover_image: z.string(),
+    chaintype_id : z.string(),
     category: z
         .array(z.string()),
         // .refine((value) => value.some((item) => item), {
@@ -169,6 +170,7 @@ export default function CreateCollection() {
             description: '',
             logo_image: '',
             cover_image: '',
+            chaintype_id:'',
             category:[],
         },
     })
@@ -190,6 +192,7 @@ export default function CreateCollection() {
                 if (cid !== '') {
                     setLoading(true)
                     const collectionId = uuidv4()
+                    const chaintype = localStorage.getItem("BaseSepoliaChain");
                     const BrandId= localStorage.getItem("BrandId");
                     const response = await fetch(`${apiUrl}/collections`, {
                         method: 'POST',
@@ -204,6 +207,7 @@ export default function CreateCollection() {
                             description: values.description,
                             logo_image: values.logo_image,
                             cover_image: values.cover_image,
+                            chaintype_id: chaintype
                         }),
                     })
 

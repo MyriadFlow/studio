@@ -37,6 +37,7 @@ export default function Home() {
   useEffect(() => {
     if (walletAddress) {
       localStorage.setItem("walletAddress", walletAddress);
+      localStorage.setItem("BaseSepoliaChain", "554b4903-9a06-4031-98f4-48276c427f78")
       setHasAddress(true);
       getBrands();
     } else {

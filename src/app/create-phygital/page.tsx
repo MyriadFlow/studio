@@ -182,6 +182,7 @@ export default function CreatePhygital() {
 					const phygitalId = uuidv4()
 					const CollectionId = localStorage.getItem("CollectionId")
 					const walletAddress = localStorage.getItem("walletAddress")
+					const chaintype = localStorage.getItem("BaseSepoliaChain");
 					const productUrl = localStorage.getItem("producturl")
 					const response = await fetch(`${apiUrl}/phygitals`, {
 						method: 'POST',
@@ -202,6 +203,7 @@ export default function CreatePhygital() {
 							royality: parseInt(values.royality),
 							product_info: values.product_info,
 							image: values.image,
+							chaintype_id: chaintype
 						}),
 					})
 					const phygital = await response.json();

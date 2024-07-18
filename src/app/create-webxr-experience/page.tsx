@@ -159,7 +159,7 @@ export default function CreateWebxrExperience() {
 	const storedData = getAvatar() ?? '{}'
 	const phygital = getPhy() ?? '{}'
 	const PhygitalId = getPhygitalId() ?? '{}'
-
+	const chaintype = localStorage.getItem("BaseSepoliaChain");
 	const parsedData = JSON.parse(storedData)
 	const phygitalName = JSON.parse(phygital).phygitalName
 
@@ -206,6 +206,7 @@ export default function CreateWebxrExperience() {
 						gold_reward: values.gold_reward,
 						silver_reward: values.silver_reward,
 						bronze_reward: values.bronze_reward,
+						chaintype_id: chaintype,
 						customizations: { data:values.customizations },
 					}),
 				})
@@ -220,6 +221,7 @@ export default function CreateWebxrExperience() {
 						id: brandId,
 						phygital_id: PhygitalId,
 						user_id:walletAddress,
+						chaintype_id: chaintype,
 						...parsedData,
 					}),
 				})

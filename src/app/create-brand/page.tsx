@@ -69,6 +69,7 @@ const formSchema = z.object({
     trade_hub: z.string(),
     payout_address: z.string(),
     chain_id: z.string(),
+    chaintype_id:z.string(),
 })
 
 export default function CreateBrand() {
@@ -244,6 +245,7 @@ export default function CreateBrand() {
             trade_hub: '',
             payout_address: '',
             chain_id: '',
+            chaintype_id: '',
         },
     })
 
@@ -296,6 +298,7 @@ export default function CreateBrand() {
                                 position: 'top-left',
                             })
                             const brandId = uuidv4()
+                            const chaintype = localStorage.getItem("BaseSepoliaChain");
                             const response = await fetch(`${apiUrl}/brands`, {
                                 method: 'POST',
                                 headers: {
@@ -316,7 +319,8 @@ export default function CreateBrand() {
                                     access_master: AccessMasterAddress,
                                     trade_hub: TradehubAddress,
                                     payout_address: account.address,
-                                    chain_id: "84532"
+                                    chain_id: "84532",
+                                    chaintype_id: chaintype
                                 }),
                             })
                             const brand = await response.json();
@@ -331,6 +335,7 @@ export default function CreateBrand() {
                                         }, body: JSON.stringify({
                                             id: brandId,
                                             wallet_address: account.address,
+						                    chaintype_id: chaintype,
                                         }),
                                     })
                                 console.log(users);
