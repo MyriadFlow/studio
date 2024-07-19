@@ -49,7 +49,9 @@ export const Navbar = () => {
 		<>
 	
 			<NavigationMenu className='nav max-w-screen flex items-center justify-between px-8 py-6 relative'>
+			    <a href="/">
 				<Logo />
+				</a>
 				<NavigationMenuList className='flex gap-8 items-center text-white'>
 					{navlinks.map((link, index) => (
 						<Link href={link.path} key={index}>
