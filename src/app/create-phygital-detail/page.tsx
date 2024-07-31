@@ -68,65 +68,65 @@ export default function CreatePhygitalDetail() {
 	})
 
 
-	const deployContract = async (
-		name: string,
-		symbol: string,
-		contractDetails: (string | number)[],
-		baseUri: string
-	) => {
-		if (!walletClient) {
-			throw new Error('Wallet client not available')
-		}
-		const AccessMasterAddress = localStorage.getItem("AccessMasterAddress");
-		const TradehubAddress = localStorage.getItem("TradehubAddress");
-		console.log("access" ,AccessMasterAddress)
-		console.log("trade" ,TradehubAddress)
-		try {
-			const hash = await walletClient.deployContract({
-				abi: phygital.abi,
-				bytecode: phygital.bytecode as Hex,
-				account: walletAddress,
-				args: [name, symbol, `${TradehubAddress}`, `${AccessMasterAddress}`, '0xe6b8a5CF854791412c1f6EFC7CAf629f5Df1c747', contractDetails, baseUri]
-			})
+	// const deployContract = async (
+	// 	name: string,
+	// 	symbol: string,
+	// 	contractDetails: (string | number)[],
+	// 	baseUri: string
+	// ) => {
+	// 	if (!walletClient) {
+	// 		throw new Error('Wallet client not available')
+	// 	}
+	// 	const AccessMasterAddress = localStorage.getItem("AccessMasterAddress");
+	// 	const TradehubAddress = localStorage.getItem("TradehubAddress");
+	// 	console.log("access" ,AccessMasterAddress)
+	// 	console.log("trade" ,TradehubAddress)
+	// 	try {
+	// 		const hash = await walletClient.deployContract({
+	// 			abi: phygital.abi,
+	// 			bytecode: phygital.bytecode as Hex,
+	// 			account: walletAddress,
+	// 			args: [name, symbol, `${TradehubAddress}`, `${AccessMasterAddress}`, '0xe6b8a5CF854791412c1f6EFC7CAf629f5Df1c747', contractDetails, baseUri]
+	// 		})
 
-			if (!hash) {
-				throw new Error('Failed to execute deploy contract transaction')
-			}
+	// 		if (!hash) {
+	// 			throw new Error('Failed to execute deploy contract transaction')
+	// 		}
 
-			const txn = await publicClient.waitForTransactionReceipt({ hash })
-			setIsDeployed(true)
+	// 		const txn = await publicClient.waitForTransactionReceipt({ hash })
+	// 		setIsDeployed(true)
 
-			return txn.contractAddress
-		} catch (error) {
-			console.error('Deployment error:', error)
-			setError('Error deploying contract: ' + error)
-		}
-	};
+	// 		return txn.contractAddress
+	// 	} catch (error) {
+	// 		console.error('Deployment error:', error)
+	// 		setError('Error deploying contract: ' + error)
+	// 	}
+	// };
 
-	const PhygitalDeploy = async (): Promise<boolean> => {
-		try {
-			const contractDetailsString = ["10000000000000000", 100, 300, 6];
-			const contractDetails = contractDetailsString.map((item, index) => {
-				if (index === 0) {
-					return item; // Keep the first element as a string
-				} else {
-					const num = Number(item);
-					return isNaN(num) ? item : num;
-				}
-			});
+	// const PhygitalDeploy = async (): Promise<boolean> => {
+	// 	try {
+	// 		const contractDetailsString = ["10000000000000000", 100, 300, 6];
+	// 		const contractDetails = contractDetailsString.map((item, index) => {
+	// 			if (index === 0) {
+	// 				return item; // Keep the first element as a string
+	// 			} else {
+	// 				const num = Number(item);
+	// 				return isNaN(num) ? item : num;
+	// 			}
+	// 		});
 
-			console.log(contractDetails);
+	// 		console.log(contractDetails);
 
-			const address = await deployContract(`${parsedData.name}`, "AC", contractDetails, "www.baseuri.com");
-            localStorage.setItem("PhygitalAddress", address as `0x${string}`)
-			console.log('Contract deployed at:', address);
-			return address !== null;
-		} catch (error) {
-			console.error('Error deploying contract:', error);
-			setError('Error deploying contract: ' + error);
-			return false;
-		}
-	};
+	// 		const address = await deployContract(`${parsedData.name}`, "AC", contractDetails, "www.baseuri.com");
+    //         localStorage.setItem("PhygitalAddress", address as `0x${string}`)
+	// 		console.log('Contract deployed at:', address);
+	// 		return address !== null;
+	// 	} catch (error) {
+	// 		console.error('Error deploying contract:', error);
+	// 		setError('Error deploying contract: ' + error);
+	// 		return false;
+	// 	}
+	// };
 
 
 	const apiUrl = process.env.NEXT_PUBLIC_URI;
@@ -172,74 +172,74 @@ export default function CreatePhygitalDetail() {
 			setLoading(true)
 
 
-			toast.warning('Now we are deploing phygital to launch your nft collection', {
-				position: 'top-left',
-			})
-			const deploySuccess = await PhygitalDeploy();
-			if (deploySuccess) {
-				const phygitalId = localStorage.getItem("PhygitalId");
-				const CollectionId = localStorage.getItem("CollectionId")
-				const PhygitalAddress = localStorage.getItem("PhygitalAddress")
-				const phygitalResponse = await fetch(`${apiUrl}/phygitals/${phygitalId}`, {
-					method: 'PUT',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify({
-						collection_id: CollectionId,
-						color: values.color,
-						size: values.size,
-						weight: parseFloat(values.weight),
-						material: values.material,
-						usage: values.usage,
-						quality: values.quality,
-						manufacturer: values.manufacturer,
-						origin_country: values.origin_country,
-						name: parsedData.name,
-						brand_name: parsedData.brand_name,
-						category: { data: parsedData.category },
-						description: parsedData.description,
-						price: parseFloat(parsedData.price),
-						quantity: parseInt(parsedData.quantity),
-						royality: parseInt(parsedData.royality),
-						product_info: parsedData.product_info,
-						image: parsedData.image,
-						contract_address:PhygitalAddress,
-					}),
-				})
+			// toast.warning('Now we are deploying phygital to launch your nft collection', {
+			// 	position: 'top-left',
+			// })
+			// const deploySuccess = await PhygitalDeploy();
+			// if (deploySuccess) {
+			//  const phygitalId = localStorage.getItem("PhygitalId");
+			// 	const CollectionId = localStorage.getItem("CollectionId")
+			// 	const PhygitalAddress = localStorage.getItem("PhygitalAddress")
+			// 	const phygitalResponse = await fetch(`${apiUrl}/phygitals/${phygitalId}`, {
+			// 		method: 'PUT',
+			// 		headers: {
+			// 			'Content-Type': 'application/json',
+			// 		},
+			// 		body: JSON.stringify({
+			// 			collection_id: CollectionId,
+			// 			color: values.color,
+			// 			size: values.size,
+			// 			weight: parseFloat(values.weight),
+			// 			material: values.material,
+			// 			usage: values.usage,
+			// 			quality: values.quality,
+			// 			manufacturer: values.manufacturer,
+			// 			origin_country: values.origin_country,
+			// 			name: parsedData.name,
+			// 			brand_name: parsedData.brand_name,
+			// 			category: { data: parsedData.category },
+			// 			description: parsedData.description,
+			// 			price: parseFloat(parsedData.price),
+			// 			quantity: parseInt(parsedData.quantity),
+			// 			royality: parseInt(parsedData.royality),
+			// 			product_info: parsedData.product_info,
+			// 			image: parsedData.image,
+			// 			contract_address:PhygitalAddress,
+			// 		}),
+			// 	})
 
 				if (formData.length > 0) {
 					const variantData = formData.map((item: FormDataEntry) => ({
 						variant: item.title.toUpperCase() || '',
 						description: item.description || '',
 					}))
-					const variantId = uuidv4()
-					const chaintype = localStorage.getItem("BaseSepoliaChain");
-					await fetch(`${apiUrl}/variants`, {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						body: JSON.stringify({
-							id: variantId,
-							phygital_id: phygitalId,
-							chaintype_id: chaintype,
-							variantData,
-						}),
-					})
+					// localStorage.setItem("variantData", JSON.stringify(variantData));
+					const variantDataString = JSON.stringify(variantData);
+					localStorage.setItem('variantData', variantDataString);
+					// const variantId = uuidv4()
+					// await fetch(`${apiUrl}/variants`, {
+					// 	method: 'POST',
+					// 	headers: {
+					// 		'Content-Type': 'application/json',
+					// 	},
+					// 	body: JSON.stringify({
+					// 		id: variantId,
+					// 		phygital_id: phygitalId,
+					// 		variantData,
+					// 	}),
+					// })
 				}
 
-				if (phygitalResponse.status === 200) {
-					toast.success('Deploy Successful', {
-						position: 'top-left',
-					})
+					// toast.success('Deploy Successful', {
+					// 	position: 'top-left',
+					// })
 					router.push('/create-avatar')
-				}
-			} else {
-				toast.warning('Failed to create phygital data', {
-					position: 'top-left',
-				})
-			}
+			// 	}
+			// } else {
+			// 	toast.warning('Failed to create phygital data', {
+			// 		position: 'top-left',
+			// 	})
+			// }
 		} catch (error) {
 			console.error(error)
 			toast.error('An error occurred while creating phygital data', {

@@ -280,7 +280,7 @@ export default function CreateBrand() {
                     // const addressExists = result.some((user: { wallet_address: string | undefined }) => user.wallet_address === account.address);
 
                     // if (!addressExists) {
-                    toast.warning('Now we are deploying AccessMaster to manage out brand', {
+                    toast.warning('Now we are deploying AccessMaster to manage your brand', {
                         position: 'top-left',
                     })
                     const deploySuccess = await handleDeploy();
@@ -335,14 +335,14 @@ export default function CreateBrand() {
                                         }, body: JSON.stringify({
                                             id: brandId,
                                             wallet_address: account.address,
-						                    chaintype_id: chaintype,
+                                            chaintype_id: chaintype,
                                         }),
                                     })
                                 console.log(users);
                                 toast.success('Your Brand has been created', {
                                     position: 'top-left',
                                 })
-                                router.push(`/congratulations?bramd_name=${values.name}`);
+                                router.push(`/congratulations?brand_name=${values.name}`);
                             }
                         }
                     }
@@ -494,7 +494,7 @@ export default function CreateBrand() {
                                     <div className='border border-dashed border-black h-60 w-[32rem] flex flex-col items-center justify-center p-6'>
                                         <UploadIcon />
                                         <p>Drag file here to upload. Choose file </p>
-                                        <p>Recommeded size 1920 x 1080 px</p>
+                                        <p>Recommeded size 1920 x 972 px</p>
                                         <div>
                                             <label
                                                 htmlFor='uploadCover'

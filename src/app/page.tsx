@@ -73,7 +73,7 @@ export default function Home() {
               </Link>
             </div>
             {brands.length == 0 && (
-              <div className='h-screen flex-col flex text-black text-center gap-12 justify-center relative'>
+              <div className='flex-col flex text-black text-center gap-12 justify-center relative mt-8'>
               <h1 className='text-6xl font-bold mb-6 uppercase'>
                 Myriadflow studio
               </h1>

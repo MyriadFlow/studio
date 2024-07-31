@@ -179,41 +179,37 @@ export default function CreatePhygital() {
 
 				if (cid !== '') {
 					setLoading(true)
-					const phygitalId = uuidv4()
-					const CollectionId = localStorage.getItem("CollectionId")
-					const walletAddress = localStorage.getItem("walletAddress")
-					const chaintype = localStorage.getItem("BaseSepoliaChain");
-					const productUrl = localStorage.getItem("producturl")
-					const response = await fetch(`${apiUrl}/phygitals`, {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-						body: JSON.stringify({
-							id: phygitalId,
-							collection_id: CollectionId,
-							deployer_address: walletAddress,
-							product_url: productUrl,
-							name: values.name,
-							brand_name: values.brand_name,
-							category: { data: values.category },
-							description: values.description,
-							price: parseFloat(values.price),
-							quantity: parseInt(values.quantity),
-							royality: parseInt(values.royality),
-							product_info: values.product_info,
-							image: values.image,
-							chaintype_id: chaintype
-						}),
-					})
-					const phygital = await response.json();
-					localStorage.setItem("PhygitalId", phygital.id);
-					if (response.status === 200) {
+					// const phygitalId = uuidv4()
+					// const CollectionId = localStorage.getItem("CollectionId")
+					// const walletAddress = localStorage.getItem("walletAddress")
+					// const productUrl = localStorage.getItem("producturl")
+					// const response = await fetch(`${apiUrl}/phygitals`, {
+					// 	method: 'POST',
+					// 	headers: {
+					// 		'Content-Type': 'application/json',
+					// 	},
+					// 	body: JSON.stringify({
+					// 		id: phygitalId,
+					// 		collection_id: CollectionId,
+					// 		deployer_address: walletAddress,
+					// 		product_url: productUrl,
+					// 		name: values.name,
+					// 		brand_name: values.brand_name,
+					// 		category: { data: values.category },
+					// 		description: values.description,
+					// 		price: parseFloat(values.price),
+					// 		quantity: parseInt(values.quantity),
+					// 		royality: parseInt(values.royality),
+					// 		product_info: values.product_info,
+					// 		image: values.image,
+					// 	}),
+					// })
+					// const phygital = await response.json();
+					// localStorage.setItem("PhygitalId", phygital.id);
 						router.push(
 							`/create-phygital-detail`
 						)
 					}
-				}
 			} else if (!imageError && cid === '') {
 				toast.warning('Wait for your image to finish upload')
 			}
@@ -441,7 +437,7 @@ export default function CreatePhygital() {
 									<div className='border border-dashed border-black h-60 w-[32rem] flex flex-col items-center justify-center p-6'>
 										<UploadIcon />
 										<p>Drag file here to upload. Choose file </p>
-										<p>Recommeded size 512 x 512 px</p>
+										<p>Recommeded size 1024 x 1024 px</p>
 										<div>
 											<label
 												htmlFor='upload'

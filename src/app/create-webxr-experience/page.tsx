@@ -34,8 +34,8 @@ const formSchema = z.object({
 	image360: z.string(),
 	customizations: z
 		.array(z.string()),
-		// .refine((value) => value.some((item) => item))
-		// .optional(),
+	// .refine((value) => value.some((item) => item))
+	// .optional(),
 	free_nft_image: z.string(),
 	gold_reward: z.string().min(1, { message: 'Gold reward must be provided' }),
 	silver_reward: z
@@ -44,6 +44,7 @@ const formSchema = z.object({
 	bronze_reward: z
 		.string()
 		.min(1, { message: 'Bronze reward must be provided' }),
+	avatar_voice: z.string(),
 })
 
 const items = [
@@ -80,56 +81,57 @@ const items = [
 export default function CreateWebxrExperience() {
 
 	const [file, setFile] = useState<File | null>(null);
-    const [cid, setCid] = useState("");
-    const [cidCover, setCidCover] = useState("");
-    const [uploading, setUploading] = useState(false);
+	const [cid, setCid] = useState("");
+	const [cidCover, setCidCover] = useState("");
+	const [uploading, setUploading] = useState(false);
+	const [avatarVoice, setAvatarVoice] = useState<string>('');
 
-    const inputFile = useRef(null);
-    const uploadFile = async (fileToUpload: string | Blob) => {
-        try {
-            setUploading(true);
-            const data = new FormData();
-            data.set("file", fileToUpload);
-            const res = await fetch("/api/files", {
-                method: "POST",
-                body: data,
-            });
-            const resData = await res.json();
-            setCid(resData.IpfsHash);
+	const inputFile = useRef(null);
+	const uploadFile = async (fileToUpload: string | Blob) => {
+		try {
+			setUploading(true);
+			const data = new FormData();
+			data.set("file", fileToUpload);
+			const res = await fetch("/api/files", {
+				method: "POST",
+				body: data,
+			});
+			const resData = await res.json();
+			setCid(resData.IpfsHash);
 			toast.success('Upload Completed!', {
 				position: 'top-left',
 			})
-            console.log(resData.IpfsHash);
-            setUploading(false);
-        } catch (e) {
-            console.log(e);
-            setUploading(false);
-            alert("Trouble uploading file");
-        }
-    };
-    const uploadCoverFile = async (fileToUpload: string | Blob) => {
-        try {
-            setUploading(true);
-            const data = new FormData();
-            data.set("file", fileToUpload);
-            const res = await fetch("/api/files", {
-                method: "POST",
-                body: data,
-            });
-            const resData = await res.json();
-            setCidCover(resData.IpfsHash);
+			console.log(resData.IpfsHash);
+			setUploading(false);
+		} catch (e) {
+			console.log(e);
+			setUploading(false);
+			alert("Trouble uploading file");
+		}
+	};
+	const uploadCoverFile = async (fileToUpload: string | Blob) => {
+		try {
+			setUploading(true);
+			const data = new FormData();
+			data.set("file", fileToUpload);
+			const res = await fetch("/api/files", {
+				method: "POST",
+				body: data,
+			});
+			const resData = await res.json();
+			setCidCover(resData.IpfsHash);
 			toast.success('Upload Completed!', {
 				position: 'top-left',
 			})
-            console.log(resData.IpfsHash);
-            setUploading(false);
-        } catch (e) {
-            console.log(e);
-            setUploading(false);
-            alert("Trouble uploading file");
-        }
-    };
-    const apiUrl = process.env.NEXT_PUBLIC_URI;
+			console.log(resData.IpfsHash);
+			setUploading(false);
+		} catch (e) {
+			console.log(e);
+			setUploading(false);
+			alert("Trouble uploading file");
+		}
+	};
+	const apiUrl = process.env.NEXT_PUBLIC_URI;
 
 	const router = useRouter()
 	const [imageUrl, setImageUrl] = useState<string>('')
@@ -159,7 +161,7 @@ export default function CreateWebxrExperience() {
 	const storedData = getAvatar() ?? '{}'
 	const phygital = getPhy() ?? '{}'
 	const PhygitalId = getPhygitalId() ?? '{}'
-	const chaintype = localStorage.getItem("BaseSepoliaChain");
+
 	const parsedData = JSON.parse(storedData)
 	const phygitalName = JSON.parse(phygital).phygitalName
 
@@ -172,6 +174,7 @@ export default function CreateWebxrExperience() {
 			gold_reward: '',
 			silver_reward: '',
 			bronze_reward: '',
+			avatar_voice: '',
 		},
 	})
 
@@ -185,50 +188,49 @@ export default function CreateWebxrExperience() {
 		try {
 			values.image360 = "ipfs://" + cid
 			values.free_nft_image = "ipfs://" + cidCover
+			values.avatar_voice = avatarVoice;
 			localStorage.setItem('webxrData', JSON.stringify(values))
 
 			console.log(values)
 
 			if (cid !== '') {
 				setLoading(true)
-				const brandId = uuidv4()
-				const webxr = await fetch(`${apiUrl}/webxr`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify({
-						id: brandId,
-						phygitalName,
-						phygital_id: PhygitalId,
-						image360: values.image360,
-						free_nft_image: values.free_nft_image,
-						gold_reward: values.gold_reward,
-						silver_reward: values.silver_reward,
-						bronze_reward: values.bronze_reward,
-						chaintype_id: chaintype,
-						customizations: { data:values.customizations },
-					}),
-				})
+				// const brandId = uuidv4()
+				// const webxr = await fetch(`${apiUrl}/webxr`, {
+				// 	method: 'POST',
+				// 	headers: {
+				// 		'Content-Type': 'application/json',
+				// 	},
+				// 	body: JSON.stringify({
+				// 		id: brandId,
+				// 		phygitalName,
+				// 		phygital_id: PhygitalId,
+				// 		image360: values.image360,
+				// 		free_nft_image: values.free_nft_image,
+				// 		gold_reward: values.gold_reward,
+				// 		silver_reward: values.silver_reward,
+				// 		bronze_reward: values.bronze_reward,
+				// 		customizations: { data:values.customizations },
+				// 	}),
+				// })
 
-				const walletAddress = localStorage.getItem("walletAddress");
-				await fetch(`${apiUrl}/avatars`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify({
-						id: brandId,
-						phygital_id: PhygitalId,
-						user_id:walletAddress,
-						chaintype_id: chaintype,
-						...parsedData,
-					}),
-				})
+				// const walletAddress = localStorage.getItem("walletAddress");
+				// await fetch(`${apiUrl}/avatars`, {
+				// 	method: 'POST',
+				// 	headers: {
+				// 		'Content-Type': 'application/json',
+				// 	},
+				// 	body: JSON.stringify({
+				// 		id: brandId,
+				// 		phygital_id: PhygitalId,
+				// 		user_id:walletAddress,
+				// 		...parsedData,
+				// 	}),
+				// })
 
-				if (webxr.status === 200) {
-					router.push('/review')
-				}
+				// if (webxr.status === 200) {
+				router.push('/review')
+				// }
 			}
 		} catch (error) {
 			console.log(error)
@@ -237,21 +239,21 @@ export default function CreateWebxrExperience() {
 		}
 	}
 
-    const uploadImage = (e: ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (files && files.length > 0) {
-            setFile(files[0]);
-            uploadFile(files[0]);
-        }
-    };
+	const uploadImage = (e: ChangeEvent<HTMLInputElement>) => {
+		const files = e.target.files;
+		if (files && files.length > 0) {
+			setFile(files[0]);
+			uploadFile(files[0]);
+		}
+	};
 
-    const uploadCover = (e: ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (files && files.length > 0) {
-            setFile(files[0]);
-            uploadCoverFile(files[0]);
-        }
-    }
+	const uploadCover = (e: ChangeEvent<HTMLInputElement>) => {
+		const files = e.target.files;
+		if (files && files.length > 0) {
+			setFile(files[0]);
+			uploadCoverFile(files[0]);
+		}
+	}
 
 	const removePrefix = (uri: any) => {
 		return uri.substring(7, uri.length)
@@ -291,11 +293,11 @@ export default function CreateWebxrExperience() {
 							</div>
 							<div className='flex gap-12'>
 								<div>
-									<h3 className='text-2xl'>Upload 360*</h3>
+									<h3 className='text-2xl'>Upload 360 Image Background*</h3>
 									<div className='border border-dashed border-black h-60 w-[32rem] flex flex-col items-center justify-center p-6'>
 										<UploadIcon />
 										<p>Drag file here to upload. Choose file </p>
-										<p>Recommeded size 512 x 512 px</p>
+										<p>Recommended size 4096 x 2048 px. Max file size 4MB</p>
 										<div>
 											<label
 												htmlFor='upload'
@@ -305,7 +307,7 @@ export default function CreateWebxrExperience() {
 													id='upload'
 													type='file'
 													className='hidden'
-                                                    ref={inputFile}
+													ref={inputFile}
 													onChange={uploadImage}
 													accept='image/*'
 												/>
@@ -338,6 +340,35 @@ export default function CreateWebxrExperience() {
 											<p>Preview after upload</p>
 										</div>
 									)}
+								</div>
+							</div>
+							<div>
+								<h3 className='text-2xl'>Choose Avatar Voice*</h3>
+								<div className='mt-6 ml-10'>
+									<label className="inline-flex items-center mr-4">
+										<input
+											type="radio"
+											className="form-radio text-purple-600"
+											name="avatarVoice"
+											value="Denise"
+											checked={avatarVoice === 'Denise'}
+											onChange={(e) => setAvatarVoice(e.target.value)}
+											style={{ transform: 'scale(1.5)' }}
+										/>
+										<span className="ml-2 text-lg">Denise</span>
+									</label>
+									<label className="inline-flex items-center ml-80">
+										<input
+											type="radio"
+											className="form-radio text-purple-600"
+											name="avatarVoice"
+											value="Richard"
+											checked={avatarVoice === 'Richard'}
+											onChange={(e) => setAvatarVoice(e.target.value)}
+											style={{ transform: 'scale(1.5)' }}
+										/>
+										<span className="ml-2 text-lg">Richard</span>
+									</label>
 								</div>
 							</div>
 							<div className='flex gap-12 flex-col p-4 border-[#30D8FF] border rounded'>
@@ -423,7 +454,7 @@ export default function CreateWebxrExperience() {
 													id='uploadCover'
 													type='file'
 													className='hidden'
-                                                    ref={inputFile}
+													ref={inputFile}
 													onChange={uploadCover}
 													accept='image/*'
 												/>
