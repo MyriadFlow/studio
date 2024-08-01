@@ -23,11 +23,11 @@ export const Navbar = () => {
 		},
 		{
 			title: 'Discover',
-			path: 'https://discover-two.vercel.app',
+			path: 'https://discover.myriadflow.com',
 		},
 		{
 			title: 'Studio',
-			path: 'https://studio-one-sigma.vercel.app',
+			path: 'https://studio.myriadflow.com',
 		},
 		{
 			title: 'WebXR',
