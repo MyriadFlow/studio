@@ -31,7 +31,7 @@ export const Navbar = () => {
 		},
 		{
 			title: 'WebXR',
-			path: 'https://webxr-ebon.vercel.app',
+			path: 'https://webxr.myriadflow.com',
 		},
 	]
 
