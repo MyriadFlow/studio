@@ -27,7 +27,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { useAccount, useChainId, useWalletClient } from 'wagmi'
 import { NFTStorage } from 'nft.storage'
 import { Hex, createPublicClient, http } from 'viem'
-import { baseSepolia } from 'viem/chains'
+import { base } from 'viem/chains'
 import axios from 'axios'
 import phygital from "@/lib/phygital.json"
 
@@ -63,7 +63,7 @@ export default function CreatePhygitalDetail() {
 	const chainId = useChainId()
 	const { data: walletClient } = useWalletClient({ chainId })
 	const publicClient = createPublicClient({
-		chain: baseSepolia,
+		chain: base,
 		transport: http(),
 	})
 

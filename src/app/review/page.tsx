@@ -7,7 +7,7 @@ import { AwaitedReactNode, JSXElementConstructor, Key, ReactElement, ReactNode, 
 import { v4 as uuidv4 } from 'uuid';
 import { toast, ToastContainer } from 'react-toastify'
 import { createPublicClient, http, Hex } from 'viem'
-import { baseSepolia } from 'viem/chains'
+import { base } from 'viem/chains'
 import { useAccount, useChainId, useWalletClient } from 'wagmi'
 import phygital from "@/lib/phygital.json"
 import { useRouter } from 'next/navigation'
@@ -75,7 +75,7 @@ export default function Review() {
 	const chainId = useChainId()
 	const { data: walletClient } = useWalletClient({ chainId })
 	const publicClient = createPublicClient({
-		chain: baseSepolia,
+		chain: base,
 		transport: http(),
 	})
 
@@ -118,36 +118,45 @@ export default function Review() {
 		symbol: string,
 		contractDetails: (string | number)[],
 		baseUri: string
-	) => {
+	): Promise<string | null> => {
 		if (!walletClient) {
-			throw new Error('Wallet client not available')
+			toast.error('Wallet client not available', {
+				position: 'top-left',
+			});
+			return null;
 		}
+	
 		const AccessMasterAddress = localStorage.getItem("AccessMasterAddress");
 		const TradehubAddress = localStorage.getItem("TradehubAddress");
-		console.log("access", AccessMasterAddress)
-		console.log("trade", TradehubAddress)
+		console.log("access", AccessMasterAddress);
+		console.log("trade", TradehubAddress);
+	
 		try {
 			const hash = await walletClient.deployContract({
 				abi: phygital.abi,
 				bytecode: phygital.bytecode as Hex,
 				account: walletAddress,
-				args: [name, symbol, `${TradehubAddress}`, `${AccessMasterAddress}`, '0xe6b8a5CF854791412c1f6EFC7CAf629f5Df1c747', contractDetails, baseUri]
-			})
-
+				args: [name, symbol, `${TradehubAddress}`, `${AccessMasterAddress}`, '0xe6b8a5CF854791412c1f6EFC7CAf629f5Df1c747', contractDetails, baseUri],
+			});
+	
 			if (!hash) {
-				throw new Error('Failed to execute deploy contract transaction')
+				throw new Error('Failed to execute deploy contract transaction');
 			}
-
-			const txn = await publicClient.waitForTransactionReceipt({ hash })
-			setIsDeployed(true)
-
-			return txn.contractAddress
+	
+			const txn = await publicClient.waitForTransactionReceipt({ hash });
+			setIsDeployed(true);
+	
+			return txn.contractAddress ? txn.contractAddress : null;
 		} catch (error) {
-			console.error('Deployment error:', error)
-			setError('Error deploying contract: ' + error)
+			console.error('Deployment error:', error);
+			toast.error('Error deploying contract: ' + error, {
+				position: 'top-left',
+			});
+			return null;
 		}
 	};
-	const PhygitalDeploy = async (): Promise<boolean> => {
+	
+	const PhygitalDeploy = async (): Promise<string | null> => {
 		try {
 			const contractDetailsString = ["10000000000000000", 100, 300, 6];
 			const contractDetails = contractDetailsString.map((item, index) => {
@@ -158,29 +167,51 @@ export default function Review() {
 					return isNaN(num) ? item : num;
 				}
 			});
-
+	
 			console.log(contractDetails);
-
+	
 			const address = await deployContract(`${editableData.name}`, "AC", contractDetails, "www.baseuri.com");
-			localStorage.setItem("PhygitalAddress", address as `0x${string}`)
-			console.log('Contract deployed at:', address);
-			return address !== null;
+	
+			if (address) {
+				localStorage.setItem("PhygitalAddress", address as `0x${string}`);
+				console.log('Contract deployed at:', address);
+				return address;
+			} else {
+				return null;
+			}
 		} catch (error) {
 			console.error('Error deploying contract:', error);
-			setError('Error deploying contract: ' + error);
-			return false;
+			toast.error('Error deploying contract: ' + error, {
+				position: 'top-left',
+			});
+			return null;
 		}
 	};
+	
 	const sendPostRequests = async () => {
 		try {
-			// Post request for Phygital data
-			const phygitalId = uuidv4()
-			const CollectionId = localStorage.getItem("CollectionId")
-			// const walletAddress = localStorage.getItem("walletAddress")
+			toast.warning('Now we are deploying Phygital to launch your NFT collection', {
+				position: 'top-left',
+			});
+	
+			const phygitalAddress = await PhygitalDeploy();
+	
+			if (!phygitalAddress) {
+				toast.error('Phygital deployment failed. Aborting creation process.', {
+					position: 'top-left',
+				});
+				return;
+			}
+	
+			// Proceed with creation only if Phygital deployment was successful
+			const phygitalId = uuidv4();
+			const CollectionId = localStorage.getItem("CollectionId");
 			const chaintype = localStorage.getItem("BaseSepoliaChain");
-			const productUrl = localStorage.getItem("producturl")
-			const brand_name = localStorage.getItem('brand_name')
-			const response = await fetch(`${apiUrl}/phygitals`, {
+			const productUrl = localStorage.getItem("producturl");
+			const brand_name = localStorage.getItem('brand_name');
+	
+			// Post request for Phygital data
+			const phygitalResponse = await fetch(`${apiUrl}/phygitals`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -199,98 +230,91 @@ export default function Review() {
 					royality: parseInt(editableData.royality),
 					product_info: editableData.product_info,
 					image: editableData.image,
-					chaintype_id: chaintype
+					chaintype_id: chaintype,
 				}),
-			})
-			const phygital = await response.json();
-			localStorage.setItem("PhygitalId", phygital.id);
-
-
-			// Post request for Phygital Details data
-			toast.warning('Now we are deploying phygital to launch your nft collection', {
-				position: 'top-left',
-			})
-			const deploySuccess = await PhygitalDeploy();
-			if (deploySuccess) {
-				const phygitalId = localStorage.getItem("PhygitalId");
-				const CollectionId = localStorage.getItem("CollectionId")
-				const PhygitalAddress = localStorage.getItem("PhygitalAddress")
-				const phygitalResponse = await fetch(`${apiUrl}/phygitals/${phygitalId}`, {
-					method: 'PUT',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify({
-						collection_id: CollectionId,
-						color: editableDetailsData.color,
-						size: editableDetailsData.size,
-						weight: parseFloat(editableDetailsData.weight),
-						material: editableDetailsData.material,
-						usage: editableDetailsData.usage,
-						quality: editableDetailsData.quality,
-						manufacturer: editableDetailsData.manufacturer,
-						origin_country: editableDetailsData.origin_country,
-						name: editableData.name,
-						brand_name: brand_name,
-						category: { data: editableData.category },
-						description: editableData.description,
-						price: parseFloat(editableData.price),
-						quantity: parseInt(editableData.quantity),
-						royality: parseInt(editableData.royality),
-						product_info: editableData.product_info,
-						image: editableData.image,
-						contract_address: PhygitalAddress,
-					}),
-				})
-
-				toast.success('Deploy Successful', {
-					position: 'top-left',
-				})
-			} else {
-				toast.warning('Failed to create phygital data', {
-					position: 'top-left',
-				})
+			});
+	
+			if (!phygitalResponse.ok) {
+				throw new Error('Failed to create phygital data');
 			}
-
-
-			// Post request for varient data
-			const phygitalid = localStorage.getItem("PhygitalId");
+	
+			localStorage.setItem("PhygitalId", phygitalId);
+	
+			// Post request for Phygital Details data
+			const phygitalDetailsResponse = await fetch(`${apiUrl}/phygitals/${phygitalId}`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					collection_id: CollectionId,
+					color: editableDetailsData.color,
+					size: editableDetailsData.size,
+					weight: parseFloat(editableDetailsData.weight),
+					material: editableDetailsData.material,
+					usage: editableDetailsData.usage,
+					quality: editableDetailsData.quality,
+					manufacturer: editableDetailsData.manufacturer,
+					origin_country: editableDetailsData.origin_country,
+					name: editableData.name,
+					brand_name: brand_name,
+					category: { data: editableData.category },
+					description: editableData.description,
+					price: parseFloat(editableData.price),
+					quantity: parseInt(editableData.quantity),
+					royality: parseInt(editableData.royality),
+					product_info: editableData.product_info,
+					image: editableData.image,
+					contract_address: phygitalAddress,
+				}),
+			});
+	
+			if (!phygitalDetailsResponse.ok) {
+				throw new Error('Failed to update phygital details');
+			}
+	
+			// Post request for Variant data
+			const variantId = uuidv4();
 			const variantDataString = localStorage.getItem("variantData");
 			const storedVariantData = variantDataString ? JSON.parse(variantDataString) : [];
 			const description = storedVariantData.map((item: { description: string }) => item.description).join(', ');
 			const variant = storedVariantData.map((item: { variant: string }) => item.variant).join(', ');
-			const variantId = uuidv4()
-			await fetch(`${apiUrl}/variants`, {
+	
+			const variantResponse = await fetch(`${apiUrl}/variants`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
 					id: variantId,
-					phygital_id: phygitalid,
+					phygital_id: phygitalId,
 					chaintype_id: chaintype,
 					variant: variant,
-					description: description
+					description: description,
 				}),
-			})
-
-
+			});
+	
+			if (!variantResponse.ok) {
+				throw new Error('Failed to create variant data');
+			}
+	
 			// Post request for WebXR data
-			const brandId = uuidv4()
+			const brandId = uuidv4();
 			const getPhy = () => {
 				if (typeof window !== 'undefined' && localStorage) {
-					return localStorage.getItem('phygitalData')
+					return localStorage.getItem('phygitalData');
 				}
-			}
+			};
 			const getPhygitalId = () => {
 				if (typeof window !== 'undefined' && localStorage) {
-					return localStorage.getItem('PhygitalId')
+					return localStorage.getItem('PhygitalId');
 				}
-			}
-			const phygitals = getPhy() ?? '{}'
-			const phygitalName = JSON.parse(phygitals).phygitalName
-			const PhygitalId = getPhygitalId() ?? '{}'
-			const webxr = await fetch(`${apiUrl}/webxr`, {
+			};
+			const phygitals = getPhy() ?? '{}';
+			const phygitalName = JSON.parse(phygitals).phygitalName;
+			const PhygitalId = getPhygitalId() ?? '{}';
+	
+			const webxrResponse = await fetch(`${apiUrl}/webxr`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -306,19 +330,23 @@ export default function Review() {
 					bronze_reward: editableWebxrData.bronze_reward,
 					chaintype_id: chaintype,
 					customizations: { data: editableWebxrData.customizations },
-					
 				}),
-			})
-
-			// const walletAddress = localStorage.getItem("walletAddress");
+			});
+	
+			if (!webxrResponse.ok) {
+				throw new Error('Failed to create WebXR data');
+			}
+	
+			// Post request for Avatar data
 			const getAvatar = () => {
 				if (typeof window !== 'undefined' && localStorage) {
-					return localStorage.getItem('avatar')
+					return localStorage.getItem('avatar');
 				}
-			}
-			const storedData = getAvatar() ?? '{}'
-			const parsedData = JSON.parse(storedData)
-			await fetch(`${apiUrl}/avatars`, {
+			};
+			const storedData = getAvatar() ?? '{}';
+			const parsedData = JSON.parse(storedData);
+	
+			const avatarResponse = await fetch(`${apiUrl}/avatars`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -328,19 +356,28 @@ export default function Review() {
 					phygital_id: PhygitalId,
 					user_id: walletAddress,
 					chaintype_id: chaintype,
-					avatar_voice : editableWebxrData.avatar_voice,
+					avatar_voice: editableWebxrData.avatar_voice,
 					...parsedData,
 				}),
-			})
-
-			if (webxr.status === 200) {
-				router.push('/launch-congratulation')
+			});
+	
+			if (!avatarResponse.ok) {
+				throw new Error('Failed to create avatar data');
 			}
+	
+			toast.success('Deploy and creation successful', {
+				position: 'top-left',
+			});
+	
+			router.push('/launch-congratulation');
 		} catch (error) {
-			console.error('Error sending data:', error)
-			alert('Error sending data. Please try again.')
+			console.error('Error during creation process:', error);
+			toast.error('Creation process failed: ' + error, {
+				position: 'top-left',
+			});
 		}
-	}
+	};
+	
 
 	return (
 		<>
@@ -406,7 +443,7 @@ export default function Review() {
 							</div>
 							<div className='border border-black p-8 w-2/6 h-2/3 ml-40'>
 								<img
-									src={`https://nftstorage.link/${parsedData.image.replace('ipfs://', 'ipfs/')}`}
+									src={`https://ivory-adjacent-hyena-559.mypinata.cloud/${parsedData.image.replace('ipfs://', 'ipfs/')}`}
 									alt='preview'
 									height={400}
 									width={400}
@@ -599,7 +636,7 @@ export default function Review() {
 									<h2 className='text-xl'>Your WebXR Background</h2>
 									<div className='h-80 w-[50%] flex flex-col items-center justify-center bg-[#D9D8D880] border border-black'>
 										<img
-											src={`https://nftstorage.link/${parsedWebxrData.image360.replace('ipfs://', 'ipfs/')}`}
+											src={`https://ivory-adjacent-hyena-559.mypinata.cloud/${parsedWebxrData.image360.replace('ipfs://', 'ipfs/')}`}
 											alt='preview'
 											height={300}
 											width={300}
@@ -632,7 +669,7 @@ export default function Review() {
 									<h2 className='text-xl'>Free NFT Image</h2>
 									<div className='border border-black p-8'>
 										<img
-											src={`https://nftstorage.link/${parsedWebxrData.free_nft_image.replace('ipfs://', 'ipfs/')}`}
+											src={`https://ivory-adjacent-hyena-559.mypinata.cloud/${parsedWebxrData.free_nft_image.replace('ipfs://', 'ipfs/')}`}
 											alt='preview'
 											height={200}
 											width={200}

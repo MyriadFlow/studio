@@ -9,8 +9,8 @@ import { headers } from 'next/headers'
 
 import { cookieToInitialState } from 'wagmi'
 import Providers from '@/lib/providers'
-import Web3ModalProvider from '@/lib/providers'
 import { config } from '@/lib/wagmi'
+import AppKitProvider from '@/lib/providers'
 
 
 const fontSans = FontSans({
@@ -66,7 +66,7 @@ export default function RootLayout({
 						fontSans.variable
 					)}
 				>
-				<Web3ModalProvider initialState={initialState}>{children}</Web3ModalProvider>
+				<AppKitProvider  initialState={initialState}>{children}</AppKitProvider >
 				</body>
 			</Providers>
 		</html>

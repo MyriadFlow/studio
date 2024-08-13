@@ -26,7 +26,7 @@ import { useRouter } from 'next/navigation'
 import { useAccount, useChainId, useWalletClient } from 'wagmi'
 import { NFTStorage } from 'nft.storage'
 import { Hex, createPublicClient, http } from 'viem'
-import { baseSepolia } from 'viem/chains'
+import { base } from 'viem/chains'
 import axios from 'axios'
 
 import Simplestore from "@/lib/Simplestore.json"
@@ -81,7 +81,7 @@ export default function CreateBrand() {
     const chainId = useChainId()
     const { data: walletClient } = useWalletClient({ chainId })
     const publicClient = createPublicClient({
-        chain: baseSepolia,
+        chain: base,
         transport: http(),
     })
 
@@ -159,8 +159,11 @@ export default function CreateBrand() {
 
             return txn.contractAddress
         } catch (error) {
-            console.error('Deployment error:', error)
-            setError('Error deploying contract: ' + error)
+            console.error('Deployment error:', error);
+            toast.error('Error deploying AccessMaster contract: ' + error, {
+                position: 'top-left',
+            });
+            throw error;
         }
     };
 
@@ -191,8 +194,11 @@ export default function CreateBrand() {
 
             return txn.contractAddress
         } catch (error) {
-            console.error('Deployment error:', error)
-            setError('Error deploying contract: ' + error)
+            console.error('Deployment error:', error);
+            toast.error('Error deploying TradeHub contract: ' + error, {
+                position: 'top-left',
+            });
+            throw error;
         }
     };
     const handleDeploy = async (): Promise<boolean> => {
@@ -202,8 +208,10 @@ export default function CreateBrand() {
             console.log('Contract deployed at:', address);
             return address !== null;
         } catch (error) {
-            console.error('Error deploying contract:', error);
-            setError('Error deploying contract: ' + error);
+            console.error('Error deploying AccessMaster contract:', error);
+            toast.error('Failed to deploy AccessMaster contract', {
+                position: 'top-left',
+            });
             return false;
         }
     };
@@ -211,12 +219,14 @@ export default function CreateBrand() {
     const TradehubDeploy = async (): Promise<boolean> => {
         try {
             const address = await deployTradehubContract(30, 'NFT BAZAAR');
-            localStorage.setItem("TradehubAddress", address as `0x${string}`)
-            console.log('Contract deployed at:', address);
+            localStorage.setItem('TradehubAddress', address as `0x${string}`);
+            console.log('TradeHub Contract deployed at:', address);
             return address !== null;
         } catch (error) {
-            console.error('Error deploying contract:', error);
-            setError('Error deploying contract: ' + error);
+            console.error('Error deploying TradeHub contract:', error);
+            toast.error('Failed to deploy TradeHub contract', {
+                position: 'top-left',
+            });
             return false;
         }
     };
@@ -253,117 +263,116 @@ export default function CreateBrand() {
         if (!account.addresses) {
             toast.warning('Connect your wallet', {
                 position: 'top-left',
-            })
-        } else {
-            if (!cid) {
-                setImageError(true)
-            }
-
-            try {
-                values.logo_image = "ipfs://" + cid
-                values.cover_image = "ipfs://" + cidCover                             
-                values.manager_id = account.address!
-                localStorage.setItem('brand_name', values.name)
-                console.log(values)
-
-                if (cid !== '') {
-                    setLoading(true)
-                    // const res = await fetch(`${apiUrl}/users/all`)
-
-                    // if (!res.ok) {
-                    // 	throw new Error('Network response was not ok');
-                    // }
-
-                    // const result = await res.json();
-                    // console.log(result);
-
-                    // const addressExists = result.some((user: { wallet_address: string | undefined }) => user.wallet_address === account.address);
-
-                    // if (!addressExists) {
-                    toast.warning('Now we are deploying AccessMaster to manage your brand', {
-                        position: 'top-left',
-                    })
-                    const deploySuccess = await handleDeploy();
-                    if (deploySuccess) {
-                        const AccessMasterAddress = localStorage.getItem("AccessMasterAddress");
-                        console.log('Contract deployed at:', AccessMasterAddress);
-                        toast.warning('Now we will deploy TradeHub ', {
-                            position: 'top-left',
-                        })
-                        const deployTradeHub = await TradehubDeploy();
-                        if (deployTradeHub) {
-                            const TradehubAddress = localStorage.getItem("TradehubAddress");
-                            console.log('Contract deployed at:', TradehubAddress)
-                            toast.success('Deploy Successful', {
-                                position: 'top-left',
-                            })
-                            const brandId = uuidv4()
-                            const chaintype = localStorage.getItem("BaseSepoliaChain");
-                            const response = await fetch(`${apiUrl}/brands`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({
-                                    id: brandId,
-                                    name: values.name,
-                                    description: values.description,
-                                    logo_image: values.logo_image,
-                                    cover_image: values.cover_image,
-                                    representative: values.representative,
-                                    contact_email: values.contact_email,
-                                    contact_phone: values.contact_phone,
-                                    shipping_address: values.shipping_address,
-                                    additional_info: values.additional_info,
-                                    manager_id: values.manager_id,
-                                    access_master: AccessMasterAddress,
-                                    trade_hub: TradehubAddress,
-                                    payout_address: account.address,
-                                    chain_id: "84532",
-                                    chaintype_id: chaintype
-                                }),
-                            })
-                            const brand = await response.json();
-                            console.log(brand)
-                            localStorage.setItem("BrandId", brand.id);
-                            if (response.status === 200) {
-                                const users = await fetch(`${apiUrl}/users`,
-                                    {
-                                        method: 'POST',
-                                        headers: {
-                                            'Content-Type': 'application/json',
-                                        }, body: JSON.stringify({
-                                            id: brandId,
-                                            wallet_address: account.address,
-                                            chaintype_id: chaintype,
-                                        }),
-                                    })
-                                console.log(users);
-                                toast.success('Your Brand has been created', {
-                                    position: 'top-left',
-                                })
-                                router.push(`/congratulations?brand_name=${values.name}`);
-                            }
-                        }
-                    }
-                    // }else{
-                    // toast.warning('With one address only one Brand can be created')
-                    // }
-
-                } else if (!imageError && cid === '') {
-                    toast.warning('Wait for your image to finish upload', {
-                        position: 'top-left',
-                    })
-                }
-            } catch (error) {
-                console.log(error)
-                toast.warning('Failed to create Brand', {
+            });
+            return;
+        }
+    
+        if (!cid) {
+            setImageError(true);
+            return;
+        }
+    
+        try {
+            values.logo_image = 'ipfs://' + cid;
+            values.cover_image = 'ipfs://' + cidCover;
+            values.manager_id = account.address!;
+            localStorage.setItem('brand_name', values.name);
+            console.log(values);
+    
+            if (cid !== '') {
+                setLoading(true);
+    
+                toast.warning('Deploying AccessMaster to manage your brand', {
                     position: 'top-left',
-                })
-                setLoading(false)
+                });
+    
+                const deploySuccess = await handleDeploy();
+                if (!deploySuccess) throw new Error('AccessMaster deployment failed');
+    
+                const AccessMasterAddress = localStorage.getItem('AccessMasterAddress');
+                console.log('Contract deployed at:', AccessMasterAddress);
+    
+                toast.warning('Deploying TradeHub', {
+                    position: 'top-left',
+                });
+    
+                const deployTradeHub = await TradehubDeploy();
+                if (!deployTradeHub) throw new Error('TradeHub deployment failed');
+    
+                const TradehubAddress = localStorage.getItem('TradehubAddress');
+                console.log('Contract deployed at:', TradehubAddress);
+    
+                toast.success('Deployment Successful', {
+                    position: 'top-left',
+                });
+    
+                const brandId = uuidv4();
+                const chaintype = localStorage.getItem('BaseSepoliaChain');
+    
+                const response = await fetch(`${apiUrl}/brands`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        id: brandId,
+                        name: values.name,
+                        description: values.description,
+                        logo_image: values.logo_image,
+                        cover_image: values.cover_image,
+                        representative: values.representative,
+                        contact_email: values.contact_email,
+                        contact_phone: values.contact_phone,
+                        shipping_address: values.shipping_address,
+                        additional_info: values.additional_info,
+                        manager_id: values.manager_id,
+                        access_master: AccessMasterAddress,
+                        trade_hub: TradehubAddress,
+                        payout_address: account.address,
+                        chain_id: '84532',
+                        chaintype_id: chaintype,
+                    }),
+                });
+    
+                if (!response.ok) throw new Error('Failed to create brand');
+    
+                const brand = await response.json();
+                localStorage.setItem('BrandId', brand.id);
+                console.log(brand);
+    
+                const users = await fetch(`${apiUrl}/users`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        id: brandId,
+                        wallet_address: account.address,
+                        chaintype_id: chaintype,
+                    }),
+                });
+    
+                if (!users.ok) throw new Error('Failed to add user');
+    
+                console.log(users);
+                toast.success('Your Brand has been created', {
+                    position: 'top-left',
+                });
+                router.push(`/congratulations?brand_name=${values.name}`);
+            } else if (!imageError && cid === '') {
+                toast.warning('Wait for your image to finish upload', {
+                    position: 'top-left',
+                });
             }
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to create Brand: ' + error, {
+                position: 'top-left',
+            });
+            setLoading(false);
         }
     }
+    
 
     const uploadImage = (e: ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;

@@ -26,7 +26,7 @@ createWeb3Modal({
   enableOnramp: true // Optional - false as default
 })
 
-export default function Web3ModalProvider({
+export default function AppKitProvider({
   children,
   initialState
 }: {

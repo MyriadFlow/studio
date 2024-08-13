@@ -1,9 +1,9 @@
 import { http, createConfig } from '@wagmi/core'
-import { baseSepolia } from '@wagmi/core/chains'
+import { base } from 'viem/chains'
 
 export const config = createConfig({
-	chains: [baseSepolia],
+	chains: [base],
 	transports: {
-		[baseSepolia.id]: http(),
+		[base.id]: http(),
 	},
 })
