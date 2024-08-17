@@ -167,6 +167,8 @@ function HomePage() {
           <img src='/verified.png' style={{ marginLeft: '2.5rem', height: '40px', width: '40px' }}></img>
           <h1 className="text-2xl mt-2"> Get Verified</h1>
         </div>
+        <h1 style={{ marginTop: '0.5rem', fontSize: '1.125rem', color: '#374151', fontWeight: '600' }}>Wallet Address : {address}</h1>
+
 
         <p className="text-gray-500 text-lg mt-6 ">{bio || "Short bio of the person here"}</p>
 
