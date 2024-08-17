@@ -233,15 +233,15 @@ export default function Review() {
 					chaintype_id: chaintype,
 				}),
 			});
-	
+			const phygital = await phygitalResponse.json();
+			localStorage.setItem("PhygitalId", phygital.id);
+
 			if (!phygitalResponse.ok) {
 				throw new Error('Failed to create phygital data');
 			}
 	
-			localStorage.setItem("PhygitalId", phygitalId);
-	
 			// Post request for Phygital Details data
-			const phygitalDetailsResponse = await fetch(`${apiUrl}/phygitals/${phygitalId}`, {
+			const phygitalDetailsResponse = await fetch(`${apiUrl}/phygitals/${phygital.id}`, {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
