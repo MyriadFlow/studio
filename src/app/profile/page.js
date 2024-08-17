@@ -240,13 +240,13 @@ function HomePage() {
         </div>
       </div>
 
-      <div style={{ padding: '50px' }}>
+      {/* <div style={{ padding: '50px' }}>
         <div className='mt-10 flex' style={{ gap: '20px', flexWrap: 'wrap' }}>
           {matchedNFTs?.map((nft, index) => (
             <ProfileNftCard key={index} nft={nft} />
           ))}
         </div>
-      </div>
+      </div> */}
 
       <div className='pt-20'>
         <Footer />
