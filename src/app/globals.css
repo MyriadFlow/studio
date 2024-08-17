@@ -92,3 +92,10 @@
 	color: black !important;
 	background: black !important;
 }
+
+.truncate-wallet {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px; 
+  }
