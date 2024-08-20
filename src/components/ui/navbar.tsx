@@ -54,6 +54,15 @@ export const Navbar = () => {
 		{ title: 'WebXR', path: 'https://webxr.myriadflow.com' },
 	];
 
+	const Notification = () => {
+		if (!address) {
+			toast.warning("Currently works with Metamask and Coinbase Wallet Extension. We are working on Smart Wallet functionality.", {
+				containerId: "containerA",
+				position: 'top-left',
+			}
+			)
+		}
+	};
 	const handleLogout = () => {
 		disconnect();
 	};
@@ -155,7 +164,9 @@ export const Navbar = () => {
 								</div>
 							</>
 						) : (
+							<div onClick={Notification}>
 								<w3m-button />
+							</div>
 						)}
 					</div>
 				</NavigationMenuList>
