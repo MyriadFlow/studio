@@ -301,7 +301,7 @@ export default function CreatePhygital() {
 							/>
 							<div>
 								<Label className='text-xl mb-6'>
-									Categories
+									Categories &nbsp; &nbsp;
 									<span className='text-[#757575] text-base'>
 										Choose all that apply <Checkbox checked={true} />
 									</span>
@@ -501,7 +501,7 @@ export default function CreatePhygital() {
 
 							<Button
 								type='submit'
-								className='w-fit bg-[#30D8FF] rounded-full text-black'
+								className='w-fit bg-[#30D8FF] rounded-full hover:text-white text-black'
 							>
 								{loading ? 'loading' : 'Next'}
 							</Button>

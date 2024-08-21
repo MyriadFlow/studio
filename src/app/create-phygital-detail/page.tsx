@@ -439,7 +439,7 @@ export default function CreatePhygitalDetail() {
 							<div>
 								<Button
 									type='submit'
-									className='bg-[#30D8FF] rounded-full text-black'
+									className='bg-[#30D8FF] rounded-full hover:text-white text-black'
 								>
 									{loading ? 'loading' : 'Next'}
 								</Button>

@@ -389,7 +389,7 @@ export default function Review() {
 						className={`${activeButton === 'phygital'
 							? 'bg-[#4187D6] text-white'
 							: 'bg-transparent'
-							}  border border-black text-black`}
+							}  border border-black text-black hover:text-white`}
 						onClick={() => handleButtonClick('phygital')}
 					>
 						Phygital
@@ -398,7 +398,7 @@ export default function Review() {
 						className={`${activeButton === 'phygital-details'
 							? 'bg-[#4187D6] text-white'
 							: 'bg-transparent'
-							}  border border-black text-black`}
+							}  border border-black text-black hover:text-white`}
 						onClick={() => handleButtonClick('phygital-details')}
 					>
 						Additional Details
@@ -407,7 +407,7 @@ export default function Review() {
 						className={`${activeButton === 'webxr'
 							? 'bg-[#4187D6] text-white'
 							: 'bg-transparent'
-							}  border border-black text-black`}
+							}  border border-black text-black hover:text-white`}
 						onClick={() => handleButtonClick('webxr')}
 					>
 						WebXR Experience
@@ -454,7 +454,7 @@ export default function Review() {
 							<h2>Category</h2>
 							<div className='bg-[#0000001A] rounded p-8 flex flex-wrap gap-12'>
 								{editableData.category?.map((category: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null | undefined, index: Key | null | undefined) => (
-									<Button key={index} className='bg-white rounded-full text-black'>
+									<Button key={index} className='bg-white rounded-full hover:text-white  text-black'>
 										{category}
 									</Button>
 								))}
@@ -508,10 +508,10 @@ export default function Review() {
 							/>
 						</div>
 						<div className='flex mt-6'>
-							<Button className='text-black bg-[#30D8FF] rounded-lg ' onClick={handleEditClick}>
+							<Button className='text-black bg-[#30D8FF] hover:text-white rounded-lg ' onClick={handleEditClick}>
 								{isEditing ? 'Save' : 'Edit'}
 							</Button>
-							<Button className='text-black bg-[#30D8FF] rounded-lg ml-8' onClick={() => handleButtonClick('phygital-details')}>
+							<Button className='text-black bg-[#30D8FF] hover:text-white rounded-lg ml-8' onClick={() => handleButtonClick('phygital-details')}>
 								Confirm
 							</Button>
 						</div>
@@ -602,10 +602,10 @@ export default function Review() {
 								</div>
 							</div>
 							<div className='flex'>
-								<Button className='text-black bg-[#30D8FF] rounded-lg ' onClick={handleEditClick}>
+								<Button className='text-black bg-[#30D8FF] hover:text-white rounded-lg ' onClick={handleEditClick}>
 									{isEditing ? 'Save' : 'Edit'}
 								</Button>
-								<Button className='text-black bg-[#30D8FF] rounded-lg ml-8' onClick={() => handleButtonClick('webxr')}>
+								<Button className='text-black bg-[#30D8FF] hover:text-white rounded-lg ml-8' onClick={() => handleButtonClick('webxr')}>
 									Confirm
 								</Button>
 
@@ -655,7 +655,7 @@ export default function Review() {
 								</h2>
 								<div className='bg-[#0000001A] rounded p-8 flex flex-wrap gap-12 mt-2'>
 									{parsedWebxrData.customizations?.map((customizations: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null | undefined, index: Key | null | undefined) => (
-										<Button key={index} className='bg-white rounded-full text-black'>
+										<Button key={index} className='bg-white rounded-full hover:text-white text-black'>
 											{customizations}
 										</Button>
 									))}
@@ -716,7 +716,7 @@ export default function Review() {
 								</div>
 							</div>
 							<div className='flex justify-between'>
-								<Button className='text-black bg-[#30D8FF] rounded-lg '
+								<Button className='text-black bg-[#30D8FF] hover:text-white rounded-lg '
 									onClick={sendPostRequests}>
 									Launch
 								</Button>

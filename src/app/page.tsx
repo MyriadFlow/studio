@@ -140,7 +140,7 @@ export default function Home() {
           <div className='p-8'>
             <div className='absolute top-0 right-0 mt-10 mr-8'>
               <Link href='/create-brand'>
-                <Button className='bg-[#30D8FF] rounded-full text-black'>
+                <Button className='bg-[#30D8FF] rounded-full hover:text-white text-black'>
                   Create Brand
                 </Button>
               </Link>
@@ -161,7 +161,7 @@ export default function Home() {
                     You have not created any brands yet. Ready to start your journey?
                   </p>
                   <Link href='/create-brand'>
-                    <Button className='bg-[#30D8FF] rounded-full text-black'>
+                    <Button className='bg-[#30D8FF] rounded-full hover:text-white text-black'>
                       Create Brand
                     </Button>
                   </Link>

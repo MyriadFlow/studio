@@ -549,7 +549,7 @@ export default function CreateWebxrExperience() {
 									/>
 								</div>
 							</div>
-							<Button className='bg-[#30D8FF] rounded-full text-black'>
+							<Button className='bg-[#30D8FF] rounded-full hover:text-white text-black'>
 								{loading ? 'loading ' : 'Review phygital & WebXR'}
 							</Button>
 						</div>
