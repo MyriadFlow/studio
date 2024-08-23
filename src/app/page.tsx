@@ -152,9 +152,7 @@ export default function Home() {
                 </h1>
                 <h2 className='text-3xl '>
                   <span className='inline-block'>
-                    Welcome to MyriadFlow Studio, your one-stop shop
-                  </span>
-                  <span>for creating groundbreaking phygital NFTs!</span>
+                    Welcome to MyriadFlow Studio, your one-stop shop for creating groundbreaking phygital NFTs!</span>
                 </h2>
                 <div className='flex flex-col gap-14 justify-center items-center text-xl'>
                   <p>
@@ -289,9 +287,7 @@ export default function Home() {
             </h1>
             <h2 className='text-2xl '>
               <span className='inline-block'>
-                Welcome to MyriadFlow Studio, your one-stop shop
-              </span>
-              <span>for creating groundbreaking phygital NFTs!</span>
+                Welcome to MyriadFlow Studio, your one-stop shop for creating groundbreaking phygital NFTs!</span>
             </h2>
             <div className='flex flex-col gap-14 justify-center items-center'>
               <p>

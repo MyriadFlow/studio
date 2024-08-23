@@ -40,6 +40,30 @@ const formSchema = z.object({
     name: z.string().min(2, {
         message: 'Brand name must be at least 2 characters',
     }),
+    slogan: z.string().min(2, {
+        message: 'Slogan name must be at least 2 characters',
+    }),
+    website: z.string().min(2, {
+        message: 'Website name must be at least 2 characters',
+    }),
+    twitter: z.string().min(2, {
+        message: 'Twitter name must be at least 2 characters',
+    }),
+    instagram: z.string().min(2, {
+        message: 'Instagram name must be at least 2 characters',
+    }),
+    facebook: z.string().min(2, {
+        message: 'Facebook name must be at least 2 characters',
+    }),
+    additional_link: z.string().min(2, {
+        message: 'Additional_link name must be at least 2 characters',
+    }),
+    link: z.string().min(2, {
+        message: 'Link name must be at least 2 characters',
+    }),
+    discord: z.string().min(2, {
+        message: 'Discord name must be at least 2 characters',
+    }),
     description: z
         .string()
         .min(2, { message: 'Brand description must be at least 2 characters' })
@@ -242,12 +266,20 @@ export default function CreateBrand() {
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: '',
+            slogan: '',
             description: '',
             representative: '',
             contact_email: '',
             contact_phone: '',
             shipping_address: '',
             additional_info: '',
+            website: '',
+            twitter: '',
+            instagram: '',
+            facebook: '',
+            additional_link: '',
+            link: '',
+            discord: '',
             logo_image: '',
             cover_image: '',
             manager_id: '',
@@ -317,6 +349,7 @@ export default function CreateBrand() {
                     body: JSON.stringify({
                         id: brandId,
                         name: values.name,
+                        slogan: values.slogan,
                         description: values.description,
                         logo_image: values.logo_image,
                         cover_image: values.cover_image,
@@ -325,6 +358,13 @@ export default function CreateBrand() {
                         contact_phone: values.contact_phone,
                         shipping_address: values.shipping_address,
                         additional_info: values.additional_info,
+                        website: values.website,
+                        twitter: values.twitter,
+                        instagram: values.instagram,
+                        facebook: values.facebook,
+                        additional_link: values.additional_link,
+                        link: values.link,
+                        discord: values.discord,
                         manager_id: values.manager_id,
                         access_master: AccessMasterAddress,
                         trade_hub: TradehubAddress,
@@ -415,6 +455,25 @@ export default function CreateBrand() {
                                     <FormItem>
                                         <FormLabel className='text-xl font-semibold mb-4'>
                                             Brand Name*
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                className='border-0 bg-[#0000001A] rounded'
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name='slogan'
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className='text-xl font-semibold mb-4'>
+                                            Brand Slogan*
                                         </FormLabel>
                                         <FormControl>
                                             <Input
@@ -597,6 +656,7 @@ export default function CreateBrand() {
                                         </FormLabel>
                                         <Input
                                             className='border-0 bg-[#0000001A] rounded'
+                                            placeholder='Include country code'
                                             {...field}
                                         />
                                         <FormMessage />
@@ -615,6 +675,7 @@ export default function CreateBrand() {
                                         <FormControl>
                                             <Input
                                                 className='border-0 bg-[#0000001A] rounded'
+                                                placeholder='Include name, street address, city, postal code, and country'
                                                 {...field}
                                             />
                                         </FormControl>
@@ -622,6 +683,152 @@ export default function CreateBrand() {
                                     </FormItem>
                                 )}
                             />
+
+                            <FormLabel className='text-xl font-semibold'>
+                                Social Links
+                            </FormLabel>
+                            <div className='grid grid-cols-2 gap-4'>
+                                <FormField
+                                    name='website'
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                             <FormLabel className='text-lg '>
+                                             Website
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    className='border-0 bg-[#0000001A] rounded'
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    name='twitter'
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                             <FormLabel className='text-lg '>
+                                             X (Twitter)
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    className='border-0 bg-[#0000001A] rounded'
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    name='instagram'
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className='text-lg '>
+                                            Instagram
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    className='border-0 bg-[#0000001A] rounded'
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    name='facebook'
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className='text-lg '>
+                                            Facebook
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    className='border-0 bg-[#0000001A] rounded'
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    name='additional_link'
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormControl>
+                                                <select
+                                                    className='border-0 bg-[#0000001A] rounded w-full h-10 mt-8'
+                                                    {...field}
+                                                >
+                                                    <option value=''>+ Choose</option>
+                                                    <option value='telegram'>Telegram</option>
+                                                    <option value='linkedin'>LinkedIn</option>
+                                                    <option value='youtube'>YouTube</option>
+                                                    <option value='whatsapp'>WhatsApp</option>
+                                                    <option value='google'>Google</option>
+                                                    <option value='tiktok'>TikTok</option>
+                                                    <option value='snapchat'>Snapchat</option>
+                                                    <option value='pinterest'>Pinterest</option>
+                                                </select>
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    name='link'
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className='text-lg '>
+                                            Link
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    className='border-0 bg-[#0000001A] rounded'
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    name='discord'
+                                    control={form.control}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel className='text-lg'>
+                                            Discord
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    className='border-0 bg-[#0000001A] rounded'
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                             
+                            </div>
 
                             <FormField
                                 name='additional_info'
@@ -631,13 +838,13 @@ export default function CreateBrand() {
                                         <FormLabel className='text-xl font-semibold mb-4'>
                                             Brand Information for AI *
                                         </FormLabel>
-                                        <FormDescription>
-                                            Fill this field if you want to create an AI-powered brand
-                                            ambassador
+                                        <FormDescription className='text-lg font-semibold'>
+                                            Fill this field if you want to create an AI-powered brand ambassador
                                         </FormDescription>
                                         <FormControl>
                                             <Textarea
-                                                className='border-0 bg-[#0000001A]'
+                                                className='border-0 bg-[#0000001A] text-lg'
+                                                placeholder='Give as much information as possible about your brand. Anything you want the AI avatar to know and share with your customers. '
                                                 {...field}
                                             />
                                         </FormControl>

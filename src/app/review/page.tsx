@@ -16,7 +16,7 @@ export default function Review() {
 	const router = useRouter()
 	const [activeButton, setActiveButton] = useState('phygital')
 	const [isEditing, setIsEditing] = useState(false)
-	const [editableData, setEditableData] = useState({ name: '', description: '', price: '', quantity: '', royality: '', product_info: '', image: '', category: [] })
+	const [editableData, setEditableData] = useState({ name: '', description: '', price: '', quantity: '', royality: '', product_info: '', image: '', category: [] , tags:[] })
 	const [editableDetailsData, setEditableDetailsData] = useState({ color: '', size: '', weight: '', usage: '', material: '', quality: '', manufacturer: '', origin_country: '' })
 	const [editableWebxrData, setEditableWebxrData] = useState({ customizations: [], gold_reward: '', silver_reward: '', bronze_reward: '', image360: '', free_nft_image: '' , avatar_voice:'' })
 
@@ -224,6 +224,7 @@ export default function Review() {
 					name: editableData.name,
 					brand_name: brand_name,
 					category: { data: editableData.category },
+					tags: { data: editableData.tags },
 					description: editableData.description,
 					price: parseFloat(editableData.price),
 					quantity: parseInt(editableData.quantity),
@@ -259,6 +260,7 @@ export default function Review() {
 					name: editableData.name,
 					brand_name: brand_name,
 					category: { data: editableData.category },
+					tags: { data: editableData.tags },
 					description: editableData.description,
 					price: parseFloat(editableData.price),
 					quantity: parseInt(editableData.quantity),
@@ -451,11 +453,21 @@ export default function Review() {
 							</div>
 						</div>
 						<div className='mt-6'>
-							<h2>Category</h2>
+							<h2 className='text-xl'>Category</h2>
 							<div className='bg-[#0000001A] rounded p-8 flex flex-wrap gap-12'>
 								{editableData.category?.map((category: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null | undefined, index: Key | null | undefined) => (
-									<Button key={index} className='bg-white rounded-full hover:text-white  text-black'>
+									<Button key={index} className='bg-white rounded-lg hover:text-white  text-black'>
 										{category}
+									</Button>
+								))}
+							</div>
+						</div>
+						<div className='mt-6'>
+							<h2 className='text-xl'>Tags</h2>
+							<div className='bg-[#0000001A] rounded p-8 flex flex-wrap gap-12'>
+								{editableData.tags?.map((tags: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null | undefined, index: Key | null | undefined) => (
+									<Button key={index} className='bg-white rounded-lg hover:text-white  text-black'>
+										{tags}
 									</Button>
 								))}
 							</div>

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect,useRef, ChangeEvent  } from 'react'
+import React, { useState, useRef, ChangeEvent } from 'react'
 import {
 	Button,
 	Checkbox,
@@ -53,6 +53,7 @@ const formSchema = z.object({
 		.min(2, { message: 'Product Information must be at least 2 characters' }),
 	image: z.string(),
 	brand_name: z.string(),
+	tags: z.array(z.string()).optional(),
 })
 
 const items = [
@@ -94,12 +95,68 @@ const items = [
 	},
 ]
 
+interface TagsInputProps {
+	selectedTags: (tags: string[]) => void;
+	tags: string[];
+  }
+  
+  const TagsInput: React.FC<TagsInputProps> = ({ selectedTags, tags }) => {
+	const [tagList, setTagList] = useState<string[]>(tags);
+  
+	const removeTags = (indexToRemove: number) => {
+	  const updatedTags = tagList.filter((_, index) => index !== indexToRemove);
+	  setTagList(updatedTags);
+	  selectedTags(updatedTags);
+	};
+  
+	const addTags = (event: React.KeyboardEvent<HTMLInputElement>) => {
+	  if (event.key === "Enter") {
+		event.preventDefault(); // Prevent default action for Enter key
+		const inputValue = (event.target as HTMLInputElement).value.trim();
+		if (inputValue !== "" && !tagList.includes(inputValue)) {
+		  const updatedTags = [...tagList, inputValue];
+		  setTagList(updatedTags);
+		  selectedTags(updatedTags);
+		  (event.target as HTMLInputElement).value = ""; // Clear input
+		}
+	  }
+	};
+  
+	return (
+	  <div className="flex flex-wrap items-start min-h-12 w-[50%] p-1 border border-gray-300 rounded-md focus-within:border-blue-500">
+		<ul id="tags" className="flex flex-wrap p-0 m-0">
+		  {tagList.map((tag, index) => (
+			<li
+			  key={index}
+			  className="flex items-center justify-center h-8 px-2 mr-2 mb-2 text-white bg-blue-600 rounded-md"
+			>
+			  <span className="tag-title">{tag}</span>
+			  <span
+				className="ml-2 w-4 h-4 flex items-center justify-center text-blue-600 bg-white rounded-full cursor-pointer"
+				onClick={() => removeTags(index)}
+			  >
+				x
+			  </span>
+			</li>
+		  ))}
+		</ul>
+		<input
+		  type="text"
+		  onKeyDown={addTags} 
+		  placeholder="Add a tag and press enter"
+		  className="flex-1 border-none h-12 text-lg p-1 focus:outline-none"
+		/>
+	  </div>
+	);
+  };
+
 export default function CreatePhygital() {
 
 	const apiUrl = process.env.NEXT_PUBLIC_URI;
 
 	const [showForm, setShowForm] = useState(false)
 	const [productURL, setProductURL] = useState('')
+	const [tags, setTags] = useState<string[]>([])
 
 	const handleSubmit = () => {
 		if (!productURL) {
@@ -162,6 +219,7 @@ export default function CreatePhygital() {
 			product_info: '',
 			image: '',
 			brand_name: '',
+			tags: [],
 		},
 	})
 
@@ -175,6 +233,7 @@ export default function CreatePhygital() {
 				const brand_name = localStorage.getItem('brand_name')
 				values.image = "ipfs://" + cid
 				values.brand_name = brand_name!
+				values.tags = tags
 				localStorage.setItem('phygitalData', JSON.stringify(values))
 
 				if (cid !== '') {
@@ -301,7 +360,7 @@ export default function CreatePhygital() {
 							/>
 							<div>
 								<Label className='text-xl mb-6'>
-									Categories &nbsp; &nbsp;
+									Categories* &nbsp; &nbsp;
 									<span className='text-[#757575] text-base'>
 										Choose all that apply <Checkbox checked={true} />
 									</span>
@@ -348,6 +407,23 @@ export default function CreatePhygital() {
 												/>
 											))}
 											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</div>
+							<div>
+								<FormField
+									control={form.control}
+									name='tags'
+									render={() => (
+										<FormItem>
+											<Label className='text-xl mb-6'>
+												Tags* &nbsp; &nbsp;&nbsp; &nbsp;
+												<span className='text-[#757575] text-base'>
+													Add max 5 tags that represent your product
+												</span>
+											</Label>
+											<TagsInput selectedTags={setTags} tags={[]} />
 										</FormItem>
 									)}
 								/>
