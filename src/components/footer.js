@@ -7,7 +7,7 @@ const Footer = () => {
       <footer style={{ background: 'linear-gradient(90deg, #30D8FF 0%, #A32CC4 50%, #C243FE 100%)', padding: '40px 60px' }}>
         <section style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="brand" style={{ textAlign: 'left' }}>
-            <Link href="#" passHref>
+            <Link href="https://myriadflow.com/" passHref>
               <img
                 src="/images/MFlogo.png"
                 width={200}
