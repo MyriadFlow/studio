@@ -334,6 +334,8 @@ export default function Review() {
 					customizations: { data: editableWebxrData.customizations },
 				}),
 			});
+			const webxr = await webxrResponse.json();
+			localStorage.setItem("WebxrId", webxr.id);
 	
 			if (!webxrResponse.ok) {
 				throw new Error('Failed to create WebXR data');

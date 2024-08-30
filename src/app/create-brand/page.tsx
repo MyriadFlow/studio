@@ -43,27 +43,13 @@ const formSchema = z.object({
     slogan: z.string().min(2, {
         message: 'Slogan name must be at least 2 characters',
     }),
-    website: z.string().min(2, {
-        message: 'Website name must be at least 2 characters',
-    }),
-    twitter: z.string().min(2, {
-        message: 'Twitter name must be at least 2 characters',
-    }),
-    instagram: z.string().min(2, {
-        message: 'Instagram name must be at least 2 characters',
-    }),
-    facebook: z.string().min(2, {
-        message: 'Facebook name must be at least 2 characters',
-    }),
-    additional_link: z.string().min(2, {
-        message: 'Additional_link name must be at least 2 characters',
-    }),
-    link: z.string().min(2, {
-        message: 'Link name must be at least 2 characters',
-    }),
-    discord: z.string().min(2, {
-        message: 'Discord name must be at least 2 characters',
-    }),
+    website: z.string(),
+    twitter: z.string(),
+    instagram: z.string(),
+    facebook: z.string(),
+    additional_link: z.string(),
+    link: z.string(),
+    discord: z.string(),
     description: z
         .string()
         .min(2, { message: 'Brand description must be at least 2 characters' })
