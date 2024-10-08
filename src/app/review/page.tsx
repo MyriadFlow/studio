@@ -209,6 +209,7 @@ export default function Review() {
 			const chaintype = localStorage.getItem("BaseSepoliaChain");
 			const productUrl = localStorage.getItem("producturl");
 			const brand_name = localStorage.getItem('brand_name');
+			const elevateRegion = localStorage.getItem('elevateRegion');
 	
 			// Post request for Phygital data
 			const phygitalResponse = await fetch(`${apiUrl}/phygitals`, {
@@ -232,6 +233,7 @@ export default function Review() {
 					product_info: editableData.product_info,
 					image: editableData.image,
 					chaintype_id: chaintype,
+					elevate_region: elevateRegion,
 				}),
 			});
 			const phygital = await phygitalResponse.json();
@@ -268,6 +270,7 @@ export default function Review() {
 					product_info: editableData.product_info,
 					image: editableData.image,
 					contract_address: phygitalAddress,
+					elevate_region: elevateRegion,
 				}),
 			});
 	
@@ -293,6 +296,7 @@ export default function Review() {
 					chaintype_id: chaintype,
 					variant: variant,
 					description: description,
+					elevate_region: elevateRegion,
 				}),
 			});
 	
@@ -332,6 +336,7 @@ export default function Review() {
 					bronze_reward: editableWebxrData.bronze_reward,
 					chaintype_id: chaintype,
 					customizations: { data: editableWebxrData.customizations },
+					elevate_region: elevateRegion,
 				}),
 			});
 			const webxr = await webxrResponse.json();
@@ -362,6 +367,7 @@ export default function Review() {
 					chaintype_id: chaintype,
 					avatar_voice: editableWebxrData.avatar_voice,
 					...parsedData,
+					elevate_region: elevateRegion,
 				}),
 			});
 	

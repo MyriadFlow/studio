@@ -85,6 +85,19 @@ const formSchema = z.object({
 export default function CreateBrand() {
     const { address: walletAddress } = useAccount()
 
+    const [showForm, setShowForm] = useState(false)
+    const handleCheckboxChange = () => {
+        setShowForm(!showForm);
+    };
+    const [elevateRegion, setElevateRegion] = useState('')
+    const handleSubmit = () => {
+        if (!elevateRegion) {
+            toast.warning('Product URL is required.')
+            return
+        } else {
+            localStorage.setItem("elevateRegion", elevateRegion)
+        }
+    }
 
     const [error, setError] = useState<string | null>(null)
     const [isDeployed, setIsDeployed] = useState(false)
@@ -113,8 +126,8 @@ export default function CreateBrand() {
             const resData = await res.json();
             setCid(resData.IpfsHash);
             toast.success('Upload Completed!', {
-				position: 'top-left',
-			})
+                position: 'top-left',
+            })
             console.log(resData.IpfsHash);
             setUploading(false);
         } catch (e) {
@@ -135,8 +148,8 @@ export default function CreateBrand() {
             const resData = await res.json();
             setCidCover(resData.IpfsHash);
             toast.success('Upload Completed!', {
-				position: 'top-left',
-			})
+                position: 'top-left',
+            })
             console.log(resData.IpfsHash);
             setUploading(false);
         } catch (e) {
@@ -284,49 +297,50 @@ export default function CreateBrand() {
             });
             return;
         }
-    
+
         if (!cid) {
             setImageError(true);
             return;
         }
-    
+
         try {
             values.logo_image = 'ipfs://' + cid;
             values.cover_image = 'ipfs://' + cidCover;
             values.manager_id = account.address!;
             localStorage.setItem('brand_name', values.name);
             console.log(values);
-    
+
             if (cid !== '') {
                 setLoading(true);
-    
+
                 toast.warning('Deploying AccessMaster to manage your brand', {
                     position: 'top-left',
                 });
-    
+
                 const deploySuccess = await handleDeploy();
                 if (!deploySuccess) throw new Error('AccessMaster deployment failed');
-    
+
                 const AccessMasterAddress = localStorage.getItem('AccessMasterAddress');
                 console.log('Contract deployed at:', AccessMasterAddress);
-    
+
                 toast.warning('Deploying TradeHub', {
                     position: 'top-left',
                 });
-    
+
                 const deployTradeHub = await TradehubDeploy();
                 if (!deployTradeHub) throw new Error('TradeHub deployment failed');
-    
+
                 const TradehubAddress = localStorage.getItem('TradehubAddress');
                 console.log('Contract deployed at:', TradehubAddress);
-    
+
                 toast.success('Deployment Successful', {
                     position: 'top-left',
                 });
-    
+
                 const brandId = uuidv4();
                 const chaintype = localStorage.getItem('BaseSepoliaChain');
-    
+                const elevateRegion = localStorage.getItem('elevateRegion');
+
                 const response = await fetch(`${apiUrl}/brands`, {
                     method: 'POST',
                     headers: {
@@ -357,15 +371,16 @@ export default function CreateBrand() {
                         payout_address: account.address,
                         chain_id: '84532',
                         chaintype_id: chaintype,
+                        elevate_region : elevateRegion,
                     }),
                 });
-    
+
                 if (!response.ok) throw new Error('Failed to create brand');
-    
+
                 const brand = await response.json();
                 localStorage.setItem('BrandId', brand.id);
                 console.log(brand);
-    
+
                 const users = await fetch(`${apiUrl}/users`, {
                     method: 'POST',
                     headers: {
@@ -377,9 +392,9 @@ export default function CreateBrand() {
                         chaintype_id: chaintype,
                     }),
                 });
-    
+
                 if (!users.ok) throw new Error('Failed to add user');
-    
+
                 console.log(users);
                 toast.success('Your Brand has been created', {
                     position: 'top-left',
@@ -398,7 +413,7 @@ export default function CreateBrand() {
             setLoading(false);
         }
     }
-    
+
 
     const uploadImage = (e: ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
@@ -679,8 +694,8 @@ export default function CreateBrand() {
                                     control={form.control}
                                     render={({ field }) => (
                                         <FormItem>
-                                             <FormLabel className='text-lg '>
-                                             Website
+                                            <FormLabel className='text-lg '>
+                                                Website
                                             </FormLabel>
                                             <FormControl>
                                                 <Input
@@ -698,8 +713,8 @@ export default function CreateBrand() {
                                     control={form.control}
                                     render={({ field }) => (
                                         <FormItem>
-                                             <FormLabel className='text-lg '>
-                                             X (Twitter)
+                                            <FormLabel className='text-lg '>
+                                                X (Twitter)
                                             </FormLabel>
                                             <FormControl>
                                                 <Input
@@ -718,7 +733,7 @@ export default function CreateBrand() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel className='text-lg '>
-                                            Instagram
+                                                Instagram
                                             </FormLabel>
                                             <FormControl>
                                                 <Input
@@ -737,7 +752,7 @@ export default function CreateBrand() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel className='text-lg '>
-                                            Facebook
+                                                Facebook
                                             </FormLabel>
                                             <FormControl>
                                                 <Input
@@ -781,7 +796,7 @@ export default function CreateBrand() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel className='text-lg '>
-                                            Link
+                                                Link
                                             </FormLabel>
                                             <FormControl>
                                                 <Input
@@ -800,7 +815,7 @@ export default function CreateBrand() {
                                     render={({ field }) => (
                                         <FormItem>
                                             <FormLabel className='text-lg'>
-                                            Discord
+                                                Discord
                                             </FormLabel>
                                             <FormControl>
                                                 <Input
@@ -813,8 +828,47 @@ export default function CreateBrand() {
                                     )}
                                 />
 
-                             
+
                             </div>
+
+                            <label className='flex items-center text-xl'>
+                                <input
+                                    type='checkbox'
+                                    checked={showForm}
+                                    onChange={handleCheckboxChange}
+                                    className='mr-2 '
+                                />
+                                My brand is part of MyriadFlow Elevate Program
+                            </label>
+                            {showForm && (
+                                <div className='mt-6'>
+                                    <div className='flex flex-col gap-4'>
+                                        <label>
+                                            Select Region
+                                            <select
+                                                className='border rounded px-2 py-1 border border-black ml-2 w-96'
+                                                value={elevateRegion} // Update this to the appropriate state for region
+                                                onChange={(e) => setElevateRegion(e.target.value)} // Update this to handle region selection
+                                                required
+                                            >
+                                                <option value=''>Select Region</option>
+                                                <option value='Africa'>Africa</option>
+                                                <option value='Asia'>Asia</option>
+                                                <option value='Europe'>Europe</option>
+                                                <option value='North America'>North America</option>
+                                                <option value='South America'>South America</option>
+                                                <option value='Australia'>Australia</option>
+                                            </select>
+                                        </label>
+                                        <button
+                                            className='w-fit border border-black bg-[#0000001A] rounded-lg text-black text-2xl mt-4 px-6'
+                                            onClick={handleSubmit}
+                                        >
+                                            Save
+                                        </button>
+                                    </div>
+                                </div>)}
+
 
                             <FormField
                                 name='additional_info'
