@@ -48,52 +48,52 @@ const formSchema = z.object({
         }),
     logo_image: z.string(),
     cover_image: z.string(),
-    chaintype_id : z.string(),
+    chaintype_id: z.string(),
     category: z
         .array(z.string()),
-        // .refine((value) => value.some((item) => item), {
-        //     message: 'You have to select at least one category.',
-        // }),
+    // .refine((value) => value.some((item) => item), {
+    //     message: 'You have to select at least one category.',
+    // }),
 })
 
 
 const items = [
-	{
-		id: 'fashion',
-		label: 'Fashion',
-	},
-	{
-		id: 'home & decor',
-		label: 'Home & Decor',
-	},
-	{
-		id: 'sustainable goods',
-		label: 'Sustainable goods',
-	},
-	{
-		id: 'collectibles',
-		label: 'Collectibles',
-	},
-	{
-		id: 'functional items',
-		label: 'Functional items',
-	},
-	{
-		id: 'tech enabled',
-		label: 'Tech enabled',
-	},
-	{
-		id: 'art & photography',
-		label: 'Art & Photography',
-	},
-	{
-		id: 'luxury goods',
-		label: 'Luxury goods',
-	},
-	{
-		id: 'music lovers',
-		label: 'Music lovers',
-	},
+    {
+        id: 'fashion',
+        label: 'Fashion',
+    },
+    {
+        id: 'home & decor',
+        label: 'Home & Decor',
+    },
+    {
+        id: 'sustainable goods',
+        label: 'Sustainable goods',
+    },
+    {
+        id: 'collectibles',
+        label: 'Collectibles',
+    },
+    {
+        id: 'functional items',
+        label: 'Functional items',
+    },
+    {
+        id: 'tech enabled',
+        label: 'Tech enabled',
+    },
+    {
+        id: 'art & photography',
+        label: 'Art & Photography',
+    },
+    {
+        id: 'luxury goods',
+        label: 'Luxury goods',
+    },
+    {
+        id: 'music lovers',
+        label: 'Music lovers',
+    },
 ]
 
 export default function CreateCollection() {
@@ -120,8 +120,8 @@ export default function CreateCollection() {
             const resData = await res.json();
             setCid(resData.IpfsHash);
             toast.success('Upload Completed!', {
-				position: 'top-left',
-			})
+                position: 'top-left',
+            })
             console.log(resData.IpfsHash);
             setUploading(false);
         } catch (e) {
@@ -142,8 +142,8 @@ export default function CreateCollection() {
             const resData = await res.json();
             setCidCover(resData.IpfsHash);
             toast.success('Upload Completed!', {
-				position: 'top-left',
-			})
+                position: 'top-left',
+            })
             console.log(resData.IpfsHash);
             setUploading(false);
         } catch (e) {
@@ -157,9 +157,9 @@ export default function CreateCollection() {
     const account = useAccount()
     const router = useRouter()
     const [imageUrl, setImageUrl] = useState<string>('')
-	const [coverImageUrl, setCoverImageUrl] = useState<string>('')
+    const [coverImageUrl, setCoverImageUrl] = useState<string>('')
     const [preview, setPreview] = useState<boolean>(false)
-	const [previewCover, setCoverPreview] = useState<boolean>(false)
+    const [previewCover, setCoverPreview] = useState<boolean>(false)
     const [loading, setLoading] = useState<boolean>(false)
     const [imageError, setImageError] = useState<boolean>(false)
 
@@ -170,8 +170,8 @@ export default function CreateCollection() {
             description: '',
             logo_image: '',
             cover_image: '',
-            chaintype_id:'',
-            category:[],
+            chaintype_id: '',
+            category: [],
         },
     })
 
@@ -185,7 +185,7 @@ export default function CreateCollection() {
 
             try {
                 values.logo_image = "ipfs://" + cid
-                values.cover_image = "ipfs://" + cidCover 
+                values.cover_image = "ipfs://" + cidCover
                 localStorage.setItem('collection_name', values.name)
                 console.log(values)
 
@@ -193,7 +193,8 @@ export default function CreateCollection() {
                     setLoading(true)
                     const collectionId = uuidv4()
                     const chaintype = localStorage.getItem("BaseSepoliaChain");
-                    const BrandId= localStorage.getItem("BrandId");
+                    const BrandId = localStorage.getItem("BrandId");
+                    const elevateRegion = localStorage.getItem('elevateRegion');
                     const response = await fetch(`${apiUrl}/collections`, {
                         method: 'POST',
                         headers: {
@@ -207,11 +208,12 @@ export default function CreateCollection() {
                             description: values.description,
                             logo_image: values.logo_image,
                             cover_image: values.cover_image,
-                            chaintype_id: chaintype
+                            chaintype_id: chaintype,
+                            elevate_region: elevateRegion,
                         }),
                     })
 
-					const collection = await response.json(); 
+                    const collection = await response.json();
                     localStorage.setItem("CollectionId", collection.id);
 
                     if (response.status === 200) {
@@ -406,56 +408,56 @@ export default function CreateCollection() {
                                 </div>
                             </div>
                             <Label className='text-xl'>
-									Categories
-									<span className='text-[#757575] text-base'>
-										Choose all that apply <Checkbox checked={true} />
-									</span>
-								</Label>
+                                Categories
+                                <span className='text-[#757575] text-base'>
+                                    Choose all that apply <Checkbox checked={true} />
+                                </span>
+                            </Label>
                             <FormField
-									control={form.control}
-									name='category'
-									render={() => (
-										<FormItem className='flex justify-between flex-wrap'>
-											{items.map((item) => (
-												<FormField
-													key={item.id}
-													control={form.control}
-													name='category'
-													render={({ field }) => {
-														return (
-															<FormItem
-																key={item.id}
-																className='flex items-baseline space-x-3 space-y-6 basis-[30%]'
-															>
-																<FormControl>
-																	<Checkbox
-																		checked={field.value?.includes(item.id)}
-																		onCheckedChange={(checked) => {
-																			return checked
-																				? field.onChange([
-																					...field.value,
-																					item.id,
-																				])
-																				: field.onChange(
-																					field.value?.filter(
-																						(value: any) => value !== item.id
-																					)
-																				)
-																		}}
-																	/>
-																</FormControl>
-																<FormLabel className='font-normal'>
-																	{item.label}
-																</FormLabel>
-															</FormItem>
-														)
-													}}
-												/>
-											))}
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
+                                control={form.control}
+                                name='category'
+                                render={() => (
+                                    <FormItem className='flex justify-between flex-wrap'>
+                                        {items.map((item) => (
+                                            <FormField
+                                                key={item.id}
+                                                control={form.control}
+                                                name='category'
+                                                render={({ field }) => {
+                                                    return (
+                                                        <FormItem
+                                                            key={item.id}
+                                                            className='flex items-baseline space-x-3 space-y-6 basis-[30%]'
+                                                        >
+                                                            <FormControl>
+                                                                <Checkbox
+                                                                    checked={field.value?.includes(item.id)}
+                                                                    onCheckedChange={(checked) => {
+                                                                        return checked
+                                                                            ? field.onChange([
+                                                                                ...field.value,
+                                                                                item.id,
+                                                                            ])
+                                                                            : field.onChange(
+                                                                                field.value?.filter(
+                                                                                    (value: any) => value !== item.id
+                                                                                )
+                                                                            )
+                                                                    }}
+                                                                />
+                                                            </FormControl>
+                                                            <FormLabel className='font-normal'>
+                                                                {item.label}
+                                                            </FormLabel>
+                                                        </FormItem>
+                                                    )
+                                                }}
+                                            />
+                                        ))}
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
                             <Button
                                 type='submit'
