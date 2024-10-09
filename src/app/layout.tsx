@@ -2,16 +2,12 @@ import type { Metadata } from 'next'
 import { Bai_Jamjuree as FontSans } from 'next/font/google'
 import './globals.css'
 import 'react-toastify/dist/ReactToastify.css'
-
 import { cn } from '@/lib/utils'
-
 import { headers } from 'next/headers'
-
 import { cookieToInitialState } from 'wagmi'
 import Providers from '@/lib/providers'
 import { config } from '@/lib/wagmi'
 import AppKitProvider from '@/lib/providers'
-
 
 const fontSans = FontSans({
 	subsets: ['latin'],
@@ -20,12 +16,14 @@ const fontSans = FontSans({
 })
 export const metadata: Metadata = {
 	title: 'Studio | MyriadFlow',
-	description: 'Bring your brand to the future! MyriadFlow Studio empowers you to launch and manage brands, collections, and phygital NFTs with WebXR experiences – all without coding.',
+	description:
+		'Bring your brand to the future! MyriadFlow Studio empowers you to launch and manage brands, collections, and phygital NFTs with WebXR experiences – all without coding.',
 	openGraph: {
 		type: 'website',
 		url: 'https://studio.myriadflow.com',
 		title: 'Studio | MyriadFlow',
-		description: 'Bring your brand to the future! MyriadFlow Studio empowers you to launch and manage brands, collections, and phygital NFTs with WebXR experiences – all without coding.',
+		description:
+			'Bring your brand to the future! MyriadFlow Studio empowers you to launch and manage brands, collections, and phygital NFTs with WebXR experiences – all without coding.',
 		images: [
 			{
 				url: '/metaimg.png',
@@ -39,7 +37,8 @@ export const metadata: Metadata = {
 		card: 'summary_large_image',
 		site: '@MyriadFlow',
 		title: 'Studio | MyriadFlow',
-		description: 'Bring your brand to the future! MyriadFlow Studio empowers you to launch and manage brands, collections, and phygital NFTs with WebXR experiences – all without coding.',
+		description:
+			'Bring your brand to the future! MyriadFlow Studio empowers you to launch and manage brands, collections, and phygital NFTs with WebXR experiences – all without coding.',
 		images: [
 			{
 				url: '/metaimg.png',
@@ -66,7 +65,9 @@ export default function RootLayout({
 						fontSans.variable
 					)}
 				>
-				<AppKitProvider  initialState={initialState}>{children}</AppKitProvider >
+					<AppKitProvider initialState={initialState}>
+						{children}
+					</AppKitProvider>
 				</body>
 			</Providers>
 		</html>
