@@ -54,6 +54,9 @@ const formSchema = z.object({
     // .refine((value) => value.some((item) => item), {
     //     message: 'You have to select at least one category.',
     // }),
+    additional_info: z
+        .string()
+        .min(2, { message: 'Collection Information must be at least 2 characters' }),
 })
 
 
@@ -172,6 +175,8 @@ export default function CreateCollection() {
             cover_image: '',
             chaintype_id: '',
             category: [],
+            additional_info:'',
+
         },
     })
 
@@ -205,6 +210,7 @@ export default function CreateCollection() {
                             brand_id: BrandId,
                             name: values.name,
                             category: { data: values.category },
+                            additional_info: values.additional_info,
                             description: values.description,
                             logo_image: values.logo_image,
                             cover_image: values.cover_image,
@@ -454,6 +460,29 @@ export default function CreateCollection() {
                                                 }}
                                             />
                                         ))}
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                name='additional_info'
+                                control={form.control}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className='text-xl font-semibold mb-4'>
+                                            Collection Information for AI *
+                                        </FormLabel>
+                                        <FormDescription className='text-lg font-semibold'>
+                                            Fill this field if you want to create an AI-powered brand ambassador
+                                        </FormDescription>
+                                        <FormControl>
+                                            <Textarea
+                                                className='border-0 bg-[#0000001A] text-lg'
+                                                placeholder='Give as much information as possible about your collection. Anything you want the AI avatar to know and share with your customers. '
+                                                {...field}
+                                            />
+                                        </FormControl>
                                         <FormMessage />
                                     </FormItem>
                                 )}

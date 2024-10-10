@@ -30,7 +30,7 @@ export default function Congratulations() {
 				</Link>
 				<a href={`https://discover.myriadflow.com/nfts/${PhygitalId}`} target="_blank" rel="noopener noreferrer">
 					<Button className="w-fit bg-[#30D8FF] hover:text-white rounded-full text-black text-2xl">
-						View On Discover
+						View the Phygital
 					</Button>
 				</a>
 
