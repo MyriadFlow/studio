@@ -9,9 +9,9 @@ export const projectId = "c26b357532f63f7ba31efebac88d0eed"
 if (!projectId) throw new Error('Project ID is not defined')
 
 export const metadata = {
-  name: 'AppKit',
-  description: 'AppKit Example',
-  url: 'https://web3modal.com', // origin must match your domain & subdomain
+  name: 'Myriadflow',
+  description: 'Myriadflow',
+  url: 'https://studio.myriadflow.com/', // Origin must match your domain & subdomain
   icons: ['https://avatars.githubusercontent.com/u/37784886']
 }
 
