@@ -156,7 +156,7 @@ export default function Home() {
 									<w3m-button />
 								</div>
 								<Link
-									href='https://studio.myriadflow.com'
+									href='/create-brand'
 									target='_blank'
 									className="px-10 py-2 rounded-[30px] font-bold text-black bg-[#30D8FF]"
 								>
