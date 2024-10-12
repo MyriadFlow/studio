@@ -132,210 +132,209 @@ export default function Home() {
 	return (
 		<>
 			<Navbar />
-			<main className='flex-col flex text-black text-center gap-12 justify-center relative'>
-				<ToastContainer />
-				{/* <Image
-          src='/images/blob-3.png'
-          alt='blob'
-          height={350}
-          width={350}
-          className='absolute top-0 right-0'
-        /> */}
-				{hasAddress ? (
-					<div className='p-8'>
-						<div className='absolute top-0 right-0 mt-10 mr-8'>
-							<Link href='/create-brand'>
-								<Button className='bg-[#30D8FF] rounded-full hover:text-white text-black'>
-									Create Brand
-								</Button>
-							</Link>
-						</div>
-						{brands.length == 0 && (
-							<div className='flex-col flex text-black text-center gap-12 justify-center relative mt-32'>
-								<h1 className='text-6xl font-bold mb-6 uppercase'>
-									Myriadflow studio
-								</h1>
-								<h2 className='text-3xl '>
-									<span className='inline-block'>
-										Welcome to MyriadFlow Studio, your one-stop shop for
-										creating groundbreaking phygital NFTs!
-									</span>
-								</h2>
-								<div className='flex flex-col gap-14 justify-center items-center text-xl'>
-									<p>
-										You have not created any brands yet. Ready to start your
-										journey?
-									</p>
-									<Link href='/create-brand'>
-										<Button className='bg-[#30D8FF] rounded-full hover:text-white text-black'>
-											Create Brand
-										</Button>
-									</Link>
-								</div>
+			<div>
+				<div className='flex flex-col md:flex-row h-screen bg-white relative'>
+					<div className='w-full md:w-1/2 h-full px-8 md:px-16 flex flex-col justify-center items-center'>
+						<div className='max-w-md'>
+							<h1 className='text-4xl md:text-7xl font-bold mb-4'>
+								<span className="bg-gradient-to-l from-[#50B7F9] to-[#D32CE0] text-transparent bg-clip-text">
+									MyriadFlow
+								</span>
+								<br />
+								<span className="bg-gradient-to-l from-[#50B7F9] to-[#D32CE0] text-transparent bg-clip-text">
+									Studio
+								</span>
+							</h1>
+							<div className='text-3xl md:text-5xl font-thin mt-4 md:mt-10 text-black' style={{ fontFamily: 'Bai Jamjuree, sans-serif' }}>
+								Launch phygitals &<br />virtual experiences
 							</div>
-						)}
-						{showForm && (
-							<div
-								className='fixed inset-0 bg-white bg-opacity-10 backdrop-blur-sm z-50 flex items-center justify-center'
-								style={{
-									boxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
-									WebkitBoxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
-									MozBoxShadow: '0px 4px 4px rgba(0, 0, 0, 0.25)',
-								}}
-							>
-								<div className='bg-white rounded-lg p-6 max-w-md w-full text-center'>
-									<h2
-										className='text-3xl mb-4'
-										style={{
-											background:
-												'linear-gradient(90deg, #30D8FF 0%, #5B0292 100%)',
-											backgroundClip: 'text',
-											color: 'transparent',
-											fontFamily: 'Bai Jamjuree, sans-serif',
-										}}
-									>
-										You&apos;re almost ready!
-									</h2>
-									<h2
-										style={{
-											fontFamily: 'Bai Jamjuree, sans-serif',
-											fontWeight: 300,
-											fontSize: '15px',
-											lineHeight: '27.5px',
-											textAlign: 'center',
-											color: 'black',
-										}}
-									>
-										Choose a public display name and share your email address to
-										sign up with MyriadFlow.
-									</h2>
-
-									<input
-										type='text'
-										placeholder='Display Name'
-										value={displayName}
-										onChange={(e) => setDisplayName(e.target.value)}
-										className='w-full p-2 mb-2 rounded-lg border border-gray-300 mt-4'
-										required
-									/>
-									<input
-										type='email'
-										placeholder='Email Address'
-										value={email}
-										onChange={(e) => setEmail(e.target.value)}
-										className='w-full p-2 mb-2 rounded-md border border-gray-300'
-										required
-									/>
-									<div className='mb-4 flex items-center mt-4'>
-										<input
-											type='checkbox'
-											id='tos'
-											checked={tosChecked}
-											onChange={(e) => setTosChecked(e.target.checked)}
-											className='mr-2 -mt-4'
-											required
-										/>
-										<label htmlFor='tos' className='text-sm'>
-											I have read and accept the{' '}
-											<a href='#' className='text-blue-500'>
-												Terms of Service
-											</a>{' '}
-											and confirm that I am at least 18 years old.
-										</label>
-									</div>
-									<div className='mb-6 flex items-center'>
-										<input
-											type='checkbox'
-											id='newsletter'
-											checked={newsletterChecked}
-											onChange={(e) => setNewsletterChecked(e.target.checked)}
-											className='mr-2 -mt-4'
-										/>
-										<label htmlFor='newsletter' className='text-sm'>
-											I want to stay up-to-date and receive announcements and
-											news from MyriadFlow.
-										</label>
-									</div>
-									<button
-										onClick={handleSubmit}
-										className={`w-full py-2 rounded-md text-black ${
-											tosChecked && displayName && email
-												? 'bg-[#30D8FF]'
-												: 'bg-gray-300 cursor-not-allowed'
-										}`}
-										disabled={!tosChecked || !displayName || !email}
-									>
-										Finish Sign-Up
-									</button>
-									<button
-										onClick={() => setShowForm(false)}
-										className='w-full py-2 mt-2 rounded-md border border-gray-300 bg-white text-black'
-									>
-										Disconnect
-									</button>
-								</div>
-							</div>
-						)}
-						<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6'>
-							{brands.map((brand) => (
-								// <a key={brand.id} href={`/nfts/${brand.id}`}>
-								<div className='shadow-lg rounded-lg p-6' key={brand.id}>
-									<img
-										src={`https://nftstorage.link/${brand.logo_image.replace(
-											'ipfs://',
-											'ipfs/'
-										)}`}
-										alt={brand.name}
-										className='mb-4'
-									/>
-									<h3 className='text-xl font-bold'>{brand.name}</h3>
-									<p className='text-gray-700'>{brand.description}</p>
-								</div>
-								// </a>
-							))}
-						</div>
-					</div>
-				) : (
-					<div className='h-screen flex-col flex text-black text-center gap-12 justify-center relative -mt-14'>
-						<h1 className='text-6xl font-bold mb-6 uppercase'>
-							Myriadflow studio
-						</h1>
-						<h2 className='text-2xl '>
-							<span className='inline-block'>
-								Welcome to MyriadFlow Studio, your one-stop shop for creating
-								groundbreaking phygital NFTs!
-							</span>
-						</h2>
-						<div className='flex flex-col gap-14 justify-center items-center'>
-							<p>
-								You have not created any brands yet. Ready to start your
-								journey?
+							<p className="text-xl text-black mt-4 mb-8">
+								No coding knowledge needed.
 							</p>
-							<button
-								className='bg-[#30D8FF] rounded-full text-black p-4'
-								onClick={ifConnected}
-							>
-								Start Your Journey
-							</button>
+							<div className='flex flex-col md:flex-row gap-6 mt-6 md:mt-28'>
+								<div className="relative inline-block">
+									<w3m-button />
+								</div>
+								<Link
+									href='https://studio.myriadflow.com'
+									target='_blank'
+									className="px-10 py-2 rounded-[30px] font-bold text-black bg-[#30D8FF]"
+								>
+									Create Brand
+								</Link>
+							</div>
 						</div>
 					</div>
-				)}
-				{/* <Image
-          src='/images/blob-2.png'
-          alt='blob'
-          height={350}
-          width={350}
-          className='absolute bottom-18 left-0'
-        />
-        <Image
-          src='/images/blob-1.png'
-          alt='blob'
-          height={350}
-          width={350}
-          className='absolute bottom-0 left-0'
-        /> */}
-				<Footer />
-			</main>
+
+					<div className='w-full md:w-1/2 h-full relative flex items-center justify-center'>
+						<Image
+							src='/images/hero_background.png'
+							alt='Hero Background'
+							layout='fill'
+							objectFit='cover'
+						/>
+						<div className='absolute bottom-4 text-2xl p-12 left-8 right-8 text-black md:mb-10 text-left'
+							style={{
+								fontFamily: 'Bai Jamjuree, sans-serif',
+							}}>
+							Welcome to MyriadFlow Studio, your one-stop shop for creating groundbreaking phygital NFTs. Ready to take off to the next level?
+						</div>
+					</div>
+				</div>
+				<div
+					className='bg-black py-4 md:py-6 text-center'
+				>
+					<h2 className='text-2xl md:text-4xl font-bold bg-gradient-to-r from-[#F45EC1] to-[#4EB9F3] text-transparent bg-clip-text'>
+						Launch Your NFT Experiences.
+					</h2>
+				</div>
+
+
+				<div className='bg-white py-16 px-8 md:px-16'>
+					<div className='max-w-7xl mx-auto'>
+						<div className='flex flex-col md:flex-row items-center justify-between mb-16'>
+							<div className='md:w-1/2 mb-8 md:mb-0 flex items-center'>
+								<h2 className='text-2xl md:text-3xl font-medium text-black mr-8' style={{ fontFamily: 'Bai Jamjuree, sans-serif' }}>
+									Sell & showcase<br />your products as<br />phygital NFTs
+								</h2>
+								<div className='relative' style={{ width: '300px', height: '300px' }}>
+									<img
+										src='/images/discover_cover.png'
+										alt='Discover Cover'
+										className='absolute w-full h-full object-cover'
+										style={{
+											borderRadius: '20px 0 0 0',
+										}}
+									/>
+								</div>
+							</div>
+							<div className='text-4xl font-bold text-black pr-10'>+</div>
+							<div className='md:w-1/2 flex items-center'>
+								<h2 className='text-2xl md:text-3xl font-medium text-black mr-8' style={{ fontFamily: 'Bai Jamjuree, sans-serif' }}>
+									Captivate your<br />customers with<br />virtual experiences
+								</h2>
+								<div className='relative' style={{ width: '276px', height: '300px' }}>
+									<img
+										src='/images/webxr_cover.png'
+										alt='WebXR Cover'
+										className='absolute w-full h-full object-cover'
+										style={{
+											borderRadius: '20px 0 0 0',
+										}}
+									/>
+								</div>
+							</div>
+						</div>
+
+						<div className='text-center'>
+							<p className='text-3xl mb-2 text-black' style={{ fontFamily: 'Bai Jamjuree, sans-serif' }}>
+								<span className='font-bold'>Already launched your brand?</span> Go to <a href="#" className='underline'>my Brand</a> page.
+							</p>
+							<br></br>
+							<p className='text-4xl font-bold mb-2 text-black'>OR</p>
+							<br></br>
+							<p className='text-3xl text-black' style={{ fontFamily: 'Bai Jamjuree, sans-serif' }}>
+								<span className='font-bold'>Just getting started?</span> Choose the correct alternative.
+							</p>
+						</div>
+					</div>
+				</div>
+
+				<div className='bg-white py-16 px-8 md:px-16'>
+					<div className='max-w-6xl mx-auto'>
+						<div className='flex flex-col md:flex-row justify-between'>
+							{/* Left side - Premium Brand */}
+							<div className='md:w-[48%] relative mb-8 md:mb-0'>
+								<div className='flex justify-center items-center'>
+									<div className='bg-[#30D8FF] text-black text-2xl border border-black  px-4 py-2 rounded-full inline-block mb-4'>
+										Premium Brand
+									</div>
+								</div>
+								<br></br>
+								<ul className='list-disc list-inside mb-4 text-black'>
+									<li>99 USD / month</li>
+									<li>Access to all our premium features</li>
+									<li>AR and 3D models</li>
+									<li>Verified NFT Brand communities</li>
+									<li>Showcase on Discover page</li>
+								</ul>
+								<br></br>
+								<div className='bg-[#30D8FF] text-black text-xl  rounded-xl border border-black p-8 pt-12 relative'>
+									<h3 className='text-2xl font-bold mb-4'>Premium Brand</h3>
+									<p className='mb-4 italic'>For established brands looking for the best tools and experience.</p>
+
+									<p className='mb-4'>Select this option if you meet the criteria to be featured as a premium brand or creator on MyriadFlow's main Discover marketplace.</p>
+									<p className='mb-4'>Premium brands are established brands with a significant following and client base, using certified factories and quality standards.</p>
+									<p className='mb-4'>Premium brands enjoy enhanced visibility and access to exclusive tools designed for established creators and brands.</p>
+									<div className="flex justify-center items-center">
+										<button className='bg-white text-black text-2xl  border border-black px-6 py-2 rounded-full'>Join Now</button>
+									</div>
+									<img
+										src='/images/collection.png'
+										alt='Collection'
+										className='absolute -top-20 -right-12 w-40 h-40 object-cover rounded-[50px]'
+									/>
+									<img
+										src='/images/golden_tablet.png'
+										alt='Golden Tablet'
+										className='absolute -bottom-20 -left-10 w-40 h-40 object-cover rounded-[20px]' />
+								</div>
+							</div>
+
+
+							<div className='md:w-[48%] relative'>
+								<div className='flex justify-center items-center'>
+									<div className='bg-[#30D8FF4D] text-black text-2xl border border-black  px-4 py-2 rounded-full inline-block mb-4'>
+										Elevate Program
+									</div>
+								</div>
+								<br></br>
+								<ul className='list-disc list-inside mb-4 text-black '>
+									<li>No upfront costs</li>
+									<li>Sponsored base themes</li>
+									<li>Sponsored transactions for launching collections</li>
+									<li>Showcase on Elevate page</li>
+								</ul>
+								<br></br>
+								<br></br>
+
+								<div className='bg-[#E0F7FA] text-black rounded-xl text-xl border border-black p-8 pt-12 relative'>
+									<h3 className='text-2xl font-bold mb-4'>Elevate Program</h3>
+									<p className='mb-4 italic'>For emerging brands & creators Starting in Africa.</p>
+
+									<p className='mb-4'>Choose this option if you are an emerging creator or grassroots brand seeking to leverage our platform's unique features.</p>
+									<p className='mb-4'>You will benefit from sponsored Basenames and incur no upfront costs to launch your phygital NFTs and virtual brand ambassadors.</p>
+									<p className='mb-4'>As your brand develops and gains traction, you'll have the opportunity to transition into the premium category and be showcased on our main page.</p>
+									<div className="flex justify-center items-center">
+										<button className='bg-white  text-black text-2xl border border-black px-6 py-2 rounded-full mt-8'>Join Now</button>
+									</div>
+									<img
+										src='/images/dress_web.png'
+										alt='Dress Web'
+										className='absolute -top-20 -right-10 w-40 h-40 object-cover rounded-[50px]'
+									/>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div className='bg-white py-16 px-8 md:px-16 text-black text-left pt-24'>
+					<div className='max-w-6xl mx-auto'>
+						<h2 className='text-5xl font-bold mb-8 text-black' style={{ fontFamily: 'Bai Jamjuree, sans-serif' }}>
+							Want to find out more?
+						</h2>
+						<p className='text-xl mb-4 text-black' style={{ fontFamily: 'Bai Jamjuree, sans-serif' }}>
+							<a href="#" className='underline'>Click here</a> for more details about the requirements.
+						</p>
+						<p className='text-xl text-black' style={{ fontFamily: 'Bai Jamjuree, sans-serif' }}>
+							Or <a href="#" className='underline'>contact us</a>. We would love to hear from you!
+						</p>
+					</div>
+				</div>
+
+			</div >
+			<Footer />
 		</>
 	)
 }
