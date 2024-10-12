@@ -263,7 +263,7 @@ export default function Home() {
 									<h3 className='text-2xl font-bold mb-4'>Premium Brand</h3>
 									<p className='mb-4 italic'>For established brands looking for the best tools and experience.</p>
 
-									<p className='mb-4'>Select this option if you meet the criteria to be featured as a premium brand or creator on MyriadFlow's main Discover marketplace.</p>
+									<p className='mb-4'>Select this option if you meet the criteria to be featured as a premium brand or creator on MyriadFlow&apos;s main Discover marketplace.</p>
 									<p className='mb-4'>Premium brands are established brands with a significant following and client base, using certified factories and quality standards.</p>
 									<p className='mb-4'>Premium brands enjoy enhanced visibility and access to exclusive tools designed for established creators and brands.</p>
 									<div className="flex justify-center items-center">
@@ -302,9 +302,9 @@ export default function Home() {
 									<h3 className='text-2xl font-bold mb-4'>Elevate Program</h3>
 									<p className='mb-4 italic'>For emerging brands & creators Starting in Africa.</p>
 
-									<p className='mb-4'>Choose this option if you are an emerging creator or grassroots brand seeking to leverage our platform's unique features.</p>
+									<p className='mb-4'>Choose this option if you are an emerging creator or grassroots brand seeking to leverage our platform&apos;s unique features.</p>
 									<p className='mb-4'>You will benefit from sponsored Basenames and incur no upfront costs to launch your phygital NFTs and virtual brand ambassadors.</p>
-									<p className='mb-4'>As your brand develops and gains traction, you'll have the opportunity to transition into the premium category and be showcased on our main page.</p>
+									<p className='mb-4'>As your brand develops and gains traction, you&apos;ll have the opportunity to transition into the premium category and be showcased on our main page.</p>
 									<div className="flex justify-center items-center">
 										<button className='bg-white  text-black text-2xl border border-black px-6 py-2 rounded-full mt-8'>Join Now</button>
 									</div>
