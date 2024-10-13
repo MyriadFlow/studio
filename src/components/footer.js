@@ -1,5 +1,5 @@
 import React from 'react';
-import Link from 'next/link'; 
+import Link from 'next/link';
 
 const Footer = () => {
   return (
@@ -16,17 +16,20 @@ const Footer = () => {
                 style={{ marginBottom: '20px' }}
               />
             </Link>
-            <p style={{ color: 'white', maxWidth: '350px', fontSize: '19px' }}>
-            Revolutionary platform for exploring and launching NFT Xperiences.
+            <p style={{ color: 'white', maxWidth: '350px', fontSize: '14px' }}>
+              Innovative next-gen platform for exploring and launching NFT Xperiences with AI-powered brand ambassadors and no-code tools.
             </p>
-            <p style={{ marginTop: '30px', color: 'white', fontSize: '15px' }}>
+            <p style={{ marginTop: '30px', color: 'white', fontSize: '14px' }}>
               © Copyright 2024 MyriadFlow. All rights reserved
             </p>
           </div>
 
           <div className="links" style={{ textAlign: 'left', color: 'white', fontSize: '14px' }}>
             <h3 className='text-2xl font-semibold'>About</h3>
-            <Link href="/MyriadFlow_Terms_of_Service.pdf" target="_blank" style={{ color: 'white', textDecoration: 'none', display: 'block', marginTop: '28px' , fontSize: '15px'}}>
+            <Link href="https://discover.myriadflow.com/guide" target="_blank" style={{ color: 'white', textDecoration: 'none', display: 'block', marginTop: '28px', fontSize: '15px' }}>
+              Guide
+            </Link>
+            <Link href="/MyriadFlow_Terms_of_Service.pdf" target="_blank" style={{ color: 'white', textDecoration: 'none', display: 'block' }}>
               Terms of Service
             </Link>
             <Link href="/MyriadFlow_Creator_Terms_and_Conditions.pdf" target="_blank" style={{ color: 'white', textDecoration: 'none', display: 'block' }}>
@@ -42,13 +45,13 @@ const Footer = () => {
 
           <div className="platform" style={{ textAlign: 'left', color: 'white', fontSize: '14px' }}>
             <h3 className='text-2xl font-semibold'>Platform</h3>
-            <Link href="https://studio.myriadflow.com" style={{ color: 'white', textDecoration: 'none', display: 'block', marginTop: '28px' ,fontSize: '15px' }}>
+            <Link href="https://studio.myriadflow.com" style={{ color: 'white', textDecoration: 'none', display: 'block', marginTop: '28px', fontSize: '15px' }}>
               Studio
             </Link>
             <Link href="https://discover.myriadflow.com" style={{ color: 'white', textDecoration: 'none', display: 'block' }}>
               Discover
             </Link>
-            <Link href="https://webxr.myriadflow.com" style={{ color: 'white', textDecoration: 'none', display: 'block'}}>
+            <Link href="https://webxr.myriadflow.com" style={{ color: 'white', textDecoration: 'none', display: 'block' }}>
               WebXR
             </Link>
           </div>
