@@ -135,17 +135,17 @@ export default function Home() {
 			<Navbar />
 			<div>
 				<div className='flex flex-col md:flex-row h-screen bg-white relative'>
-					<div className='w-full md:w-1/2 h-full px-8 md:px-16 flex flex-col mt-16'>
+					<div className='w-full md:w-1/2 h-full px-8 md:px-16 flex flex-col mt-20 mx-16'>
 							<div className='text-4xl md:text-8xl font-bold mb-4 bg-gradient-to-l from-[#50B7F9] to-[#D32CE0] text-transparent bg-clip-text'>
-								MyriadFlow Studio
+								MyriadFlow <br/> Studio
 							</div>
-							<div className='text-3xl md:text-5xl font-thin mt-4 md:mt-10 text-black'>
+							<div className='text-3xl md:text-6xl font-thin mt-4 md:mt-10 text-black'>
 								Launch phygitals &<br />virtual experiences
 							</div>
-							<p className="text-xl text-black mt-4">
+							<p className="text-2xl text-black mt-4">
 								No coding knowledge needed.
 							</p>
-							<div className='flex flex-col md:flex-row gap-6 mt-6 md:mt-24'>
+							<div className='flex flex-col md:flex-row gap-6 mt-6 md:mt-18'>
 								<div className="relative inline-block">
 									<w3m-button />
 								</div>
