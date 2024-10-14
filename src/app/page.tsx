@@ -135,24 +135,17 @@ export default function Home() {
 			<Navbar />
 			<div>
 				<div className='flex flex-col md:flex-row h-screen bg-white relative'>
-					<div className='w-full md:w-1/2 h-full px-8 md:px-16 flex flex-col justify-center items-center'>
-						<div className='max-w-md'>
-							<h1 className='text-4xl md:text-7xl font-bold mb-4'>
-								<span className="bg-gradient-to-l from-[#50B7F9] to-[#D32CE0] text-transparent bg-clip-text">
-									MyriadFlow
-								</span>
-								<br />
-								<span className="bg-gradient-to-l from-[#50B7F9] to-[#D32CE0] text-transparent bg-clip-text">
-									Studio
-								</span>
-							</h1>
-							<div className='text-3xl md:text-5xl font-thin mt-4 md:mt-10 text-black' style={{ fontFamily: 'Bai Jamjuree, sans-serif' }}>
+					<div className='w-full md:w-1/2 h-full px-8 md:px-16 flex flex-col mt-16'>
+							<div className='text-4xl md:text-8xl font-bold mb-4 bg-gradient-to-l from-[#50B7F9] to-[#D32CE0] text-transparent bg-clip-text'>
+								MyriadFlow Studio
+							</div>
+							<div className='text-3xl md:text-5xl font-thin mt-4 md:mt-10 text-black'>
 								Launch phygitals &<br />virtual experiences
 							</div>
-							<p className="text-xl text-black mt-4 mb-8">
+							<p className="text-xl text-black mt-4">
 								No coding knowledge needed.
 							</p>
-							<div className='flex flex-col md:flex-row gap-6 mt-6 md:mt-28'>
+							<div className='flex flex-col md:flex-row gap-6 mt-6 md:mt-24'>
 								<div className="relative inline-block">
 									<w3m-button />
 								</div>
@@ -163,7 +156,6 @@ export default function Home() {
 									Create Brand
 								</Link>
 							</div>
-						</div>
 					</div>
 
 					<div className='w-full md:w-1/2 h-full relative flex items-center justify-center'>
