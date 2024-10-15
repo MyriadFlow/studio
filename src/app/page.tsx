@@ -134,38 +134,37 @@ export default function Home() {
 		<>
 			<Navbar />
 			<div>
-				<div className='flex flex-col md:flex-row h-screen bg-white relative'>
-					<div className='w-full md:w-1/2 h-full px-8 md:px-16 flex flex-col mt-20 mx-16'>
-							<div className='text-4xl md:text-8xl font-bold mb-4 bg-gradient-to-l from-[#50B7F9] to-[#D32CE0] text-transparent bg-clip-text'>
-								MyriadFlow <br/> Studio
+				<div className='flex flex-col md:flex-row h-screen bg-white relative -mt-20'>
+					<div className='w-full md:w-1/2 h-full px-8 md:px-16 flex flex-col mt-48'>
+						<div className='text-4xl md:text-7xl font-bold mb-4 bg-gradient-to-l from-[#50B7F9] to-[#D32CE0] text-transparent bg-clip-text'>
+							MyriadFlow <br /> Studio
+						</div>
+						<div className='text-3xl md:text-5xl font-thin mt-4 md:mt-6'>
+							Launch phygitals &<br />virtual experiences
+						</div>
+						<p className="text-xl text-black mt-4">
+							No coding knowledge needed.
+						</p>
+						<div className='flex flex-col md:flex-row gap-6 mt-6 md:mt-20'>
+							<div className="relative inline-block">
+								<w3m-button />
 							</div>
-							<div className='text-3xl md:text-6xl font-thin mt-4 md:mt-10 text-black'>
-								Launch phygitals &<br />virtual experiences
-							</div>
-							<p className="text-2xl text-black mt-4">
-								No coding knowledge needed.
-							</p>
-							<div className='flex flex-col md:flex-row gap-6 mt-6 md:mt-18'>
-								<div className="relative inline-block">
-									<w3m-button />
-								</div>
-								<Link
-									href='/create-brand'
-									className="px-10 py-2 rounded-[30px] font-bold text-black bg-[#30D8FF]"
-								>
-									Create Brand
-								</Link>
-							</div>
+							<Link
+								href='/create-brand'
+								className="px-10 py-2 rounded-[30px] font-bold text-black bg-[#30D8FF]"
+							>
+								Create Brand
+							</Link>
+						</div>
 					</div>
 
-					<div className='w-full md:w-1/2 h-full relative flex items-center justify-center'>
-						<Image
+					<div className='w-full md:w-1/2 h-full relative flex items-center justify-center mt-10'>
+						<img
 							src='/images/hero_background.png'
 							alt='Hero Background'
-							layout='fill'
-							objectFit='cover'
+							className="h-[91%] w-[100%] object-cover"
 						/>
-						<div className='absolute bottom-4 text-2xl p-12 left-8 right-8 text-black md:mb-10 text-left'
+						<div className='absolute bottom-4 text-2xl p-12 left-8 right-8 text-black text-left'
 							style={{
 								fontFamily: 'Bai Jamjuree, sans-serif',
 							}}>
@@ -174,7 +173,7 @@ export default function Home() {
 					</div>
 				</div>
 				<div
-					className='bg-black py-4 md:py-6 text-center'
+					className='bg-black py-4 md:py-6 text-center mt-2'
 				>
 					<h2 className='text-2xl md:text-4xl font-bold bg-gradient-to-r from-[#F45EC1] to-[#4EB9F3] text-transparent bg-clip-text'>
 						Launch Your NFT Experiences.
