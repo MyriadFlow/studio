@@ -135,7 +135,7 @@ export default function Home() {
 			<Navbar />
 			<div>
 				<div className='flex flex-col md:flex-row h-screen bg-white relative -mt-20'>
-					<div className='w-full md:w-1/2 h-full px-8 md:px-16 flex flex-col mt-48'>
+					<div className='w-full md:w-1/2 h-full px-8 md:px-16 flex flex-col mt-60'>
 						<div className='text-4xl md:text-7xl font-bold mb-4 bg-gradient-to-l from-[#50B7F9] to-[#D32CE0] text-transparent bg-clip-text'>
 							MyriadFlow <br /> Studio
 						</div>
