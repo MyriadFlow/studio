@@ -82,8 +82,8 @@ export const Navbar = () => {
 	const navlinks = [
 		{ title: 'Home', path: 'https://myriadflow.com' },
 		{ title: 'Discover', path: 'https://discover.myriadflow.com' },
-		{ title: 'Studio', path: 'https://studio.myriadflow.com' },
 		{ title: 'WebXR', path: 'https://webxr.myriadflow.com' },
+		{ title: 'Studio', path: 'https://studio.myriadflow.com' },
 	]
 
 	const Notification = () => {
@@ -110,8 +110,18 @@ export const Navbar = () => {
 				</a>
 				<NavigationMenuList className='flex gap-8 items-center text-white text-lg'>
 					{navlinks.map((link, index) => (
-						<Link href={link.path} key={index}>
-							<NavigationMenuItem>{link.title}</NavigationMenuItem>
+						<Link href={link.path} key={index} target={link.title === 'Home' ? '_blank' : undefined}>
+							<NavigationMenuItem>
+								{link.title}
+								{link.title === 'Home' && (
+									<img
+										src={'/images/whitearrow.png'}
+										alt='Arrow'
+										className='inline-block ml-1'
+										style={{ width: '12px', height: '12px' }}
+									/>
+								)}
+							</NavigationMenuItem>
 						</Link>
 					))}
 					<div className=' flex' style={{ gap: '20px', marginRight: '80px' }}>
