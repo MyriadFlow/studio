@@ -158,11 +158,11 @@ export default function Home() {
 						</div>
 					</div>
 
-					<div className='w-full md:w-1/2 h-full relative flex items-center justify-center mt-10'>
+					<div className='w-full md:w-1/2 h-full relative flex items-center justify-center mt-8'>
 						<img
 							src='/images/hero_background.png'
 							alt='Hero Background'
-							className="h-[91%] w-[100%] object-cover"
+							className="h-[98%] w-[100%] object-cover"
 						/>
 						<div className='absolute bottom-4 text-2xl p-12 left-8 right-8 text-black text-left'
 							style={{
@@ -173,7 +173,7 @@ export default function Home() {
 					</div>
 				</div>
 				<div
-					className='bg-black py-4 md:py-6 text-center mt-2'
+					className='bg-black py-4 md:py-6 text-center mt-6'
 				>
 					<h2 className='text-2xl md:text-4xl font-bold bg-gradient-to-r from-[#F45EC1] to-[#4EB9F3] text-transparent bg-clip-text'>
 						Launch Your NFT Experiences.
