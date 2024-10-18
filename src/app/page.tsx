@@ -258,7 +258,9 @@ export default function Home() {
 									<p className='mb-4'>Premium brands are established brands with a significant following and client base, using certified factories and quality standards.</p>
 									<p className='mb-4'>Premium brands enjoy enhanced visibility and access to exclusive tools designed for established creators and brands.</p>
 									<div className="flex justify-center items-center">
-										<button className='bg-white text-black text-2xl  border border-black px-6 py-2 rounded-full'>Join Now</button>
+										<Link href="https://discover.myriadflow.com/elevateform">
+											<button className='bg-white text-black text-2xl  border border-black px-6 py-2 rounded-full'>Join Now</button>
+										</Link>
 									</div>
 									<img
 										src='/images/collection.png'
@@ -297,7 +299,9 @@ export default function Home() {
 									<p className='mb-4'>You will benefit from sponsored Basenames and incur no upfront costs to launch your phygital NFTs and virtual brand ambassadors.</p>
 									<p className='mb-4'>As your brand develops and gains traction, you&apos;ll have the opportunity to transition into the premium category and be showcased on our main page.</p>
 									<div className="flex justify-center items-center">
-										<button className='bg-white  text-black text-2xl border border-black px-6 py-2 rounded-full mt-8'>Join Now</button>
+										<Link href="https://discover.myriadflow.com/elevateform">
+											<button className='bg-white  text-black text-2xl border border-black px-6 py-2 rounded-full mt-8'>Join Now</button>
+										</Link>
 									</div>
 									<img
 										src='/images/dress_web.png'
