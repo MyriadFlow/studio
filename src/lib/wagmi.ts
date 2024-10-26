@@ -3,11 +3,11 @@ import { createStorage, cookieStorage } from 'wagmi'
 import { base } from 'wagmi/chains'
 
 // Get projectId from environment variables
-export const projectId = process.env.NEXT_PUBLIC_PROJECT_ID
+export const projectId ="c26b357532f63f7ba31efebac88d0eed"
 
-if (!projectId) {
-  throw new Error('Project ID is not defined')
-}
+// if (!projectId) {
+//   throw new Error('Project ID is not defined')
+// }
 
 export const metadata = {
   name: 'Myriadflow',
