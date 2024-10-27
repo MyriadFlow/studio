@@ -69,4 +69,4 @@ jobs:
             sudo docker stop studio && sudo docker rm studio && sudo docker rmi studio
             echo ${{ secrets.GHCR_TOKEN }} | sudo docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
             sudo docker pull ghcr.io/myriadflow/studio:prod
-            sudo docker run --name="studio" -p 9080:9080 -d ghcr.io/myriadflow/studio:prod
+            sudo docker run --name="studio" -p 9080:3000 -d ghcr.io/myriadflow/studio:prod
