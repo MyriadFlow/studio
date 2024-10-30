@@ -33,7 +33,7 @@ const formSchema = z.object({
 	name: z.string().min(2, {
 		message: 'Phygital name must be at least 2 characters',
 	}).regex(/^[a-zA-Z0-9\s]*$/, {
-		message: 'Brand name must only contain letters and numbers',
+		message: 'Phygital name must only contain letters and numbers',
 	}),
 	category: z
 		.array(z.string()),

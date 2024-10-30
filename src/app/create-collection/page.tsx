@@ -40,7 +40,7 @@ const formSchema = z.object({
     name: z.string().min(2, {
         message: 'Collection name must be at least 2 characters',
     }).regex(/^[a-zA-Z0-9\s]*$/, {
-        message: 'Brand name must only contain letters and numbers',
+        message: 'Collection name must only contain letters and numbers',
     }),
     description: z
         .string()
