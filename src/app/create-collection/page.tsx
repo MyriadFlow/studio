@@ -38,13 +38,15 @@ const client = new NFTStorage({ token: API_KEY })
 
 const formSchema = z.object({
     name: z.string().min(2, {
-        message: 'Brand name must be at least 2 characters',
+        message: 'Collection name must be at least 2 characters',
+    }).regex(/^[a-zA-Z\s]*$/, {
+        message: 'Collection name must only contain letters',
     }),
     description: z
         .string()
-        .min(2, { message: 'Brand description must be at least 2 characters' })
+        .min(2, { message: 'Collection description must be at least 2 characters' })
         .max(1000, {
-            message: 'Brand description should be less than 1000 words',
+            message: 'Collection description should be less than 1000 words',
         }),
     logo_image: z.string(),
     cover_image: z.string(),

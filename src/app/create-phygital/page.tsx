@@ -32,6 +32,8 @@ const client = new NFTStorage({ token: API_KEY })
 const formSchema = z.object({
 	name: z.string().min(2, {
 		message: 'Phygital name must be at least 2 characters',
+	}).regex(/^[a-zA-Z\s]*$/, {
+		message: 'Phygital name must only contain letters',
 	}),
 	category: z
 		.array(z.string()),
@@ -43,7 +45,7 @@ const formSchema = z.object({
 		.string()
 		.min(2, { message: 'Description must be at least 2 characters' })
 		.max(1000, {
-			message: 'Brand description should be less than 1000 words',
+			message: 'Phygital description should be less than 1000 words',
 		}),
 	price: z.string().min(1, { message: 'Price must be provided' }),
 	quantity: z.string().min(1, { message: 'Quantity must be provided' }),

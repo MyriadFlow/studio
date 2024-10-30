@@ -37,9 +37,13 @@ const API_KEY = process.env.NEXT_PUBLIC_STORAGE_API!
 const client = new NFTStorage({ token: API_KEY })
 
 const formSchema = z.object({
-    name: z.string().min(2, {
-        message: 'Brand name must be at least 2 characters',
-    }),
+    name: z.string()
+        .min(2, {
+            message: 'Brand name must be at least 2 characters',
+        })
+        .regex(/^[a-zA-Z\s]*$/, {
+            message: 'Brand name must only contain letters',
+        }),
     slogan: z.string().min(2, {
         message: 'Slogan name must be at least 2 characters',
     }),
