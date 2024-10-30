@@ -32,8 +32,8 @@ const client = new NFTStorage({ token: API_KEY })
 const formSchema = z.object({
 	name: z.string().min(2, {
 		message: 'Phygital name must be at least 2 characters',
-	}).regex(/^[a-zA-Z\s]*$/, {
-		message: 'Phygital name must only contain letters',
+	}).regex(/^[a-zA-Z0-9\s]*$/, {
+		message: 'Phygital name must only contain letters and numbers',
 	}),
 	category: z
 		.array(z.string()),

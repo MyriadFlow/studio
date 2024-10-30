@@ -41,8 +41,8 @@ const formSchema = z.object({
         .min(2, {
             message: 'Brand name must be at least 2 characters',
         })
-        .regex(/^[a-zA-Z\s]*$/, {
-            message: 'Brand name must only contain letters',
+        .regex(/^[a-zA-Z0-9\s]*$/, {
+            message: 'Brand name must only contain letters and numbers',
         }),
     slogan: z.string().min(2, {
         message: 'Slogan name must be at least 2 characters',
