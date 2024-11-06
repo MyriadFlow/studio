@@ -83,7 +83,7 @@ const formSchema = z.object({
     trade_hub: z.string(),
     payout_address: z.string(),
     chain_id: z.string(),
-    chaintype_id:z.string(),
+    chaintype_id: z.string(),
 })
 
 export default function CreateBrand() {
@@ -375,7 +375,7 @@ export default function CreateBrand() {
                         payout_address: account.address,
                         chain_id: '84532',
                         chaintype_id: chaintype,
-                        elevate_region : elevateRegion,
+                        elevate_region: elevateRegion,
                     }),
                 });
 
@@ -467,6 +467,9 @@ export default function CreateBrand() {
                                                 {...field}
                                             />
                                         </FormControl>
+                                        <FormDescription className='text-lg font-semibold'>
+                                            Your brand page will be available at https://myriadflow.com/brand/brandnameabove
+                                        </FormDescription>
                                         <FormMessage />
                                     </FormItem>
                                 )}
