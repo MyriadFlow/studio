@@ -89,6 +89,16 @@ const formSchema = z.object({
 export default function CreateBrand() {
     const { address: walletAddress } = useAccount()
 
+    useEffect(() => {
+		if (walletAddress) {
+			localStorage.setItem('walletAddress', walletAddress)
+			localStorage.setItem(
+				'BaseSepoliaChain',
+				'554b4903-9a06-4031-98f4-48276c427f78'
+				// '6c736e9b-37e6-43f5-9841-c0ac740282df'
+			)}
+	}, [walletAddress])
+
     const [showForm, setShowForm] = useState(false)
     const handleCheckboxChange = () => {
         setShowForm(!showForm);
@@ -100,6 +110,19 @@ export default function CreateBrand() {
             return
         } else {
             localStorage.setItem("elevateRegion", elevateRegion)
+            if(elevateRegion === 'Africa'){
+                localStorage.setItem(
+                    'BaseSepoliaChain',
+                    // '554b4903-9a06-4031-98f4-48276c427f78'
+                    '6c736e9b-37e6-43f5-9841-c0ac740282df'
+                )
+            }else(
+                localStorage.setItem(
+                    'BaseSepoliaChain',
+                    '554b4903-9a06-4031-98f4-48276c427f78'
+                    // '6c736e9b-37e6-43f5-9841-c0ac740282df'
+                )
+            )
         }
     }
 
@@ -779,7 +802,15 @@ export default function CreateBrand() {
                                         <FormItem>
                                             <FormControl>
                                                 <select
-                                                    className='border-0 bg-[#0000001A] rounded w-full h-10 mt-8'
+                                                    style={{
+                                                        backgroundImage: "url('/choose-down-arrow.png')",
+                                                        backgroundRepeat: "no-repeat",
+                                                        backgroundPosition: "right 1rem center",
+                                                        backgroundSize: "16px 16px",
+                                                        appearance: "none",
+                                                        paddingRight: "2rem"
+                                                    }}
+                                                    className="bg-white rounded w-full h-10 mt-8 border border-black px-4 font-semibold"
                                                     {...field}
                                                 >
                                                     <option value=''>+ Choose</option>

@@ -114,8 +114,8 @@ export default function Home() {
 			localStorage.setItem('walletAddress', walletAddress)
 			localStorage.setItem(
 				'BaseSepoliaChain',
-				// '554b4903-9a06-4031-98f4-48276c427f78'
-				'6c736e9b-37e6-43f5-9841-c0ac740282df'
+				'554b4903-9a06-4031-98f4-48276c427f78'
+				// '6c736e9b-37e6-43f5-9841-c0ac740282df'
 			)
 			setHasAddress(true)
 			getBrands()
