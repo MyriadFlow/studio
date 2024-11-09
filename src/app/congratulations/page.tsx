@@ -40,7 +40,7 @@ export default function Congratulations() {
 						<option value="limited">Limited Edition (ERC-721A)</option>
 					</select>
 					{selectedOption === 'limited' ? (
-						<Link href="/create-collection">
+						<Link href="/create-phygital">
 							<Button className="w-fit bg-[#30D8FF] hover:text-white rounded-full text-black text-2xl ml-20">
 								Continue
 							</Button>
