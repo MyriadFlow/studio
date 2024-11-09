@@ -39,7 +39,7 @@ export default function Congratulations() {
 						<option value="rare">Rare item (ERC-721)</option>
 						<option value="limited">Limited Edition (ERC-721A)</option>
 					</select>
-					{selectedOption === 'rare' ? (
+					{selectedOption === 'limited' ? (
 						<Link href="/create-collection">
 							<Button className="w-fit bg-[#30D8FF] hover:text-white rounded-full text-black text-2xl ml-20">
 								Continue
@@ -48,7 +48,7 @@ export default function Congratulations() {
 					) : (
 						<Button
 							className="w-fit bg-[#30D8FF] hover:text-white rounded-full text-black text-2xl ml-20"
-							disabled={selectedOption !== 'rare'}
+							disabled={selectedOption !== 'limited'}
 						>
 							Continue
 						</Button>
