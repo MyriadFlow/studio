@@ -70,3 +70,20 @@ jobs:
             echo ${{ secrets.GHCR_TOKEN }} | sudo docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
             sudo docker pull ghcr.io/myriadflow/studio:prod
             sudo docker run --name="studio" -p 9080:3000 -d ghcr.io/myriadflow/studio:prod
+
+      - name: Deploy on Developent server
+        if: github.ref == 'refs/heads/main'
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.DEV_REMOTE_SERVER_ADDRESS }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.DEV_REMOTE_SERVER_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            pwd
+            cd ~
+            sudo docker stop studio && sudo docker rm studio && sudo docker rmi ghcr.io/myriadflow/studio:main
+            echo ${{ secrets.GHCR_TOKEN }} | sudo docker login ghcr.io -u ${{ secrets.GHCR_USERNAME }} --password-stdin
+            sudo docker pull ghcr.io/myriadflow/studio:main
+            sudo docker run --name="studio" -p 9080:3000 -d ghcr.io/myriadflow/studio:main
+
