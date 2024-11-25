@@ -160,7 +160,7 @@ export default function Home() {
 
   const heroRightStyle: CSSProperties = {
     width: isMobile ? "100%" : "50%",
-    height: "full",
+    minHeight: "full",
     position: "relative",
     display: "flex",
     alignItems: "center",
@@ -170,7 +170,7 @@ export default function Home() {
   };
 
   const heroImageStyle: CSSProperties = {
-    height: isMobile ? "400px" : "98%",
+    minHeight: isMobile ? "600px" : "98%",
     width: "100%",
     objectFit: "cover",
   };
@@ -185,6 +185,7 @@ export default function Home() {
     color: "black",
     fontSize: isMobile ? "18px" : "24px",
     fontFamily: "Bai Jamjuree, sans-serif",
+    fontWeight: 400,
   };
 
   const featuresStyle: CSSProperties = {
@@ -237,7 +238,7 @@ export default function Home() {
       <div>
         <div style={heroSectionStyle}>
           <div style={heroLeftStyle}>
-            <div className="text-7xl text-center md:text-7xl font-bold mb-4 bg-gradient-to-l from-[#50B7F9] to-[#D32CE0] text-transparent bg-clip-text">
+            <div className="text-5xl lg:text-7xl md:text-6xl text-center lg:text-left font-bold mb-4 bg-gradient-to-l from-[#50B7F9] to-[#D32CE0] text-transparent bg-clip-text">
               MyriadFlow <br /> Studio
             </div>
             <div className="hidden lg:block text-3xl md:text-5xl font-thin mt-4 md:mt-6">
@@ -254,16 +255,23 @@ export default function Home() {
                 gap: "24px",
                 marginTop: isMobile ? "24px" : "80px",
               }}
+              className="flex-wrap lg:flex-nowrap"
             >
               <div className="relative inline-block">
                 <w3m-button />
               </div>
-              <Link
-                href="/create-brand"
-                className="px-10 py-2 rounded-[30px] font-bold text-black bg-[#30D8FF] text-center"
-              >
-                Create Brand
-              </Link>
+              {!walletAddress ? (
+                <Button className="px-10 py-2 rounded-[20px] font-bold text-black hover:text-white bg-white border border-solid border-[#DF1FDD] text-center">
+                  Works best on Chrome browser!
+                </Button>
+              ) : (
+                <Link
+                  href="/create-brand"
+                  className="px-10 py-2 rounded-[30px] font-bold text-black bg-[#30D8FF] text-center"
+                >
+                  Works best on Chrome browser!
+                </Link>
+              )}
             </div>
           </div>
 
@@ -472,7 +480,7 @@ export default function Home() {
               fontWeight: 300,
               lineHeight: "27.5px",
               textAlign: "center",
-			  margin: "auto"
+              margin: "auto",
             }}
           >
             Would you like to explore our Discover marketplace or WebXR on your
