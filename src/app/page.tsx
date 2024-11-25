@@ -155,7 +155,7 @@ export default function Home() {
     padding: isMobile ? "20px" : "0 60px",
     display: "flex",
     flexDirection: "column",
-    marginTop: isMobile ? "20px" : "240px",
+    marginTop: isMobile ? "40px" : "240px",
   };
 
   const heroRightStyle: CSSProperties = {
@@ -166,7 +166,7 @@ export default function Home() {
     alignItems: "center",
     justifyContent: "center",
     marginTop: isMobile ? "40px" : "0",
-	flexDirection: isMobile ? 'column-reverse' : 'row'
+    flexDirection: isMobile ? "column-reverse" : "row",
   };
 
   const heroImageStyle: CSSProperties = {
@@ -183,7 +183,7 @@ export default function Home() {
     right: "32px",
     textAlign: "left",
     color: "black",
-    fontSize: isMobile ? "14px" : "24px",
+    fontSize: isMobile ? "18px" : "24px",
     fontFamily: "Bai Jamjuree, sans-serif",
   };
 
@@ -237,19 +237,19 @@ export default function Home() {
       <div>
         <div style={heroSectionStyle}>
           <div style={heroLeftStyle}>
-            <div className="text-4xl md:text-7xl font-bold mb-4 bg-gradient-to-l from-[#50B7F9] to-[#D32CE0] text-transparent bg-clip-text">
+            <div className="text-7xl text-center md:text-7xl font-bold mb-4 bg-gradient-to-l from-[#50B7F9] to-[#D32CE0] text-transparent bg-clip-text">
               MyriadFlow <br /> Studio
             </div>
-            <div className="text-3xl md:text-5xl font-thin mt-4 md:mt-6">
+            <div className="hidden lg:block text-3xl md:text-5xl font-thin mt-4 md:mt-6">
               Launch phygitals &<br />
               virtual experiences
             </div>
-            <p className="text-xl text-black mt-4">
+            <p className="hidden lg:block text-xl text-black mt-4">
               No coding knowledge needed.
             </p>
             <div
               style={{
-                display: "flex",
+                display: isMobile ? "none" : "flex",
                 flexDirection: isMobile ? "column" : "row",
                 gap: "24px",
                 marginTop: isMobile ? "24px" : "80px",
@@ -286,7 +286,7 @@ export default function Home() {
           </h2>
         </div>
 
-        <div style={featuresStyle}>
+        <div className="hidden lg:flex" style={featuresStyle}>
           <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
             <div style={featuresSectionStyle}>
               <div style={featureBlockStyle}>
@@ -375,7 +375,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div style={programsStyle}>
+        <div className="hidden lg:flex" style={programsStyle}>
           <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
             <div style={programsContainerStyle}>
               {/* Premium Brand Card */}
@@ -425,6 +425,7 @@ export default function Home() {
         </div>
 
         <div
+          className="hidden lg:flex"
           style={{
             backgroundColor: "white",
             padding: isMobile ? "40px 20px" : "64px",
@@ -459,6 +460,60 @@ export default function Home() {
               </a>
               . We would love to hear from you!
             </p>
+          </div>
+        </div>
+
+        <div className="block lg:hidden px-4 py-10">
+          <p
+            className="w-[334px] h-[153px] "
+            style={{
+              fontFamily: "Bai Jamjuree, sans-serif",
+              fontSize: "22px",
+              fontWeight: 300,
+              lineHeight: "27.5px",
+              textAlign: "center",
+			  margin: "auto"
+            }}
+          >
+            Would you like to explore our Discover marketplace or WebXR on your
+            mobile device?{" "}
+          </p>
+
+          <div className="flex flex-col gap-4 mt-6">
+            <Link
+              href="https://discover.myriadflow.com/"
+              className="w-[233px] h-[60.91px] bg-[#30D8FF] rounded-[30px] mx-auto"
+              style={{
+                fontFamily: "Bai Jamjuree, sans-serif",
+                fontSize: "30px",
+                fontWeight: 400,
+                lineHeight: "28px",
+                letterSpacing: "0.45%",
+                color: "black",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              Discover
+            </Link>
+            <Link
+              href="https://webxr.myriadflow.com/"
+              className="w-[233px] h-[60.91px] bg-[#30D8FF] rounded-[30px] mx-auto"
+              style={{
+                fontFamily: "Bai Jamjuree, sans-serif",
+                fontSize: "30px",
+                fontWeight: 400,
+                lineHeight: "28px",
+                letterSpacing: "0.45%",
+                color: "black",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              WebXR
+            </Link>
           </div>
         </div>
       </div>

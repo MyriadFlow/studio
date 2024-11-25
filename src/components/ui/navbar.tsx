@@ -229,7 +229,7 @@ export const Navbar = () => {
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center gap-4 z-20">
             {address ? (
-              <div className="relative">
+              <div className="relative hidden lg:flex">
                 <button
                   className="flex items-center space-x-2"
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -247,7 +247,7 @@ export const Navbar = () => {
                 {isDropdownOpen && <ProfileDropdown />}
               </div>
             ) : (
-              <div onClick={Notification}>
+              <div className="hidden lg:flex" onClick={Notification}>
                 <w3m-button />
               </div>
             )}
