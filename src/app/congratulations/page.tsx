@@ -48,7 +48,7 @@ export default function Congratulations() {
               </Button>
             </Link>
           ) : selectedOption === "rare" ? (
-            <Link href="/create-phygital">
+            <Link href="/create-rare-item">
               <Button className="w-fit bg-[#30D8FF] hover:text-white rounded-full text-black text-2xl ml-20">
                 Continue
               </Button>
