@@ -281,9 +281,13 @@ export default function Home() {
               alt="Hero Background"
               style={heroImageStyle}
             />
-            <div style={heroTextStyle}>
+            <div className="hidden lg:flex" style={heroTextStyle}>
               Welcome to MyriadFlow Studio, your one-stop shop for creating
               groundbreaking phygital NFTs. Ready to take off to the next level?
+            </div>
+            <div className="flex lg:hidden" style={heroTextStyle}>
+              Welcome to MyriadFlow Studio!  Connect on desktop to launch
+              brands, collections, and phygital NFTs with WebXR Xperiences.
             </div>
           </div>
         </div>
@@ -404,7 +408,44 @@ export default function Home() {
                   <li>Showcase on Discover page</li>
                 </ul>
                 <div className="bg-[#30D8FF] text-black rounded-xl border border-black p-8 pt-12 relative">
-                  {/* Content remains the same */}
+                  <h3 className="text-2xl font-bold mb-4">Premium Brand</h3>
+                  <p className="mb-4 italic">
+                    For established brands looking for the best tools and
+                    experience.
+                  </p>
+
+                  <p className="mb-4">
+                    Select this option if you meet the criteria to be featured
+                    as a premium brand or creator on MyriadFlow&apos;s main
+                    Discover marketplace.
+                  </p>
+                  <p className="mb-4">
+                    Premium brands are established brands with a significant
+                    following and client base, using certified factories and
+                    quality standards.
+                  </p>
+                  <p className="mb-4">
+                    Premium brands enjoy enhanced visibility and access to
+                    exclusive tools designed for established creators and
+                    brands.
+                  </p>
+                  <div className="flex justify-center items-center">
+                    <Link href="https://discover.myriadflow.com/elevateform">
+                      <button className="bg-white text-black text-2xl  border border-black px-6 py-2 rounded-full">
+                        Join Now
+                      </button>
+                    </Link>
+                  </div>
+                  <img
+                    src="/images/collection.png"
+                    alt="Collection"
+                    className="absolute -top-20 -right-12 w-40 h-40 object-cover rounded-[50px]"
+                  />
+                  <img
+                    src="/images/golden_tablet.png"
+                    alt="Golden Tablet"
+                    className="absolute -bottom-20 -left-10 w-40 h-40 object-cover rounded-[20px]"
+                  />
                 </div>
               </div>
 
@@ -425,7 +466,38 @@ export default function Home() {
                   <li>Showcase on Elevate page</li>
                 </ul>
                 <div className="bg-[#E0F7FA] text-black rounded-xl border border-black p-8 pt-12 relative">
-                  {/* Content remains the same */}
+                  <h3 className="text-2xl font-bold mb-4">Elevate Program</h3>
+                  <p className="mb-4 italic">
+                    For emerging brands & creators Starting in Africa.
+                  </p>
+
+                  <p className="mb-4">
+                    Choose this option if you are an emerging creator or
+                    grassroots brand seeking to leverage our platform&apos;s
+                    unique features.
+                  </p>
+                  <p className="mb-4">
+                    You will benefit from sponsored Basenames and incur no
+                    upfront costs to launch your phygital NFTs and virtual brand
+                    ambassadors.
+                  </p>
+                  <p className="mb-4">
+                    As your brand develops and gains traction, you&apos;ll have
+                    the opportunity to transition into the premium category and
+                    be showcased on our main page.
+                  </p>
+                  <div className="flex justify-center items-center">
+                    <Link href="https://discover.myriadflow.com/elevateform">
+                      <button className="bg-white  text-black text-2xl border border-black px-6 py-2 rounded-full mt-8">
+                        Join Now
+                      </button>
+                    </Link>
+                  </div>
+                  <img
+                    src="/images/dress_web.png"
+                    alt="Dress Web"
+                    className="absolute -top-20 -right-10 w-40 h-40 object-cover rounded-[50px]"
+                  />
                 </div>
               </div>
             </div>
