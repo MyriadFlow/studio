@@ -236,8 +236,8 @@ function HomePage() {
           <div style={{ backgroundColor: '#FFFFFF' }}>
             <h1 style={{ fontSize: '1.125rem', color: '#6B7280' }}>{'0 Followers'}</h1>
             <h1 style={{ fontSize: '1.125rem', color: '#6B7280' }}>{'0 Following'}</h1>
-            <h1 style={{ marginTop: '0.5rem', fontSize: '1.125rem', color: '#374151', fontWeight: '600' }}>Address</h1>
-            <h1 style={{ fontSize: '1.125rem', color: '#6B7280' }} className='truncate-wallet'>{address}</h1>
+            {/* <h1 style={{ marginTop: '0.5rem', fontSize: '1.125rem', color: '#374151', fontWeight: '600' }}>Address</h1>
+            <h1 style={{ fontSize: '1.125rem', color: '#6B7280' }} className='truncate-wallet'>{address}</h1> */}
           </div>
         </div>
       </div>
