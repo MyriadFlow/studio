@@ -269,7 +269,7 @@ export default function Home() {
                   href="/create-brand"
                   className="px-10 py-2 rounded-[30px] font-bold text-black bg-[#30D8FF] text-center"
                 >
-                  Works best on Chrome browser!
+                  Create brand
                 </Link>
               )}
             </div>
