@@ -32,6 +32,8 @@ import axios from "axios";
 import Simplestore from "@/lib/Simplestore.json";
 import tradehub from "@/lib/tradehub.json";
 import { v4 as uuidv4 } from "uuid";
+import Loader from "@/components/ui/Loader";
+import { compressImage } from "@/lib/utils";
 
 interface BrandFormProps {
   mode: "create" | "edit";
@@ -97,10 +99,7 @@ const formSchema = z.object({
   representative: z
     .string()
     .min(2, { message: "Brand Representative must be at least 2 characters" }),
-  contact_email: z
-    .string()
-    .email()
-    .min(2, { message: "Contact email must be a valid email" }),
+  contact_email: z.string().email().min(2, { message: "Contact email must be a valid email" }),
   contact_phone: z
     .string()
     .min(2, { message: "Contact phone number must be a valid pnone number" }),
@@ -120,10 +119,7 @@ const formSchema = z.object({
   chaintype_id: z.string(),
 });
 
-export default function CreateBrand({
-  mode = "create",
-  initialData = null,
-}: BrandFormProps) {
+export default function CreateBrand({ mode = "create", initialData = null }: BrandFormProps) {
   const { address: walletAddress } = useAccount();
   const isEdit = mode === "edit";
   console.log(initialData);
@@ -178,6 +174,7 @@ export default function CreateBrand({
   const [cid, setCid] = useState("");
   const [cidCover, setCidCover] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
 
   const inputFile = useRef(null);
   const uploadFile = async (fileToUpload: string | Blob) => {
@@ -194,7 +191,7 @@ export default function CreateBrand({
       toast.success("Upload Completed!", {
         position: "top-left",
       });
-      console.log(resData.IpfsHash);
+      // console.log(resData.IpfsHash);
       setUploading(false);
     } catch (e) {
       console.log(e);
@@ -204,7 +201,7 @@ export default function CreateBrand({
   };
   const uploadCoverFile = async (fileToUpload: string | Blob) => {
     try {
-      setUploading(true);
+      setUploadingCover(true);
       const data = new FormData();
       data.set("file", fileToUpload);
       const res = await fetch("/api/files", {
@@ -217,10 +214,10 @@ export default function CreateBrand({
         position: "top-left",
       });
       console.log(resData.IpfsHash);
-      setUploading(false);
+      setUploadingCover(false);
     } catch (e) {
       console.log(e);
-      setUploading(false);
+      setUploadingCover(false);
       alert("Trouble uploading file");
     }
   };
@@ -256,10 +253,7 @@ export default function CreateBrand({
     }
   };
 
-  const deployTradehubContract = async (
-    platformFee: number,
-    memory_name: string
-  ) => {
+  const deployTradehubContract = async (platformFee: number, memory_name: string) => {
     if (!walletClient) {
       throw new Error("Wallet client not available");
     }
@@ -373,16 +367,14 @@ export default function CreateBrand({
         values.logo_image = "ipfs://" + cid;
       } else if (isEdit && initialData?.logo_image) {
         // Convert back from https://nftstorage.link/ipfs/... to ipfs://...
-        values.logo_image =
-          "ipfs://" + initialData.logo_image.split("/ipfs/")[1];
+        values.logo_image = "ipfs://" + initialData.logo_image.split("/ipfs/")[1];
       }
 
       if (cidCover) {
         values.cover_image = "ipfs://" + cidCover;
       } else if (isEdit && initialData?.cover_image) {
         // Convert back from https://nftstorage.link/ipfs/... to ipfs://...
-        values.cover_image =
-          "ipfs://" + initialData.cover_image.split("/ipfs/")[1];
+        values.cover_image = "ipfs://" + initialData.cover_image.split("/ipfs/")[1];
       }
 
       values.manager_id = account.address!;
@@ -409,7 +401,9 @@ export default function CreateBrand({
             position: "top-left",
           });
           router.push(
-            `https://discover.myriadflow.com/brand/${initialData.name.toLowerCase().replace(/\s+/g, "-")}`
+            `https://discover.myriadflow.com/brand/${initialData.name
+              .toLowerCase()
+              .replace(/\s+/g, "-")}`
           );
         } catch (error) {
           console.error(error);
@@ -525,19 +519,44 @@ export default function CreateBrand({
     }
   }
 
-  const uploadImage = (e: ChangeEvent<HTMLInputElement>) => {
+  const uploadImage = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      setFile(files[0]);
-      uploadFile(files[0]);
+      // setFile(files[0]);
+      // uploadFile(files[0]);
+      try {
+        const targetWidth = 512;
+        const targetHeight = 512;
+        const quality = 0.7;
+
+        const compressedFile = await compressImage(files[0], targetWidth, targetHeight, quality);
+
+        setFile(compressedFile);
+        await uploadFile(compressedFile);
+      } catch (error) {
+        console.error("Image compression failed:", error);
+      }
     }
   };
 
-  const uploadCover = (e: ChangeEvent<HTMLInputElement>) => {
+  const uploadCover = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      setFile(files[0]);
-      uploadCoverFile(files[0]);
+      // setFile(files[0]);
+      // uploadCoverFile(files[0]);
+
+      try {
+        const targetWidth = 1920;
+        const targetHeight = 972;
+        const quality = 0.7;
+
+        const compressedFile = await compressImage(files[0], targetWidth, targetHeight, quality);
+
+        setFile(compressedFile);
+        await uploadCoverFile(compressedFile);
+      } catch (error) {
+        console.error("Image compression failed:", error);
+      }
     }
   };
 
@@ -594,9 +613,7 @@ export default function CreateBrand({
       <ToastContainer />
       <main className="min-h-screen">
         <div className="px-16 py-8 border-b text-black border-black">
-          <h1 className="font-bold uppercase text-3xl mb-4">
-            Create your brand
-          </h1>
+          <h1 className="font-bold uppercase text-3xl mb-4">Create your brand</h1>
           <p>Fill out the details for creating your brand</p>
         </div>
         <Form {...form}>
@@ -608,13 +625,10 @@ export default function CreateBrand({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-xl font-semibold mb-4">
-                      Brand Name*
+                      Brand Name<span className="text-red-500">*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input
-                        className="border-0 bg-[#0000001A] rounded"
-                        {...field}
-                      />
+                      <Input className="border-0 bg-[#0000001A] rounded" {...field} />
                     </FormControl>
                     <FormDescription className="text-lg font-semibold">
                       Your brand page will be available at
@@ -631,13 +645,10 @@ export default function CreateBrand({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-xl font-semibold mb-4">
-                      Brand Slogan*
+                      Brand Slogan<span className="text-red-500">*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input
-                        className="border-0 bg-[#0000001A] rounded"
-                        {...field}
-                      />
+                      <Input className="border-0 bg-[#0000001A] rounded" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -650,13 +661,10 @@ export default function CreateBrand({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-xl font-semibold mb-4">
-                      Brand Description*
+                      Brand Description<span className="text-red-500">*</span>
                     </FormLabel>
                     <FormControl>
-                      <Textarea
-                        className="border-0 bg-[#0000001A]"
-                        {...field}
-                      />
+                      <Textarea className="border-0 bg-[#0000001A]" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -665,11 +673,13 @@ export default function CreateBrand({
 
               <div className="flex gap-12">
                 <div>
-                  <h3 className="text-2xl">Upload Image*</h3>
+                  <h3 className="text-2xl">
+                    Upload Image<span className="text-red-500">*</span>
+                  </h3>
                   <div className="border border-dashed border-black h-60 w-[32rem] flex flex-col items-center justify-center p-6">
                     <UploadIcon />
-                    <p>Drag file here to upload. Choose file </p>
-                    <p>Recommeded size 512 x 512 px</p>
+                    <p>Drag file here to upload. Choose file</p>
+                    <p>Recommended size 512 x 512 px</p>
                     <div>
                       <label
                         htmlFor="upload"
@@ -683,18 +693,21 @@ export default function CreateBrand({
                           onChange={uploadImage}
                           accept="image/*"
                         />
-                        <img
-                          src="https://png.pngtree.com/element_our/20190601/ourmid/pngtree-file-upload-icon-image_1344393.jpg"
-                          alt=""
-                          className="w-10 h-10"
-                        />
+                        {uploading ? (
+                          <Loader />
+                        ) : (
+                          <img
+                            src="https://png.pngtree.com/element_our/20190601/ourmid/pngtree-file-upload-icon-image_1344393.jpg"
+                            alt=""
+                            className="w-10 h-10"
+                          />
+                        )}
+
                         <div className="text-white ml-1">Replace</div>
                       </label>
                     </div>
                   </div>
-                  {imageError && (
-                    <p className="text-red-700">You have to upload a logo</p>
-                  )}
+                  {imageError && <p className="text-red-700">You have to upload a logo</p>}
                 </div>
                 <div>
                   <h3 className="text-2xl">Preview</h3>
@@ -709,7 +722,7 @@ export default function CreateBrand({
                   ) : cid ? (
                     <img
                       // src={cid}
-                      src={`${process.env.NEXT_PUBLIC_GATEWAY_URL}/ipfs/${cid}`}
+                      src={`${process.env.NEXT_PUBLIC_GATEWAY_URL}ipfs/${cid}`}
                       alt="preview image"
                       height={250}
                       width={350}
@@ -724,11 +737,13 @@ export default function CreateBrand({
               </div>
               <div className="flex gap-12">
                 <div>
-                  <h3 className="text-2xl">Upload Cover Image*</h3>
+                  <h3 className="text-2xl">
+                    Upload Cover Image<span className="text-red-500">*</span>
+                  </h3>
                   <div className="border border-dashed border-black h-60 w-[32rem] flex flex-col items-center justify-center p-6">
                     <UploadIcon />
-                    <p>Drag file here to upload. Choose file </p>
-                    <p>Recommeded size 1920 x 972 px</p>
+                    <p>Drag file here to upload. Choose file</p>
+                    <p>Recommended size 1920 x 972 px</p>
                     <div>
                       <label
                         htmlFor="uploadCover"
@@ -742,18 +757,20 @@ export default function CreateBrand({
                           onChange={uploadCover}
                           accept="image/*"
                         />
-                        <img
-                          src="https://png.pngtree.com/element_our/20190601/ourmid/pngtree-file-upload-icon-image_1344393.jpg"
-                          alt=""
-                          className="w-10 h-10"
-                        />
+                        {uploadingCover ? (
+                          <Loader />
+                        ) : (
+                          <img
+                            src="https://png.pngtree.com/element_our/20190601/ourmid/pngtree-file-upload-icon-image_1344393.jpg"
+                            alt=""
+                            className="w-10 h-10"
+                          />
+                        )}
                         <div className="text-white ml-1">Replace</div>
                       </label>
                     </div>
                   </div>
-                  {imageError && (
-                    <p className="text-red-700">You have to upload a Image</p>
-                  )}
+                  {imageError && <p className="text-red-700">You have to upload a Image</p>}
                 </div>
                 <div>
                   <h3 className="text-2xl">Preview</h3>
@@ -768,7 +785,7 @@ export default function CreateBrand({
                   ) : cidCover ? (
                     <img
                       // src={cid}
-                      src={`${process.env.NEXT_PUBLIC_GATEWAY_URL}/ipfs/${cidCover}`}
+                      src={`${process.env.NEXT_PUBLIC_GATEWAY_URL}ipfs/${cidCover}`}
                       alt="preview image"
                       height={250}
                       width={350}
@@ -787,14 +804,11 @@ export default function CreateBrand({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-xl font-semibold mb-4">
-                      Name of Brand Representative *
+                      Name of Brand Representative<span className="text-red-500">*</span>
                     </FormLabel>
 
                     <FormControl>
-                      <Input
-                        className="border-0 bg-[#0000001A] rounded"
-                        {...field}
-                      />
+                      <Input className="border-0 bg-[#0000001A] rounded" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -807,13 +821,10 @@ export default function CreateBrand({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-xl font-semibold mb-4">
-                      Contact Email*
+                      Contact Email<span className="text-red-500">*</span>
                     </FormLabel>
                     <FormControl>
-                      <Input
-                        className="border-0 bg-[#0000001A] rounded"
-                        {...field}
-                      />
+                      <Input className="border-0 bg-[#0000001A] rounded" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -826,7 +837,7 @@ export default function CreateBrand({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-xl font-semibold mb-4">
-                      Contact Phone*
+                      Contact Phone<span className="text-red-500">*</span>
                     </FormLabel>
                     <Input
                       className="border-0 bg-[#0000001A] rounded"
@@ -844,7 +855,7 @@ export default function CreateBrand({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-xl font-semibold mb-4">
-                      Shipping address for NFC tags*
+                      Shipping address for NFC tags<span className="text-red-500">*</span>
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -858,9 +869,7 @@ export default function CreateBrand({
                 )}
               />
 
-              <FormLabel className="text-xl font-semibold">
-                Social Links
-              </FormLabel>
+              <FormLabel className="text-xl font-semibold">Social Links</FormLabel>
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   name="website"
@@ -869,10 +878,7 @@ export default function CreateBrand({
                     <FormItem>
                       <FormLabel className="text-lg ">Website</FormLabel>
                       <FormControl>
-                        <Input
-                          className="border-0 bg-[#0000001A] rounded"
-                          {...field}
-                        />
+                        <Input className="border-0 bg-[#0000001A] rounded" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -886,10 +892,7 @@ export default function CreateBrand({
                     <FormItem>
                       <FormLabel className="text-lg ">X (Twitter)</FormLabel>
                       <FormControl>
-                        <Input
-                          className="border-0 bg-[#0000001A] rounded"
-                          {...field}
-                        />
+                        <Input className="border-0 bg-[#0000001A] rounded" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -903,10 +906,7 @@ export default function CreateBrand({
                     <FormItem>
                       <FormLabel className="text-lg ">Instagram</FormLabel>
                       <FormControl>
-                        <Input
-                          className="border-0 bg-[#0000001A] rounded"
-                          {...field}
-                        />
+                        <Input className="border-0 bg-[#0000001A] rounded" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -920,10 +920,7 @@ export default function CreateBrand({
                     <FormItem>
                       <FormLabel className="text-lg ">Facebook</FormLabel>
                       <FormControl>
-                        <Input
-                          className="border-0 bg-[#0000001A] rounded"
-                          {...field}
-                        />
+                        <Input className="border-0 bg-[#0000001A] rounded" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -970,10 +967,7 @@ export default function CreateBrand({
                     <FormItem>
                       <FormLabel className="text-lg ">Link</FormLabel>
                       <FormControl>
-                        <Input
-                          className="border-0 bg-[#0000001A] rounded"
-                          {...field}
-                        />
+                        <Input className="border-0 bg-[#0000001A] rounded" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -987,10 +981,7 @@ export default function CreateBrand({
                     <FormItem>
                       <FormLabel className="text-lg">Discord</FormLabel>
                       <FormControl>
-                        <Input
-                          className="border-0 bg-[#0000001A] rounded"
-                          {...field}
-                        />
+                        <Input className="border-0 bg-[#0000001A] rounded" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1046,8 +1037,7 @@ export default function CreateBrand({
                       Brand Information for AI *
                     </FormLabel>
                     <FormDescription className="text-lg font-semibold">
-                      Fill this field if you want to create an AI-powered brand
-                      ambassador
+                      Fill this field if you want to create an AI-powered brand ambassador
                     </FormDescription>
                     <FormControl>
                       <Textarea
@@ -1065,11 +1055,7 @@ export default function CreateBrand({
                 type="submit"
                 className="w-fit bg-[#30D8FF] text-black hover:text-white rounded-full"
               >
-                {loading
-                  ? "loading..."
-                  : isEdit
-                    ? "Update brand"
-                    : "Launch brand"}
+                {loading ? "loading..." : isEdit ? "Update brand" : "Launch brand"}
               </Button>
             </div>
           </form>
