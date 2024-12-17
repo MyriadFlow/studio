@@ -250,12 +250,12 @@ export default function Home() {
             </p>
             <div
               style={{
-                display: isMobile ? "none" : "flex",
+                // display: isMobile ? "none" : "flex",
                 flexDirection: isMobile ? "column" : "row",
                 gap: "24px",
                 marginTop: isMobile ? "24px" : "80px",
               }}
-              className="flex-wrap lg:flex-nowrap"
+              className="hidden column lg:row lg:flex flex-wrap lg:flex-nowrap"
             >
               <div className="relative inline-block">
                 <w3m-button />

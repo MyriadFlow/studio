@@ -15,6 +15,7 @@ export {
 	FormLabel,
 	FormMessage,
 } from './ui/form'
+export { Select } from './ui/select'
 
 // icons
 export { PreviewIcon } from './icons/preview-icon'
