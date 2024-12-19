@@ -250,12 +250,12 @@ export default function Home() {
             </p>
             <div
               style={{
-                display: isMobile ? "none" : "flex",
+                // display: isMobile ? "none" : "flex",
                 flexDirection: isMobile ? "column" : "row",
                 gap: "24px",
                 marginTop: isMobile ? "24px" : "80px",
               }}
-              className="flex-wrap lg:flex-nowrap"
+              className="hidden column lg:row lg:flex flex-wrap lg:flex-nowrap"
             >
               <div className="relative inline-block">
                 <w3m-button />
@@ -269,7 +269,7 @@ export default function Home() {
                   href="/create-brand"
                   className="px-10 py-2 rounded-[30px] font-bold text-black bg-[#30D8FF] text-center"
                 >
-                  Works best on Chrome browser!
+                  Create brand
                 </Link>
               )}
             </div>

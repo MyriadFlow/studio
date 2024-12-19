@@ -59,3 +59,5 @@ export const compressImage = async (
     reader.onerror = (error) => reject(error);
   });
 };
+
+
