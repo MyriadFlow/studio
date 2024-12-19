@@ -241,7 +241,7 @@ export default function CreateBrand({ mode = "create", initialData = null }: Bra
       console.error(e);
       toast.error("Trouble uploading cover image");
     } finally {
-      setCoverUploadingCover(false);
+      setUploadingCover(false);
     }
   };
 
