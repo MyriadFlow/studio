@@ -264,13 +264,15 @@ const CreateAgent = () => {
           </div>
 
           {isVoiceDropdownOpen && (
-            <div className="mb-4 pt-4 space-y-2 bg-gray-50">
+            <div className="mb-4 pt-4 bg-gray-50">
               {voices.map((voice: any) => (
                 <>
                   {" "}
                   <div
                     key={voice.voice_id}
-                    className="flex items-center gap-4 cursor-pointer"
+                    className={`${
+                      playingVoice === voice.voice_id ? "bg-gray-200" : ""
+                    } flex items-center gap-4 cursor-pointer hover:bg-gray-200 py-2`}
                     onClick={() => {
                       setVoiceId(voice.voice_id);
                       setVoiceName(voice.name);
