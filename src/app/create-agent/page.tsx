@@ -1,11 +1,13 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Navbar, Button, Input, Textarea } from "@/components";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { PauseIcon, PlayIcon, DownArrowIcon, UpArrowIcon } from "@/components/ui/icons";
 
 const CreateAgent = () => {
+  const router = useRouter();
   const [prompt, setPrompt] = useState("");
   const [firstMessage, setFirstMessage] = useState("");
   const [voiceId, setVoiceId] = useState("");
@@ -205,6 +207,7 @@ const CreateAgent = () => {
       if (response.ok) {
         toast.success("Agent created successfully!");
         console.log(data);
+        router.push("/create-webxr-experience");
       } else {
         toast.error(`Error: ${data.error || "Something went wrong!"}`);
       }
