@@ -493,7 +493,7 @@ export default function CreateBrand({ mode = "create", initialData = null }: Bra
 
         toast.success("Your Brand has been created");
         if (values.webxr_experience_with_ai_avatar) {
-          router.push("/create-agent");
+          router.push("/create-webxr-experience");
         } else {
           router.push(`/congratulations?brand_name=${values.name}`);
         }
