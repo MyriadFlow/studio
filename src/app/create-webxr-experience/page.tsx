@@ -340,7 +340,7 @@ export default function CreateWebxrExperience() {
     };
 
     return fetchWithErrorHandling(
-      `${elevenLabsApiUrl}convai/agents/create`,
+      `${elevenLabsApiUrl}/convai/agents/create`,
       {
         method: "POST",
         headers: {
@@ -358,7 +358,7 @@ export default function CreateWebxrExperience() {
     if (!BrandId) {
       toast.error("Failed to find BrandId in local storage. Deleting the agent...");
 
-      await axios.delete(`${elevenLabsApiUrl}agents/${agentId}`, {
+      await axios.delete(`${elevenLabsApiUrl}/agents/${agentId}`, {
         headers: {
           "xi-api-key": ELEVENLABS_API_KEY,
         },
@@ -371,7 +371,7 @@ export default function CreateWebxrExperience() {
     const payload = { agent_id: agentId };
 
     return fetchWithErrorHandling(
-      `${apiUrl}brands/${BrandId}`,
+      `${apiUrl}/brands/${BrandId}`,
       {
         method: "PUT",
         headers: {
@@ -409,7 +409,7 @@ export default function CreateWebxrExperience() {
       };
 
       const response = await fetchWithErrorHandling(
-        `${apiUrl}webxr`,
+        `${apiUrl}/webxr`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
