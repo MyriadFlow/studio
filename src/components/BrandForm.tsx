@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, ChangeEvent } from "react";
+import { useState, useEffect, useRef, ChangeEvent, useMemo } from "react";
 import {
   Button,
   Input,
@@ -21,14 +21,13 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast, ToastContainer } from "react-toastify";
 import { useRouter } from "next/navigation";
-import { useAccount, useChainId, useWalletClient } from "wagmi";
-import { NFTStorage } from "nft.storage";
-import { Hex, createPublicClient, http } from "viem";
-import { base } from "viem/chains";
+import { useAccount } from "wagmi";
+import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
-
-import Simplestore from "@/lib/Simplestore.json";
-import tradehub from "@/lib/tradehub.json";
+import { clusterApiUrl, Connection, PublicKey } from "@solana/web3.js";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { Metaplex, walletAdapterIdentity } from "@metaplex-foundation/js";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 
 interface BrandFormProps {
   mode: "create" | "edit";
@@ -55,7 +54,6 @@ export interface BrandData {
   chaintype_id: string;
   elevate_region?: string;
   webxr_experience_with_ai_avatar: boolean;
-  // Social media fields
   website?: string;
   twitter?: string;
   instagram?: string;
@@ -75,9 +73,6 @@ interface SocialLink {
   platform: string;
   url: string;
 }
-
-const API_KEY = process.env.NEXT_PUBLIC_STORAGE_API!;
-const client = new NFTStorage({ token: API_KEY });
 
 const formSchema = z.object({
   name: z
@@ -132,8 +127,6 @@ export default function CreateBrand({
   const isEdit = mode === "edit";
   const router = useRouter();
   const account = useAccount();
-  const chainId = useChainId();
-  const { data: walletClient } = useWalletClient({ chainId });
 
   // State management
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
@@ -150,13 +143,16 @@ export default function CreateBrand({
   const [logoUploading, setLogoUploading] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
 
+  const wallet = useWallet();
+  const { publicKey, connected } = wallet;
   const inputFile = useRef(null);
 
-  // Initialize public client
-  const publicClient = createPublicClient({
-    chain: base,
-    transport: http(),
-  });
+  const connection = new Connection(clusterApiUrl("devnet"));
+  const metaplex = useMemo(() => {
+    if (wallet) {
+      return new Metaplex(connection).use(walletAdapterIdentity(wallet));
+    }
+  }, [wallet, connection]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -181,27 +177,6 @@ export default function CreateBrand({
     },
   });
 
-  // Social Links Management
-  const addSocialLink = () => {
-    setSocialLinks([...socialLinks, { platform: "", url: "" }]);
-  };
-
-  const removeSocialLink = (index: number) => {
-    const newLinks = socialLinks.filter((_, i) => i !== index);
-    setSocialLinks(newLinks);
-  };
-
-  const updateSocialLink = (
-    index: number,
-    field: "platform" | "url",
-    value: string
-  ) => {
-    const newLinks = [...socialLinks];
-    newLinks[index][field] = value;
-    setSocialLinks(newLinks);
-  };
-
-  // File Upload Handlers
   const uploadFile = async (fileToUpload: string | Blob) => {
     try {
       setLogoUploading(true);
@@ -212,6 +187,7 @@ export default function CreateBrand({
         body: data,
       });
       const resData = await res.json();
+      console.log(resData);
       setCid(resData.IpfsHash);
       toast.success("Logo Upload Completed!", {
         position: "top-left",
@@ -262,30 +238,69 @@ export default function CreateBrand({
     }
   };
 
-  // Contract Deployment Functions
+  const getWebsiteUrl = () => {
+    const websiteLink = socialLinks.find((link) => link.platform === "website");
+    return websiteLink?.url || "";
+  };
+
   const deployContract = async () => {
-    if (!walletClient) {
-      throw new Error("Wallet client not available");
+    if (!publicKey || !metaplex) {
+      throw new Error("Wallet not connected");
     }
 
+    console.log(getWebsiteUrl());
+
     try {
-      const hash = await walletClient.deployContract({
-        abi: Simplestore.abi,
-        bytecode: Simplestore.bytecode as Hex,
-        account: walletAddress,
-        args: ["0xf5d0A178a61A2543c98FC4a73E3e78a097DBD9EE"],
+      const metadata = {
+        name: form.getValues("name"),
+        symbol: "BRAND",
+        description: form.getValues("description"),
+        image: `ipfs://${cid}`,
+        external_url: "",
+        attributes: [
+          {
+            trait_type: "Brand Representative",
+            value: form.getValues("representative"),
+          },
+          {
+            trait_type: "Region",
+            value: elevateRegion || "Global",
+          },
+        ],
+      };
+
+      // Upload metadata to Pinata
+      const response = await fetch("/api/upload-json", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content: metadata }),
       });
 
-      if (!hash) {
-        throw new Error("Failed to execute deploy contract transaction");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Upload failed: ${JSON.stringify(errorData)}`);
       }
 
-      const txn = await publicClient.waitForTransactionReceipt({ hash });
+      const data = await response.json();
+      const metadataUri = `ipfs://${data.IpfsHash}`;
+
+      // Create NFT Collection using Metaplex
+      const { nft: collectionNft } = await metaplex.nfts().create({
+        uri: metadataUri,
+        name: form.getValues("name"),
+        sellerFeeBasisPoints: 500,
+        symbol: "BRAND",
+        isCollection: true,
+        updateAuthority: metaplex.identity(),
+      });
+
       setIsDeployed(true);
-      return txn.contractAddress;
+      return collectionNft.address.toString();
     } catch (error) {
       console.error("Deployment error:", error);
-      toast.error("Error deploying AccessMaster contract: " + error);
+      toast.error("Error deploying collection: " + error);
       throw error;
     }
   };
@@ -294,56 +309,130 @@ export default function CreateBrand({
     platformFee: number,
     memory_name: string
   ) => {
-    if (!walletClient) {
-      throw new Error("Wallet client not available");
+    if (!publicKey || !metaplex) {
+      throw new Error("Wallet not connected");
     }
-    const AccessMasterAddress = localStorage.getItem("AccessMasterAddress");
+
     try {
-      const hash = await walletClient.deployContract({
-        abi: tradehub.abi,
-        bytecode: tradehub.bytecode as Hex,
-        account: walletAddress,
-        args: [platformFee, memory_name, `${AccessMasterAddress}`],
+      const metadata = {
+        name: memory_name,
+        symbol: "TRADE",
+        description: `Trading collection for ${form.getValues("name")}`,
+        image: `ipfs://${cidCover}`,
+        external_url: getWebsiteUrl(),
+        attributes: [
+          {
+            trait_type: "Platform Fee",
+            value: platformFee.toString(),
+          },
+        ],
+      };
+
+      const response = await fetch("/api/upload-json", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content: metadata }),
       });
 
-      if (!hash) {
-        throw new Error("Failed to execute deploy contract transaction");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Upload failed: ${JSON.stringify(errorData)}`);
       }
 
-      const txn = await publicClient.waitForTransactionReceipt({ hash });
+      const data = await response.json();
+      const metadataUri = `ipfs://${data.IpfsHash}`;
+
+      const { nft: tradingCollection } = await metaplex.nfts().create({
+        uri: metadataUri,
+        name: memory_name,
+        sellerFeeBasisPoints: platformFee * 100,
+        symbol: "TRADE",
+        isCollection: true,
+        updateAuthority: metaplex.identity(),
+      });
+
       setIsDeployed(true);
-      return txn.contractAddress;
+      return {
+        mintAddress: tradingCollection.address.toString(),
+        metadataAddress: tradingCollection.metadataAddress.toString(),
+        // tokenAddress: tradingCollection.tokenAddress?.toString() || null,
+      };
     } catch (error) {
       console.error("Deployment error:", error);
-      toast.error("Error deploying TradeHub contract: " + error);
+      toast.error("Error deploying trading collection: " + error);
       throw error;
     }
   };
 
-  const handleDeploy = async (): Promise<boolean> => {
+  const createAndUploadMetadata = async (metadata: any) => {
     try {
-      const address = await deployContract();
-      localStorage.setItem("AccessMasterAddress", address as `0x${string}`);
-      console.log("Contract deployed at:", address);
-      return address !== null;
-    } catch (error) {
-      console.error("Error deploying AccessMaster contract:", error);
-      toast.error("Failed to deploy AccessMaster contract");
-      return false;
+      const response = await fetch("/api/upload-json", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content: metadata }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Upload failed: ${JSON.stringify(errorData)}`);
+      }
+
+      const data = await response.json();
+      return `ipfs://${data.IpfsHash}`;
+    } catch (error: any) {
+      console.error("Error uploading metadata:", error);
+      throw error;
     }
   };
 
-  const TradehubDeploy = async (): Promise<boolean> => {
-    try {
-      const address = await deployTradehubContract(30, "NFT BAZAAR");
-      localStorage.setItem("TradehubAddress", address as `0x${string}`);
-      console.log("TradeHub Contract deployed at:", address);
-      return address !== null;
-    } catch (error) {
-      console.error("Error deploying TradeHub contract:", error);
-      toast.error("Failed to deploy TradeHub contract");
-      return false;
+  const mintNFTToCollection = async (
+    collectionAddress: string,
+    metadata: any
+  ) => {
+    if (!publicKey || !metaplex) {
+      throw new Error("Wallet not connected");
     }
+
+    try {
+      const metadataUri = await createAndUploadMetadata(metadata);
+
+      const { nft } = await metaplex.nfts().create({
+        uri: metadataUri,
+        name: metadata.name,
+        sellerFeeBasisPoints: metadata.royalties || 0,
+        symbol: metadata.symbol || "NFT",
+        collection: new PublicKey(collectionAddress),
+        collectionAuthority: publicKey as any,
+      });
+
+      return nft;
+    } catch (error) {
+      console.error("Error minting NFT:", error);
+      throw error;
+    }
+  };
+
+  const addSocialLink = () => {
+    setSocialLinks([...socialLinks, { platform: "", url: "" }]);
+  };
+
+  const removeSocialLink = (index: number) => {
+    const newLinks = socialLinks.filter((_, i) => i !== index);
+    setSocialLinks(newLinks);
+  };
+
+  const updateSocialLink = (
+    index: number,
+    field: "platform" | "url",
+    value: string
+  ) => {
+    const newLinks = [...socialLinks];
+    newLinks[index][field] = value;
+    setSocialLinks(newLinks);
   };
 
   const handleElevateSubmit = () => {
@@ -366,9 +455,8 @@ export default function CreateBrand({
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!account.addresses) {
-      toast.warning("Connect your wallet");
-      return;
+    if (!publicKey || !metaplex) {
+      throw new Error("Wallet not connected");
     }
 
     if (!isEdit && !cid) {
@@ -377,18 +465,13 @@ export default function CreateBrand({
     }
 
     try {
-      // Prepare social links object
-      const socialLinksObject = socialLinks.reduce(
-        (acc, link) => {
-          if (link.platform && link.url) {
-            acc[link.platform] = link.url;
-          }
-          return acc;
-        },
-        {} as Record<string, string>
-      );
+      const socialLinksObject = socialLinks.reduce((acc, link) => {
+        if (link.platform && link.url) {
+          acc[link.platform] = link.url;
+        }
+        return acc;
+      }, {} as Record<string, string>);
 
-      // Handle images
       if (cid) {
         values.logo_image = "ipfs://" + cid;
       } else if (isEdit && initialData?.logo_image) {
@@ -425,7 +508,9 @@ export default function CreateBrand({
 
           toast.success("Your Brand has been updated");
           router.push(
-            `https://discover.myriadflow.com/brand/${initialData.name.toLowerCase().replace(/\s+/g, "-")}`
+            `https://discover.myriadflow.com/brand/${initialData.name
+              .toLowerCase()
+              .replace(/\s+/g, "-")}`
           );
         } catch (error) {
           console.error(error);
@@ -436,25 +521,39 @@ export default function CreateBrand({
         return;
       }
 
-      // Create mode
       if (cid) {
         setLoading(true);
-        toast.warning("Deploying AccessMaster to manage your brand");
+        toast.warning("Deploying brand collection...");
 
-        const deploySuccess = await handleDeploy();
-        if (!deploySuccess) throw new Error("AccessMaster deployment failed");
+        const collectionAddress = await deployContract();
+        localStorage.setItem("AccessMasterAddress", collectionAddress);
+        console.log("Brand collection deployed at:", collectionAddress);
 
-        const AccessMasterAddress = localStorage.getItem("AccessMasterAddress");
-        console.log("Contract deployed at:", AccessMasterAddress);
+        toast.warning("Deploying trading collection...");
+        const tradingCollectionAddresses = await deployTradehubContract(
+          30,
+          "NFT BAZAAR"
+        );
+        localStorage.setItem(
+          "TradehubAddress",
+          tradingCollectionAddresses.mintAddress
+        );
+        localStorage.setItem(
+          "TradehubMetadataAddress",
+          tradingCollectionAddresses.metadataAddress
+        );
+        // if (tradingCollectionAddresses.tokenAddress) {
+        //   localStorage.setItem(
+        //     "TradehubTokenAddress",
+        //     tradingCollectionAddresses.tokenAddress
+        //   );
+        // }
+        console.log(
+          "Trading collection deployed at:",
+          tradingCollectionAddresses.mintAddress
+        );
 
-        toast.warning("Deploying TradeHub");
-        const deployTradeHub = await TradehubDeploy();
-        if (!deployTradeHub) throw new Error("TradeHub deployment failed");
-
-        const TradehubAddress = localStorage.getItem("TradehubAddress");
-        console.log("Contract deployed at:", TradehubAddress);
-
-        toast.success("Deployment Successful");
+        toast.success("Collections deployed successfully");
 
         const brandId = uuidv4();
         const chaintype = localStorage.getItem("BaseSepoliaChain");
@@ -467,8 +566,8 @@ export default function CreateBrand({
             id: brandId,
             ...values,
             ...socialLinksObject,
-            access_master: AccessMasterAddress,
-            trade_hub: TradehubAddress,
+            access_master: collectionAddress,
+            trade_hub: tradingCollectionAddresses.mintAddress,
             payout_address: account.address,
             chain_id: "84532",
             chaintype_id: chaintype,
@@ -481,7 +580,6 @@ export default function CreateBrand({
         const brand = await response.json();
         localStorage.setItem("BrandId", brand.id);
 
-        // Create user record
         const users = await fetch(`${apiUrl}/users`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -495,13 +593,8 @@ export default function CreateBrand({
         if (!users.ok) throw new Error("Failed to add user");
 
         toast.success("Your Brand has been created");
-        if (values.webxr_experience_with_ai_avatar) {
-          router.push("/create-webxr-experience");
-        } else {
-          router.push(`/congratulations?brand_name=${values.name}`);
-        }
-      } else if (!imageError && cid === "") {
-        toast.warning("Wait for your image to finish upload");
+
+        router.push("/create-webxr-experience");
       }
     } catch (error) {
       console.error(error);
@@ -531,7 +624,6 @@ export default function CreateBrand({
       setElevateRegion(initialData.elevate_region || "");
       setShowForm(!!initialData.elevate_region);
 
-      // Initialize social links from initialData
       const initialSocialLinks: SocialLink[] = [];
       const socialPlatforms = [
         "website",
@@ -573,492 +665,490 @@ export default function CreateBrand({
           <p>Fill out the details for your brand</p>
         </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="py-4 px-32 flex flex-col gap-12">
-              {/* Basic Information */}
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xl font-semibold mb-4">
-                      Brand Name*
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        className="border-0 bg-[#0000001A] rounded"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription className="text-lg font-semibold">
-                      Your brand page will be available at
-                      https://myriadflow.com/brand/brandnameabove
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="slogan"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xl font-semibold mb-4">
-                      Brand Slogan*
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        className="border-0 bg-[#0000001A] rounded"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                name="description"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xl font-semibold mb-4">
-                      Brand Description*
-                    </FormLabel>
-                    <FormControl>
-                      <Textarea
-                        className="border-0 bg-[#0000001A]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Image Upload Sections */}
-              <div className="flex gap-12">
-                <div>
-                  <h3 className="text-2xl">Upload Logo*</h3>
-                  <div className="border border-dashed border-black h-60 w-[32rem] flex flex-col items-center justify-center p-6 relative">
-                    {logoUploading ? (
-                      <div className="absolute inset-0 bg-black/10 flex flex-col items-center justify-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
-                        <p className="mt-4 text-black font-medium">
-                          Uploading Logo...
-                        </p>
-                      </div>
-                    ) : (
-                      <>
-                        <UploadIcon />
-                        <p>Drag file here to upload. Choose file </p>
-                        <p>Recommended size 512 x 512 px</p>
-                        <div>
-                          <label
-                            htmlFor="upload"
-                            className="flex flex-row items-center ml-12 cursor-pointer mt-4"
-                          >
-                            <input
-                              id="upload"
-                              type="file"
-                              className="hidden"
-                              ref={inputFile}
-                              onChange={uploadImage}
-                              accept="image/*"
-                              disabled={logoUploading}
-                            />
-                            <img
-                              src="https://png.pngtree.com/element_our/20190601/ourmid/pngtree-file-upload-icon-image_1344393.jpg"
-                              alt=""
-                              className="w-10 h-10"
-                            />
-                            <div className="text-white ml-1">
-                              {cid ? "Replace" : "Upload"}
-                            </div>
-                          </label>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  {imageError && (
-                    <p className="text-red-700">You have to upload a logo</p>
-                  )}
-                </div>
-                <div>
-                  <h3 className="text-2xl">Preview</h3>
-                  {isEdit && !cid ? (
-                    <img
-                      src={`${initialData?.logo_image}`}
-                      alt="preview image"
-                      height={250}
-                      width={350}
-                      className="object-contain"
-                    />
-                  ) : cid ? (
-                    <img
-                      src={`${process.env.NEXT_PUBLIC_GATEWAY_URL}/ipfs/${cid}`}
-                      alt="preview image"
-                      height={250}
-                      width={350}
-                      className="object-contain"
-                    />
-                  ) : (
-                    <div className="border border-[#D9D8D8] h-60 w-80 flex flex-col items-center justify-center p-6">
-                      <PreviewIcon />
-                      <p>Preview after upload</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Cover Image Upload */}
-              <div className="flex gap-12">
-                <div>
-                  <h3 className="text-2xl">Upload Cover Image*</h3>
-                  <div className="border border-dashed border-black h-60 w-[32rem] flex flex-col items-center justify-center p-6 relative">
-                    {coverUploading ? (
-                      <div className="absolute inset-0 bg-black/10 flex flex-col items-center justify-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
-                        <p className="mt-4 text-black font-medium">
-                          Uploading Cover Image...
-                        </p>
-                      </div>
-                    ) : (
-                      <>
-                        <UploadIcon />
-                        <p>Drag file here to upload. Choose file </p>
-                        <p>Recommended size 1920 x 972 px</p>
-                        <div>
-                          <label
-                            htmlFor="uploadCover"
-                            className="flex flex-row items-center ml-12 cursor-pointer mt-4"
-                          >
-                            <input
-                              id="uploadCover"
-                              type="file"
-                              className="hidden"
-                              ref={inputFile}
-                              onChange={uploadCover}
-                              accept="image/*"
-                              disabled={coverUploading}
-                            />
-                            <img
-                              src="https://png.pngtree.com/element_our/20190601/ourmid/pngtree-file-upload-icon-image_1344393.jpg"
-                              alt=""
-                              className="w-10 h-10"
-                            />
-                            <div className="text-white ml-1">
-                              {cidCover ? "Replace" : "Upload"}
-                            </div>
-                          </label>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-2xl">Preview</h3>
-                  {isEdit && !cidCover ? (
-                    <img
-                      src={`${initialData?.cover_image}`}
-                      alt="preview image"
-                      height={250}
-                      width={350}
-                      className="object-contain"
-                    />
-                  ) : cidCover ? (
-                    <img
-                      src={`${process.env.NEXT_PUBLIC_GATEWAY_URL}/ipfs/${cidCover}`}
-                      alt="preview image"
-                      height={250}
-                      width={350}
-                      className="object-contain"
-                    />
-                  ) : (
-                    <div className="border border-[#D9D8D8] h-60 w-80 flex flex-col items-center justify-center p-6">
-                      <PreviewIcon />
-                      <p>Preview after upload</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Contact Information */}
-              <FormField
-                name="representative"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xl font-semibold mb-4">
-                      Name of Brand Representative *
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        className="border-0 bg-[#0000001A] rounded"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                name="contact_email"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xl font-semibold mb-4">
-                      Contact Email*
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        className="border-0 bg-[#0000001A] rounded"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                name="contact_phone"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xl font-semibold mb-4">
-                      Contact Phone*
-                    </FormLabel>
-                    <Input
-                      className="border-0 bg-[#0000001A] rounded"
-                      placeholder="Include country code"
-                      {...field}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                name="shipping_address"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xl font-semibold mb-4">
-                      Shipping address for NFC tags*
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        className="border-0 bg-[#0000001A] rounded"
-                        placeholder="Include name, street address, city, postal code, and country"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Social Links Section */}
-              <div className="space-y-4">
-                <FormLabel className="text-xl font-semibold">
-                  Social Links
-                </FormLabel>
-
-                {socialLinks.map((link, index) => (
-                  <div key={index} className="flex gap-4">
-                    <select
-                      className="bg-white rounded w-48 h-10 border border-black px-4 font-semibold"
-                      value={link.platform}
-                      onChange={(e) =>
-                        updateSocialLink(index, "platform", e.target.value)
-                      }
-                    >
-                      <option value="">Select Platform</option>
-                      {[
-                        { value: "website", label: "Website" },
-                        { value: "telegram", label: "Telegram" },
-                        { value: "linkedin", label: "LinkedIn" },
-                        { value: "youtube", label: "YouTube" },
-                        { value: "whatsapp", label: "WhatsApp" },
-                        { value: "google", label: "Google" },
-                        { value: "tiktok", label: "TikTok" },
-                        { value: "snapchat", label: "Snapchat" },
-                        { value: "pinterest", label: "Pinterest" },
-                        { value: "twitter", label: "Twitter" },
-                        { value: "instagram", label: "Instagram" },
-                        { value: "facebook", label: "Facebook" },
-                        { value: "discord", label: "Discord" },
-                      ]
-                        .filter(
-                          (platform) =>
-                            platform.value === link.platform ||
-                            !socialLinks.some(
-                              (l) => l.platform === platform.value
-                            )
-                        )
-                        .map((platform) => (
-                          <option key={platform.value} value={platform.value}>
-                            {platform.label}
-                          </option>
-                        ))}
-                    </select>
-
-                    <Input
-                      className="border-0 bg-[#0000001A] rounded flex-1"
-                      placeholder="Enter URL"
-                      value={link.url}
-                      onChange={(e) =>
-                        updateSocialLink(index, "url", e.target.value)
-                      }
-                    />
-
-                    <button
-                      type="button"
-                      onClick={() => removeSocialLink(index)}
-                      className="px-4 py-2 text-red-500 hover:text-red-700"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-
-                {socialLinks.length < 13 && (
-                  <Button
-                    type="button"
-                    onClick={addSocialLink}
-                    className="mt-2"
-                  >
-                    Add Social Link
-                  </Button>
-                )}
-              </div>
-
-              {/* WebXR Experience Section */}
-              <div className="space-y-4">
+        {!connected ? (
+          <div className="flex flex-col items-center gap-4 py-8">
+            <p className="text-lg">Please connect your wallet to continue</p>
+            <WalletMultiButton />
+          </div>
+        ) : (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <div className="py-4 px-32 flex flex-col gap-12">
                 <FormField
                   control={form.control}
-                  name="webxr_experience_with_ai_avatar"
+                  name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-xl font-semibold">
-                        Do you want to create WebXR experience with a unique AI
-                        avatar?
+                      <FormLabel className="text-xl font-semibold mb-4">
+                        Brand Name*
                       </FormLabel>
                       <FormControl>
-                        <div className="flex gap-4">
-                          <label className="flex items-center gap-2">
-                            <input
-                              type="radio"
-                              checked={field.value === true}
-                              onChange={() => field.onChange(true)}
-                              className="form-radio"
-                            />
-                            <span>Yes</span>
-                          </label>
+                        <Input
+                          className="border-0 bg-[#0000001A] rounded"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription className="text-lg font-semibold">
+                        Your brand page will be available at
+                        https://myriadflow.com/brand/brandnameabove
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                          <label className="flex items-center gap-2">
-                            <input
-                              type="radio"
-                              checked={field.value === false}
-                              onChange={() => field.onChange(false)}
-                              className="form-radio"
-                            />
-                            <span>No</span>
-                          </label>
-                        </div>
+                <FormField
+                  control={form.control}
+                  name="slogan"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xl font-semibold mb-4">
+                        Brand Slogan*
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          className="border-0 bg-[#0000001A] rounded"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
 
-              {/* Elevate Program Section */}
-              <label className="flex items-center text-xl">
-                <input
-                  type="checkbox"
-                  checked={showForm}
-                  onChange={() => setShowForm(!showForm)}
-                  className="mr-2"
+                <FormField
+                  name="description"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xl font-semibold mb-4">
+                        Brand Description*
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          className="border-0 bg-[#0000001A]"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                My brand is part of MyriadFlow Elevate Program
-              </label>
 
-              {showForm && (
-                <div className="mt-6">
-                  <div className="flex flex-col gap-4">
-                    <label>
-                      Select Region
-                      <select
-                        className="border rounded px-2 py-1 border border-black ml-2 w-96"
-                        value={elevateRegion}
-                        onChange={(e) => setElevateRegion(e.target.value)}
-                        required
-                      >
-                        <option value="">Select Region</option>
-                        <option value="Africa">Africa</option>
-                        <option value="Asia">Asia</option>
-                        <option value="Europe">Europe</option>
-                        <option value="North America">North America</option>
-                        <option value="South America">South America</option>
-                        <option value="Australia">Australia</option>
-                      </select>
-                    </label>
-                    <button
-                      type="button"
-                      className="w-fit border border-black bg-[#0000001A] rounded-lg text-black text-2xl mt-4 px-6"
-                      onClick={handleElevateSubmit}
-                    >
-                      Save
-                    </button>
+                <div className="flex gap-12">
+                  <div>
+                    <h3 className="text-2xl">Upload Logo*</h3>
+                    <div className="border border-dashed border-black h-60 w-[32rem] flex flex-col items-center justify-center p-6 relative">
+                      {logoUploading ? (
+                        <div className="absolute inset-0 bg-black/10 flex flex-col items-center justify-center">
+                          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+                          <p className="mt-4 text-black font-medium">
+                            Uploading Logo...
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          <UploadIcon />
+                          <p>Drag file here to upload. Choose file </p>
+                          <p>Recommended size 512 x 512 px</p>
+                          <div>
+                            <label
+                              htmlFor="upload"
+                              className="flex flex-row items-center ml-12 cursor-pointer mt-4"
+                            >
+                              <input
+                                id="upload"
+                                type="file"
+                                className="hidden"
+                                ref={inputFile}
+                                onChange={uploadImage}
+                                accept="image/*"
+                                disabled={logoUploading}
+                              />
+                              <img
+                                src="https://png.pngtree.com/element_our/20190601/ourmid/pngtree-file-upload-icon-image_1344393.jpg"
+                                alt=""
+                                className="w-10 h-10"
+                              />
+                              <div className="text-white ml-1">
+                                {cid ? "Replace" : "Upload"}
+                              </div>
+                            </label>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    {imageError && (
+                      <p className="text-red-700">You have to upload a logo</p>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-2xl">Preview</h3>
+                    {isEdit && !cid ? (
+                      <img
+                        src={`${initialData?.logo_image}`}
+                        alt="preview image"
+                        height={250}
+                        width={350}
+                        className="object-contain"
+                      />
+                    ) : cid ? (
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_GATEWAY_URL}/ipfs/${cid}`}
+                        alt="preview image"
+                        height={250}
+                        width={350}
+                        className="object-contain"
+                      />
+                    ) : (
+                      <div className="border border-[#D9D8D8] h-60 w-80 flex flex-col items-center justify-center p-6">
+                        <PreviewIcon />
+                        <p>Preview after upload</p>
+                      </div>
+                    )}
                   </div>
                 </div>
-              )}
 
-              {/* AI Information Section */}
-              <FormField
-                name="additional_info"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xl font-semibold mb-4">
-                      Brand Information for AI *
-                    </FormLabel>
-                    <FormDescription className="text-lg font-semibold">
-                      Fill this field if you want to create an AI-powered brand
-                      ambassador
-                    </FormDescription>
-                    <FormControl>
-                      <Textarea
-                        className="border-0 bg-[#0000001A] text-lg"
-                        placeholder="Give as much information as possible about your brand. Anything you want the AI avatar to know and share with your customers. "
+                <div className="flex gap-12">
+                  <div>
+                    <h3 className="text-2xl">Upload Cover Image*</h3>
+                    <div className="border border-dashed border-black h-60 w-[32rem] flex flex-col items-center justify-center p-6 relative">
+                      {coverUploading ? (
+                        <div className="absolute inset-0 bg-black/10 flex flex-col items-center justify-center">
+                          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+                          <p className="mt-4 text-black font-medium">
+                            Uploading Cover Image...
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          <UploadIcon />
+                          <p>Drag file here to upload. Choose file </p>
+                          <p>Recommended size 1920 x 972 px</p>
+                          <div>
+                            <label
+                              htmlFor="uploadCover"
+                              className="flex flex-row items-center ml-12 cursor-pointer mt-4"
+                            >
+                              <input
+                                id="uploadCover"
+                                type="file"
+                                className="hidden"
+                                ref={inputFile}
+                                onChange={uploadCover}
+                                accept="image/*"
+                                disabled={coverUploading}
+                              />
+                              <img
+                                src="https://png.pngtree.com/element_our/20190601/ourmid/pngtree-file-upload-icon-image_1344393.jpg"
+                                alt=""
+                                className="w-10 h-10"
+                              />
+                              <div className="text-white ml-1">
+                                {cidCover ? "Replace" : "Upload"}
+                              </div>
+                            </label>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-2xl">Preview</h3>
+                    {isEdit && !cidCover ? (
+                      <img
+                        src={`${initialData?.cover_image}`}
+                        alt="preview image"
+                        height={250}
+                        width={350}
+                        className="object-contain"
+                      />
+                    ) : cidCover ? (
+                      <img
+                        src={`${process.env.NEXT_PUBLIC_GATEWAY_URL}/ipfs/${cidCover}`}
+                        alt="preview image"
+                        height={250}
+                        width={350}
+                        className="object-contain"
+                      />
+                    ) : (
+                      <div className="border border-[#D9D8D8] h-60 w-80 flex flex-col items-center justify-center p-6">
+                        <PreviewIcon />
+                        <p>Preview after upload</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <FormField
+                  name="representative"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xl font-semibold mb-4">
+                        Name of Brand Representative *
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          className="border-0 bg-[#0000001A] rounded"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  name="contact_email"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xl font-semibold mb-4">
+                        Contact Email*
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          className="border-0 bg-[#0000001A] rounded"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  name="contact_phone"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xl font-semibold mb-4">
+                        Contact Phone*
+                      </FormLabel>
+                      <Input
+                        className="border-0 bg-[#0000001A] rounded"
+                        placeholder="Include country code"
                         {...field}
                       />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                className="w-fit bg-[#30D8FF] text-black hover:text-white rounded-full"
-                disabled={loading}
-              >
-                {loading
-                  ? "Processing..."
-                  : isEdit
+                <FormField
+                  name="shipping_address"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xl font-semibold mb-4">
+                        Shipping address for NFC tags*
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          className="border-0 bg-[#0000001A] rounded"
+                          placeholder="Include name, street address, city, postal code, and country"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="space-y-4">
+                  <FormLabel className="text-xl font-semibold">
+                    Social Links
+                  </FormLabel>
+
+                  {socialLinks.map((link, index) => (
+                    <div key={index} className="flex gap-4">
+                      <select
+                        className="bg-white rounded w-48 h-10 border border-black px-4 font-semibold"
+                        value={link.platform}
+                        onChange={(e) =>
+                          updateSocialLink(index, "platform", e.target.value)
+                        }
+                      >
+                        <option value="">Select Platform</option>
+                        {[
+                          { value: "website", label: "Website" },
+                          { value: "telegram", label: "Telegram" },
+                          { value: "linkedin", label: "LinkedIn" },
+                          { value: "youtube", label: "YouTube" },
+                          { value: "whatsapp", label: "WhatsApp" },
+                          { value: "google", label: "Google" },
+                          { value: "tiktok", label: "TikTok" },
+                          { value: "snapchat", label: "Snapchat" },
+                          { value: "pinterest", label: "Pinterest" },
+                          { value: "twitter", label: "Twitter" },
+                          { value: "instagram", label: "Instagram" },
+                          { value: "facebook", label: "Facebook" },
+                          { value: "discord", label: "Discord" },
+                        ]
+                          .filter(
+                            (platform) =>
+                              platform.value === link.platform ||
+                              !socialLinks.some(
+                                (l) => l.platform === platform.value
+                              )
+                          )
+                          .map((platform) => (
+                            <option key={platform.value} value={platform.value}>
+                              {platform.label}
+                            </option>
+                          ))}
+                      </select>
+
+                      <Input
+                        className="border-0 bg-[#0000001A] rounded flex-1"
+                        placeholder="Enter URL"
+                        value={link.url}
+                        onChange={(e) =>
+                          updateSocialLink(index, "url", e.target.value)
+                        }
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => removeSocialLink(index)}
+                        className="px-4 py-2 text-red-500 hover:text-red-700"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+
+                  {socialLinks.length < 13 && (
+                    <Button
+                      type="button"
+                      onClick={addSocialLink}
+                      className="mt-2"
+                    >
+                      Add Social Link
+                    </Button>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="webxr_experience_with_ai_avatar"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xl font-semibold">
+                          Do you want to create WebXR experience with a unique
+                          AI avatar?
+                        </FormLabel>
+                        <FormControl>
+                          <div className="flex gap-4">
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="radio"
+                                checked={field.value === true}
+                                onChange={() => field.onChange(true)}
+                                className="form-radio"
+                              />
+                              <span>Yes</span>
+                            </label>
+
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="radio"
+                                checked={field.value === false}
+                                onChange={() => field.onChange(false)}
+                                className="form-radio"
+                              />
+                              <span>No</span>
+                            </label>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <label className="flex items-center text-xl">
+                  <input
+                    type="checkbox"
+                    checked={showForm}
+                    onChange={() => setShowForm(!showForm)}
+                    className="mr-2"
+                  />
+                  My brand is part of MyriadFlow Elevate Program
+                </label>
+
+                {showForm && (
+                  <div className="mt-6">
+                    <div className="flex flex-col gap-4">
+                      <label>
+                        Select Region
+                        <select
+                          className="border rounded px-2 py-1 border border-black ml-2 w-96"
+                          value={elevateRegion}
+                          onChange={(e) => setElevateRegion(e.target.value)}
+                          required
+                        >
+                          <option value="">Select Region</option>
+                          <option value="Africa">Africa</option>
+                          <option value="Asia">Asia</option>
+                          <option value="Europe">Europe</option>
+                          <option value="North America">North America</option>
+                          <option value="South America">South America</option>
+                          <option value="Australia">Australia</option>
+                        </select>
+                      </label>
+                      <button
+                        type="button"
+                        className="w-fit border border-black bg-[#0000001A] rounded-lg text-black text-2xl mt-4 px-6"
+                        onClick={handleElevateSubmit}
+                      >
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                <FormField
+                  name="additional_info"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xl font-semibold mb-4">
+                        Brand Information for AI *
+                      </FormLabel>
+                      <FormDescription className="text-lg font-semibold">
+                        Fill this field if you want to create an AI-powered
+                        brand ambassador
+                      </FormDescription>
+                      <FormControl>
+                        <Textarea
+                          className="border-0 bg-[#0000001A] text-lg"
+                          placeholder="Give as much information as possible about your brand. Anything you want the AI avatar to know and share with your customers. "
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button
+                  type="submit"
+                  className="w-fit bg-[#30D8FF] text-black hover:text-white rounded-full"
+                  disabled={loading}
+                >
+                  {loading
+                    ? "Processing..."
+                    : isEdit
                     ? "Update brand"
                     : "Continue"}
-              </Button>
-            </div>
-          </form>
-        </Form>
+                </Button>
+              </div>
+            </form>
+          </Form>
+        )}
       </main>
     </>
   );

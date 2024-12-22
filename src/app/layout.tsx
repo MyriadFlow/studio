@@ -5,15 +5,15 @@ import "react-toastify/dist/ReactToastify.css";
 import { cn } from "@/lib/utils";
 import { headers } from "next/headers";
 import { cookieToInitialState } from "wagmi";
-import Providers from "@/lib/providers";
 import { config } from "@/lib/wagmi";
-import AppKitProvider from "@/lib/providers";
+import { ClientProviders } from "@/components/Providers";
 
 const fontSans = FontSans({
   subsets: ["latin"],
   weight: ["400", "700"],
   variable: "--font-sans",
 });
+
 export const metadata: Metadata = {
   title: "Studio | MyriadFlow",
   description:
@@ -56,21 +56,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const initialState = cookieToInitialState(config, headers().get("cookie"));
+
   return (
     <html lang="en" suppressHydrationWarning>
-      <Providers>
-        
-        <body
-          className={cn(
-            "min-h-screen bg-[#FAF9F6] font-sans antialiased",
-            fontSans.variable
-          )}
-        >
-          <AppKitProvider initialState={initialState}>
-            {children}
-          </AppKitProvider>
-        </body>
-      </Providers>
+      <body
+        className={cn(
+          "min-h-screen bg-[#FAF9F6] font-sans antialiased",
+          fontSans.variable
+        )}
+      >
+        <ClientProviders initialState={initialState}>
+          {children}
+        </ClientProviders>
+      </body>
     </html>
   );
 }
