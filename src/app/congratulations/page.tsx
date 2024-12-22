@@ -2,12 +2,17 @@
 import { useSearchParams } from "next/navigation";
 import { Button, Navbar } from "@/components";
 import Link from "next/link";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 
 export default function Congratulations() {
-  const brand_name = localStorage.getItem("brand_name");
-
+  const [brandName, setBrandName] = useState<string | null>(null);
   const [selectedOption, setSelectedOption] = useState<string>("");
+
+  useEffect(() => {
+    // Access localStorage after component mounts
+    const storedBrandName = localStorage.getItem("brand_name");
+    setBrandName(storedBrandName);
+  }, []);
 
   const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedOption(event.target.value);
@@ -19,7 +24,7 @@ export default function Congratulations() {
       <main className="h-screen py-12 px-16 flex flex-col gap-8 text-black">
         <h1 className="text-3xl font-bold">Congratulations</h1>
         <p className="text-xl">
-          Your brand {brand_name} has been launched successfully. <br />
+          Your brand {brandName} has been launched successfully. <br />
           You are now ready to launch NFTs.
         </p>
         <h1 className="text-4xl font-medium">What would you like to create?</h1>
