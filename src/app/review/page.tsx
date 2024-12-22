@@ -3,7 +3,7 @@ import { Button, Input, Label, Navbar, Textarea } from '@/components'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Avatar } from '@readyplayerme/visage'
-import { AwaitedReactNode, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useEffect, useState } from 'react'
+import { JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useEffect, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid';
 import { toast, ToastContainer } from 'react-toastify'
 import { createPublicClient, http, Hex } from 'viem'
@@ -463,7 +463,7 @@ export default function Review() {
 						<div className='mt-6'>
 							<h2 className='text-xl'>Category</h2>
 							<div className='bg-[#0000001A] rounded p-8 flex flex-wrap gap-12'>
-								{editableData.category?.map((category: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null | undefined, index: Key | null | undefined) => (
+								{editableData.category?.map((category: any, index: number) => (
 									<Button key={index} className='bg-white rounded-lg hover:text-white  text-black'>
 										{category}
 									</Button>
@@ -473,7 +473,7 @@ export default function Review() {
 						<div className='mt-6'>
 							<h2 className='text-xl'>Tags</h2>
 							<div className='bg-[#0000001A] rounded p-8 flex flex-wrap gap-12'>
-								{editableData.tags?.map((tags: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null | undefined, index: Key | null | undefined) => (
+								{editableData.tags?.map((tags: any, index: number) => (
 									<Button key={index} className='bg-white rounded-lg hover:text-white  text-black'>
 										{tags}
 									</Button>
@@ -674,7 +674,7 @@ export default function Review() {
 									available customization options for the avatars
 								</h2>
 								<div className='bg-[#0000001A] rounded p-8 flex flex-wrap gap-12 mt-2'>
-									{parsedWebxrData.customizations?.map((customizations: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null | undefined, index: Key | null | undefined) => (
+									{parsedWebxrData.customizations?.map((customizations: any, index: number) => (
 										<Button key={index} className='bg-white rounded-full hover:text-white text-black'>
 											{customizations}
 										</Button>
