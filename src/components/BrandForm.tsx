@@ -16,16 +16,19 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components";
-// import { UploadButton } from '@/utils/uploadthing'
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import Image from "next/image";
 import { toast, ToastContainer } from "react-toastify";
 import { useRouter } from "next/navigation";
-import { useAccount } from "wagmi";
-import axios from "axios";
+import { useAccount, useChainId, useWalletClient } from "wagmi";
+import { NFTStorage } from "nft.storage";
+import { Hex, createPublicClient, http } from "viem";
+import { base } from "viem/chains";
 import { v4 as uuidv4 } from "uuid";
+
+import Simplestore from "@/lib/Simplestore.json";
+import tradehub from "@/lib/tradehub.json";
 import { clusterApiUrl, Connection, PublicKey } from "@solana/web3.js";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Metaplex, walletAdapterIdentity } from "@metaplex-foundation/js";
@@ -46,13 +49,6 @@ export interface BrandData {
   contact_phone: string;
   shipping_address: string;
   additional_info: string;
-  website: string;
-  twitter: string;
-  instagram: string;
-  facebook: string;
-  additional_link: string;
-  link: string;
-  discord: string;
   logo_image: string;
   cover_image: string;
   manager_id: string;
@@ -63,6 +59,7 @@ export interface BrandData {
   chaintype_id: string;
   elevate_region?: string;
   webxr_experience_with_ai_avatar: boolean;
+  // Social media fields
   website?: string;
   twitter?: string;
   instagram?: string;
@@ -95,13 +92,6 @@ const formSchema = z.object({
   slogan: z.string().min(2, {
     message: "Slogan name must be at least 2 characters",
   }),
-  website: z.string(),
-  twitter: z.string(),
-  instagram: z.string(),
-  facebook: z.string(),
-  additional_link: z.string(),
-  link: z.string(),
-  discord: z.string(),
   description: z
     .string()
     .min(2, { message: "Brand description must be at least 2 characters" })
@@ -111,10 +101,13 @@ const formSchema = z.object({
   representative: z
     .string()
     .min(2, { message: "Brand Representative must be at least 2 characters" }),
-  contact_email: z.string().email().min(2, { message: "Contact email must be a valid email" }),
+  contact_email: z
+    .string()
+    .email()
+    .min(2, { message: "Contact email must be a valid email" }),
   contact_phone: z
     .string()
-    .min(2, { message: "Contact phone number must be a valid pnone number" }),
+    .min(2, { message: "Contact phone number must be a valid phone number" }),
   shipping_address: z
     .string()
     .min(2, { message: "Shipping Address must be at least 2 characters" }),
@@ -129,40 +122,24 @@ const formSchema = z.object({
   payout_address: z.string(),
   chain_id: z.string(),
   chaintype_id: z.string(),
+  webxr_experience_with_ai_avatar: z.boolean().default(false),
 });
 
-export default function CreateBrand({ mode = "create", initialData = null }: BrandFormProps) {
+export default function CreateBrand({
+  mode = "create",
+  initialData = null,
+}: BrandFormProps) {
   const { address: walletAddress } = useAccount();
   const isEdit = mode === "edit";
   const router = useRouter();
   const account = useAccount();
+  const chainId = useChainId();
+  const { data: walletClient } = useWalletClient({ chainId });
 
+  // State management
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const handleCheckboxChange = () => {
-    setShowForm(!showForm);
-  };
   const [elevateRegion, setElevateRegion] = useState("");
-  const handleSubmit = () => {
-    if (!elevateRegion) {
-      toast.warning("Product URL is required.");
-      return;
-    } else {
-      localStorage.setItem("elevateRegion", elevateRegion);
-      if (elevateRegion === "Africa") {
-        localStorage.setItem(
-          "BaseSepoliaChain",
-          // '554b4903-9a06-4031-98f4-48276c427f78'
-          "6c736e9b-37e6-43f5-9841-c0ac740282df"
-        );
-      } else
-        localStorage.setItem(
-          "BaseSepoliaChain",
-          "554b4903-9a06-4031-98f4-48276c427f78"
-          // '6c736e9b-37e6-43f5-9841-c0ac740282df'
-        );
-    }
-  };
-
   const [error, setError] = useState<string | null>(null);
   const [isDeployed, setIsDeployed] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -173,10 +150,8 @@ export default function CreateBrand({ mode = "create", initialData = null }: Bra
   const [imageError, setImageError] = useState<boolean>(false);
   const [logoUploading, setLogoUploading] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
-
   const wallet = useWallet();
   const { publicKey, connected } = wallet;
-  const inputFile = useRef(null);
 
   const connection = new Connection(clusterApiUrl("devnet"));
   const metaplex = useMemo(() => {
@@ -185,252 +160,54 @@ export default function CreateBrand({ mode = "create", initialData = null }: Bra
     }
   }, [wallet, connection]);
 
-  const [file, setFile] = useState<File | null>(null);
-  const [cid, setCid] = useState("");
-  const [cidCover, setCidCover] = useState("");
-  const [uploading, setUploading] = useState(false);
-  const [uploadingCover, setUploadingCover] = useState(false);
+  const inputFile = useRef(null);
 
-  const uploadFile = async (fileToUpload: string | Blob) => {
+  const API_KEY = process.env.NEXT_PUBLIC_STORAGE_API;
+  if (!API_KEY) {
+    throw new Error("Missing NFT.storage API key");
+  }
+
+  const initializeNFTStorage = () => {
     try {
-      setUploading(true);
-      const data = new FormData();
-      data.set("file", fileToUpload);
-      const res = await fetch("/api/files", {
-        method: "POST",
-        body: data,
-      });
-      const resData = await res.json();
-      console.log(resData);
-      setCid(resData.IpfsHash);
-      toast.success("Upload Completed!", {
-        position: "top-left",
-      });
-      // console.log(resData.IpfsHash);
-      setUploading(false);
-    } catch (e) {
-      console.log(e);
-      setUploading(false);
-      alert("Trouble uploading file");
-    }
-  };
-  const uploadCoverFile = async (fileToUpload: string | Blob) => {
-    try {
-      setUploadingCover(true);
-      const data = new FormData();
-      data.set("file", fileToUpload);
-      const res = await fetch("/api/files", {
-        method: "POST",
-        body: data,
-      });
-      const resData = await res.json();
-      setCidCover(resData.IpfsHash);
-      toast.success("Upload Completed!", {
-        position: "top-left",
-      });
-      console.log(resData.IpfsHash);
-      setUploadingCover(false);
-    } catch (e) {
-      console.log(e);
-      setUploadingCover(false);
-      alert("Trouble uploading file");
-    }
-  };
-
-  const uploadImage = (e: ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      setFile(files[0]);
-      uploadFile(files[0]);
-    }
-  };
-
-  const uploadCover = (e: ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      setFile(files[0]);
-      uploadCoverFile(files[0]);
-    }
-  };
-
-  const getWebsiteUrl = () => {
-    const websiteLink = socialLinks.find((link) => link.platform === "website");
-    return websiteLink?.url || "";
-  };
-
-  const deployContract = async () => {
-    if (!publicKey || !metaplex) {
-      throw new Error("Wallet not connected");
-    }
-
-    console.log(getWebsiteUrl());
-
-    try {
-      const metadata = {
-        name: form.getValues("name"),
-        symbol: "BRAND",
-        description: form.getValues("description"),
-        image: `ipfs://${cid}`,
-        external_url: "",
-        attributes: [
-          {
-            trait_type: "Brand Representative",
-            value: form.getValues("representative"),
-          },
-          {
-            trait_type: "Region",
-            value: elevateRegion || "Global",
-          },
-        ],
-      };
-
-      // Upload metadata to Pinata
-      const response = await fetch("/api/upload-json", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ content: metadata }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Upload failed: ${JSON.stringify(errorData)}`);
-      }
-
-      const data = await response.json();
-      const metadataUri = `ipfs://${data.IpfsHash}`;
-
-      // Create NFT Collection using Metaplex
-      const { nft: collectionNft } = await metaplex.nfts().create({
-        uri: metadataUri,
-        name: form.getValues("name"),
-        sellerFeeBasisPoints: 500,
-        symbol: "BRAND",
-        isCollection: true,
-        updateAuthority: metaplex.identity(),
-      });
-
-      setIsDeployed(true);
-      return collectionNft.address.toString();
+      return new NFTStorage({ token: API_KEY });
     } catch (error) {
-      console.error("Deployment error:", error);
-      toast.error("Error deploying collection: " + error);
+      console.error("Failed to initialize NFT.storage:", error);
       throw error;
     }
   };
 
-  const deployTradehubContract = async (
-    platformFee: number,
-    memory_name: string
-  ) => {
-    if (!publicKey || !metaplex) {
-      throw new Error("Wallet not connected");
-    }
+  const client = initializeNFTStorage();
 
-    try {
-      const metadata = {
-        name: memory_name,
-        symbol: "TRADE",
-        description: `Trading collection for ${form.getValues("name")}`,
-        image: `ipfs://${cidCover}`,
-        external_url: getWebsiteUrl(),
-        attributes: [
-          {
-            trait_type: "Platform Fee",
-            value: platformFee.toString(),
-          },
-        ],
-      };
+  // Initialize public client
+  const publicClient = createPublicClient({
+    chain: base,
+    transport: http(),
+  });
 
-      const response = await fetch("/api/upload-json", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ content: metadata }),
-      });
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      slogan: "",
+      description: "",
+      representative: "",
+      contact_email: "",
+      contact_phone: "",
+      shipping_address: "",
+      additional_info: "",
+      logo_image: "",
+      cover_image: "",
+      manager_id: "",
+      access_master: "",
+      trade_hub: "",
+      payout_address: "",
+      chain_id: "",
+      chaintype_id: "",
+      webxr_experience_with_ai_avatar: false,
+    },
+  });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Upload failed: ${JSON.stringify(errorData)}`);
-      }
-
-      const data = await response.json();
-      const metadataUri = `ipfs://${data.IpfsHash}`;
-
-      const { nft: tradingCollection } = await metaplex.nfts().create({
-        uri: metadataUri,
-        name: memory_name,
-        sellerFeeBasisPoints: platformFee * 100,
-        symbol: "TRADE",
-        isCollection: true,
-        updateAuthority: metaplex.identity(),
-      });
-
-      setIsDeployed(true);
-      return {
-        mintAddress: tradingCollection.address.toString(),
-        metadataAddress: tradingCollection.metadataAddress.toString(),
-        // tokenAddress: tradingCollection.tokenAddress?.toString() || null,
-      };
-    } catch (error) {
-      console.error("Deployment error:", error);
-      toast.error("Error deploying trading collection: " + error);
-      throw error;
-    }
-  };
-
-  const createAndUploadMetadata = async (metadata: any) => {
-    try {
-      const response = await fetch("/api/upload-json", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ content: metadata }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Upload failed: ${JSON.stringify(errorData)}`);
-      }
-
-      const data = await response.json();
-      return `ipfs://${data.IpfsHash}`;
-    } catch (error: any) {
-      console.error("Error uploading metadata:", error);
-      throw error;
-    }
-  };
-
-  const mintNFTToCollection = async (
-    collectionAddress: string,
-    metadata: any
-  ) => {
-    if (!publicKey || !metaplex) {
-      throw new Error("Wallet not connected");
-    }
-
-    try {
-      const metadataUri = await createAndUploadMetadata(metadata);
-
-      const { nft } = await metaplex.nfts().create({
-        uri: metadataUri,
-        name: metadata.name,
-        sellerFeeBasisPoints: metadata.royalties || 0,
-        symbol: metadata.symbol || "NFT",
-        collection: new PublicKey(collectionAddress),
-        collectionAuthority: publicKey as any,
-      });
-
-      return nft;
-    } catch (error) {
-      console.error("Error minting NFT:", error);
-      throw error;
-    }
-  };
-
+  // Social Links Management
   const addSocialLink = () => {
     setSocialLinks([...socialLinks, { platform: "", url: "" }]);
   };
@@ -450,43 +227,337 @@ export default function CreateBrand({ mode = "create", initialData = null }: Bra
     setSocialLinks(newLinks);
   };
 
-  const apiUrl = process.env.NEXT_PUBLIC_URI;
+  // File Upload Handlers
+  const uploadFile = async (fileToUpload: string | Blob) => {
+    try {
+      setLogoUploading(true);
+      const data = new FormData();
+      data.set("file", fileToUpload);
+      const res = await fetch("/api/files", {
+        method: "POST",
+        body: data,
+      });
+      const resData = await res.json();
+      console.log(resData);
+      setCid(resData.IpfsHash);
+      toast.success("Logo Upload Completed!", {
+        position: "top-left",
+      });
+    } catch (e) {
+      console.error(e);
+      toast.error("Trouble uploading logo");
+    } finally {
+      setLogoUploading(false);
+    }
+  };
 
-  const account = useAccount();
-  const router = useRouter();
-  const [loading, setLoading] = useState<boolean>(false);
-  const [imageError, setImageError] = useState<boolean>(false);
+  const uploadCoverFile = async (fileToUpload: string | Blob) => {
+    try {
+      setCoverUploading(true);
+      const data = new FormData();
+      data.set("file", fileToUpload);
+      const res = await fetch("/api/files", {
+        method: "POST",
+        body: data,
+      });
+      const resData = await res.json();
+      setCidCover(resData.IpfsHash);
+      toast.success("Cover Upload Completed!", {
+        position: "top-left",
+      });
+    } catch (e) {
+      console.error(e);
+      toast.error("Trouble uploading cover image");
+    } finally {
+      setCoverUploading(false);
+    }
+  };
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      slogan: "",
-      description: "",
-      representative: "",
-      contact_email: "",
-      contact_phone: "",
-      shipping_address: "",
-      additional_info: "",
-      website: "",
-      twitter: "",
-      instagram: "",
-      facebook: "",
-      additional_link: "",
-      link: "",
-      discord: "",
-      logo_image: "",
-      cover_image: "",
-      manager_id: "",
-      access_master: "",
-      trade_hub: "",
-      payout_address: "",
-      chain_id: "",
-      chaintype_id: "",
-    },
-  });
+  const uploadImage = (e: ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      setFile(files[0]);
+      uploadFile(files[0]);
+    }
+  };
+
+  const uploadCover = (e: ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      setFile(files[0]);
+      uploadCoverFile(files[0]);
+    }
+  };
+
+  const createAndUploadMetadata = async (
+    brandData: any,
+    isCollection: boolean
+  ) => {
+    try {
+      const metadata = {
+        name: isCollection ? `${brandData.name} Collection` : brandData.name,
+        symbol: isCollection ? "BRAND" : "NFT",
+        description: brandData.description,
+        image: brandData.logo_image, // Your IPFS logo URL
+        external_url: brandData.website,
+        attributes: [
+          {
+            trait_type: "Brand Representative",
+            value: brandData.representative,
+          },
+          {
+            trait_type: "Region",
+            value: brandData.elevate_region || "Global",
+          },
+        ],
+        properties: {
+          files: [
+            {
+              uri: brandData.logo_image,
+              type: "image/png", // adjust based on your image type
+            },
+          ],
+          category: "image",
+        },
+      };
+
+      // Upload to NFT.storage
+      // const client = new NFTStorage({ token: API_KEY }); // You already have this setup
+      const metadataBlob = new Blob([JSON.stringify(metadata)], {
+        type: "application/json",
+      });
+      const cid = await client.storeBlob(metadataBlob);
+
+      return `ipfs://${cid}`;
+    } catch (error) {
+      console.error("Error uploading metadata:", error);
+      throw error;
+    }
+  };
+
+  const getWebsiteUrl = () => {
+    const websiteLink = socialLinks.find((link) => link.platform === "website");
+    return websiteLink?.url || "";
+  };
+
+  // Contract Deployment Functions
+  const deployContract = async () => {
+    // if (!walletClient) {
+    //   throw new Error("Wallet client not available");
+    // }
+
+    // try {
+    //   const hash = await walletClient.deployContract({
+    //     abi: Simplestore.abi,
+    //     bytecode: Simplestore.bytecode as Hex,
+    //     account: walletAddress,
+    //     args: ["0xf5d0A178a61A2543c98FC4a73E3e78a097DBD9EE"],
+    //   });
+
+    //   if (!hash) {
+    //     throw new Error("Failed to execute deploy contract transaction");
+    //   }
+
+    //   const txn = await publicClient.waitForTransactionReceipt({ hash });
+    //   setIsDeployed(true);
+    //   return txn.contractAddress;
+    // } catch (error) {
+    //   console.error("Deployment error:", error);
+    //   toast.error("Error deploying AccessMaster contract: " + error);
+    //   throw error;
+    // }
+
+    if (!publicKey || !metaplex) {
+      throw new Error("Wallet not connected");
+    }
+
+    try {
+      // Create and upload metadata
+      const metadata = {
+        name: form.getValues("name"),
+        symbol: "BRAND",
+        description: form.getValues("description"),
+        image: `ipfs://${cid}`, // Your logo IPFS URI
+        external_url: getWebsiteUrl(),
+        attributes: [
+          {
+            trait_type: "Brand Representative",
+            value: form.getValues("representative"),
+          },
+          {
+            trait_type: "Region",
+            value: elevateRegion || "Global",
+          },
+        ],
+      };
+
+      const metadataBlob = new Blob([JSON.stringify(metadata)], {
+        type: "application/json",
+      });
+      const metadataCid = await createAndUploadMetadata(metadataBlob, false);
+      const metadataUri = `ipfs://${metadataCid}`;
+
+      // Create NFT Collection
+      const collectionNft = await metaplex.nfts().createSft({
+        name: `${form.getValues("name")} Collection`,
+        symbol: "BRAND",
+        uri: metadataUri,
+        sellerFeeBasisPoints: 500, // 5% royalties
+        isCollection: true,
+        collectionAuthority: publicKey as any,
+        updateAuthority: publicKey as any,
+      });
+
+      setIsDeployed(true);
+      return collectionNft.mintAddress.toString();
+    } catch (error) {
+      console.error("Deployment error:", error);
+      toast.error("Error deploying collection: " + error);
+      throw error;
+    }
+  };
+
+  const deployTradehubContract = async (
+    platformFee: number,
+    memory_name: string
+  ) => {
+    // if (!walletClient) {
+    //   throw new Error("Wallet client not available");
+    // }
+    // const AccessMasterAddress = localStorage.getItem("AccessMasterAddress");
+    // try {
+    //   const hash = await walletClient.deployContract({
+    //     abi: tradehub.abi,
+    //     bytecode: tradehub.bytecode as Hex,
+    //     account: walletAddress,
+    //     args: [platformFee, memory_name, `${AccessMasterAddress}`],
+    //   });
+
+    //   if (!hash) {
+    //     throw new Error("Failed to execute deploy contract transaction");
+    //   }
+
+    //   const txn = await publicClient.waitForTransactionReceipt({ hash });
+    //   setIsDeployed(true);
+    //   return txn.contractAddress;
+    // } catch (error) {
+    //   console.error("Deployment error:", error);
+    //   toast.error("Error deploying TradeHub contract: " + error);
+    //   throw error;
+    // }
+
+    if (!publicKey || !metaplex) {
+      throw new Error("Wallet not connected");
+    }
+
+    try {
+      // Create trading collection metadata
+      const metadata = {
+        name: memory_name,
+        symbol: "TRADE",
+        description: `Trading collection for ${form.getValues("name")}`,
+        image: `ipfs://${cidCover}`,
+        external_url: getWebsiteUrl(),
+      };
+
+      const metadataBlob = new Blob([JSON.stringify(metadata)], {
+        type: "application/json",
+      });
+      const metadataCid = await createAndUploadMetadata(metadataBlob, true);
+      const metadataUri = `ipfs://${metadataCid}`;
+
+      // Create Trading Collection
+      const tradingCollection = await metaplex.nfts().createSft({
+        name: memory_name,
+        symbol: "TRADE",
+        uri: metadataUri,
+        sellerFeeBasisPoints: platformFee * 100,
+        isCollection: true,
+        collectionAuthority: publicKey as any,
+        updateAuthority: publicKey as any,
+      });
+
+      setIsDeployed(true);
+      return {
+        mintAddress: tradingCollection.mintAddress.toString(),
+        metadataAddress: tradingCollection.metadataAddress.toString(),
+        tokenAddress: tradingCollection.tokenAddress?.toString() || null,
+      };
+    } catch (error) {
+      console.error("Deployment error:", error);
+      toast.error("Error deploying trading collection: " + error);
+      throw error;
+    }
+  };
+
+  const handleDeploy = async (): Promise<boolean> => {
+    try {
+      const address = await deployContract();
+      localStorage.setItem("AccessMasterAddress", address as `0x${string}`);
+      console.log("Contract deployed at:", address);
+      return address !== null;
+    } catch (error) {
+      console.error("Error deploying AccessMaster contract:", error);
+      toast.error("Failed to deploy AccessMaster contract");
+      return false;
+    }
+  };
+
+  const TradehubDeploy = async (): Promise<boolean> => {
+    // try {
+    //   const address = await deployTradehubContract(30, "NFT BAZAAR");
+    //   localStorage.setItem("TradehubAddress", address as `0x${string}`);
+    //   console.log("TradeHub Contract deployed at:", address);
+    //   return address !== null;
+    // } catch (error) {
+    //   console.error("Error deploying TradeHub contract:", error);
+    //   toast.error("Failed to deploy TradeHub contract");
+    //   return false;
+    // }
+
+    try {
+      const addresses = await deployTradehubContract(30, "NFT BAZAAR");
+      localStorage.setItem("TradehubAddress", addresses.mintAddress);
+      localStorage.setItem(
+        "TradehubMetadataAddress",
+        addresses.metadataAddress
+      );
+      if (addresses.tokenAddress) {
+        localStorage.setItem("TradehubTokenAddress", addresses.tokenAddress);
+      }
+      console.log("TradeHub Collection deployed at:", addresses.mintAddress);
+      return true;
+    } catch (error) {
+      console.error("Error deploying TradeHub collection:", error);
+      toast.error("Failed to deploy TradeHub collection");
+      return false;
+    }
+  };
+
+  const handleElevateSubmit = () => {
+    if (!elevateRegion) {
+      toast.warning("Region selection is required.");
+      return;
+    }
+    localStorage.setItem("elevateRegion", elevateRegion);
+    if (elevateRegion === "Africa") {
+      localStorage.setItem(
+        "BaseSepoliaChain",
+        "6c736e9b-37e6-43f5-9841-c0ac740282df"
+      );
+    } else {
+      localStorage.setItem(
+        "BaseSepoliaChain",
+        "554b4903-9a06-4031-98f4-48276c427f78"
+      );
+    }
+  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    // if (!account.addresses) {
+    //   toast.warning("Connect your wallet");
+    //   return;
+    // }
     if (!publicKey || !metaplex) {
       throw new Error("Wallet not connected");
     }
@@ -497,50 +568,53 @@ export default function CreateBrand({ mode = "create", initialData = null }: Bra
     }
 
     try {
-      const socialLinksObject = socialLinks.reduce((acc, link) => {
-        if (link.platform && link.url) {
-          acc[link.platform] = link.url;
-        }
-        return acc;
-      }, {} as Record<string, string>);
+      // Prepare social links object
+      const socialLinksObject = socialLinks.reduce(
+        (acc, link) => {
+          if (link.platform && link.url) {
+            acc[link.platform] = link.url;
+          }
+          return acc;
+        },
+        {} as Record<string, string>
+      );
 
+      // Handle images
       if (cid) {
         values.logo_image = "ipfs://" + cid;
       } else if (isEdit && initialData?.logo_image) {
-        // Convert back from https://nftstorage.link/ipfs/... to ipfs://...
-        values.logo_image = "ipfs://" + initialData.logo_image.split("/ipfs/")[1];
+        values.logo_image =
+          "ipfs://" + initialData.logo_image.split("/ipfs/")[1];
       }
 
       if (cidCover) {
         values.cover_image = "ipfs://" + cidCover;
       } else if (isEdit && initialData?.cover_image) {
-        // Convert back from https://nftstorage.link/ipfs/... to ipfs://...
-        values.cover_image = "ipfs://" + initialData.cover_image.split("/ipfs/")[1];
+        values.cover_image =
+          "ipfs://" + initialData.cover_image.split("/ipfs/")[1];
       }
 
       values.manager_id = account.address!;
       localStorage.setItem("brand_name", values.name);
 
+      const apiUrl = process.env.NEXT_PUBLIC_URI;
+
       if (isEdit && initialData) {
-        // Handle edit mode
         setLoading(true);
         try {
           const response = await fetch(`${apiUrl}/brands/${initialData.id}`, {
             method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               ...values,
+              ...socialLinksObject,
               elevate_region: elevateRegion,
             }),
           });
 
           if (!response.ok) throw new Error("Failed to update brand");
 
-          toast.success("Your Brand has been updated", {
-            position: "top-left",
-          });
+          toast.success("Your Brand has been updated");
           router.push(
             `https://discover.myriadflow.com/brand/${initialData.name
               .toLowerCase()
@@ -548,47 +622,32 @@ export default function CreateBrand({ mode = "create", initialData = null }: Bra
           );
         } catch (error) {
           console.error(error);
-          toast.error("Failed to create Brand: " + error, {
-            position: "top-left",
-          });
+          toast.error("Failed to update Brand: " + error);
         } finally {
           setLoading(false);
         }
+        return;
       }
 
+      // Create mode
       if (cid) {
         setLoading(true);
-        toast.warning("Deploying brand collection...");
+        toast.warning("Deploying AccessMaster to manage your brand");
 
-        const collectionAddress = await deployContract();
-        localStorage.setItem("AccessMasterAddress", collectionAddress);
-        console.log("Brand collection deployed at:", collectionAddress);
+        const deploySuccess = await handleDeploy();
+        if (!deploySuccess) throw new Error("AccessMaster deployment failed");
 
-        toast.warning("Deploying trading collection...");
-        const tradingCollectionAddresses = await deployTradehubContract(
-          30,
-          "NFT BAZAAR"
-        );
-        localStorage.setItem(
-          "TradehubAddress",
-          tradingCollectionAddresses.mintAddress
-        );
-        localStorage.setItem(
-          "TradehubMetadataAddress",
-          tradingCollectionAddresses.metadataAddress
-        );
-        // if (tradingCollectionAddresses.tokenAddress) {
-        //   localStorage.setItem(
-        //     "TradehubTokenAddress",
-        //     tradingCollectionAddresses.tokenAddress
-        //   );
-        // }
-        console.log(
-          "Trading collection deployed at:",
-          tradingCollectionAddresses.mintAddress
-        );
+        const AccessMasterAddress = localStorage.getItem("AccessMasterAddress");
+        console.log("Contract deployed at:", AccessMasterAddress);
 
-        toast.success("Collections deployed successfully");
+        toast.warning("Deploying TradeHub");
+        const deployTradeHub = await TradehubDeploy();
+        if (!deployTradeHub) throw new Error("TradeHub deployment failed");
+
+        const TradehubAddress = localStorage.getItem("TradehubAddress");
+        console.log("Contract deployed at:", TradehubAddress);
+
+        toast.success("Deployment Successful");
 
         const brandId = uuidv4();
         const chaintype = localStorage.getItem("BaseSepoliaChain");
@@ -596,15 +655,13 @@ export default function CreateBrand({ mode = "create", initialData = null }: Bra
 
         const response = await fetch(`${apiUrl}/brands`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             id: brandId,
             ...values,
             ...socialLinksObject,
-            access_master: collectionAddress,
-            trade_hub: tradingCollectionAddresses.mintAddress,
+            access_master: AccessMasterAddress,
+            trade_hub: TradehubAddress,
             payout_address: account.address,
             chain_id: "84532",
             chaintype_id: chaintype,
@@ -616,13 +673,11 @@ export default function CreateBrand({ mode = "create", initialData = null }: Bra
 
         const brand = await response.json();
         localStorage.setItem("BrandId", brand.id);
-        console.log(brand);
 
+        // Create user record
         const users = await fetch(`${apiUrl}/users`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             id: brandId,
             wallet_address: account.address,
@@ -633,83 +688,43 @@ export default function CreateBrand({ mode = "create", initialData = null }: Bra
         if (!users.ok) throw new Error("Failed to add user");
 
         toast.success("Your Brand has been created");
-
-        router.push("/create-webxr-experience");
+        if (values.webxr_experience_with_ai_avatar) {
+          router.push("/create-webxr-experience");
+        } else {
+          router.push(`/congratulations?brand_name=${values.name}`);
+        }
+      } else if (!imageError && cid === "") {
+        toast.warning("Wait for your image to finish upload");
       }
     } catch (error) {
       console.error(error);
-      toast.error("Failed to create Brand: " + error, {
-        position: "top-left",
-      });
+      toast.error("Failed to create Brand: " + error);
       setLoading(false);
     }
   }
 
-  const uploadImage = async (e: ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      // setFile(files[0]);
-      // uploadFile(files[0]);
-      try {
-        const targetWidth = 512;
-        const targetHeight = 512;
-        const quality = 0.7;
-
-        const compressedFile = await compressImage(files[0], targetWidth, targetHeight, quality);
-
-        setFile(compressedFile);
-        await uploadFile(compressedFile);
-      } catch (error) {
-        console.error("Image compression failed:", error);
-      }
+  useEffect(() => {
+    if (walletAddress) {
+      localStorage.setItem("walletAddress", walletAddress);
+      localStorage.setItem(
+        "BaseSepoliaChain",
+        "554b4903-9a06-4031-98f4-48276c427f78"
+      );
     }
-  };
-
-  const removePrefix = (uri: any) => {
-    return uri.substring(7, uri.length);
-  };
+  }, [walletAddress]);
 
   useEffect(() => {
     if (isEdit && initialData) {
-      // Set form values
       form.reset({
-        name: initialData.name,
-        slogan: initialData.slogan,
-        description: initialData.description,
-        representative: initialData.representative,
-        contact_email: initialData.contact_email,
-        contact_phone: initialData.contact_phone,
-        shipping_address: initialData.shipping_address,
-        additional_info: initialData.additional_info,
-        website: initialData.website,
-        twitter: initialData.twitter,
-        instagram: initialData.instagram,
-        facebook: initialData.facebook,
-        additional_link: initialData.additional_link,
-        link: initialData.link,
-        discord: initialData.discord,
-        logo_image: initialData.logo_image,
-        cover_image: initialData.cover_image,
-        manager_id: initialData.manager_id,
-        access_master: initialData.access_master,
-        trade_hub: initialData.trade_hub,
-        payout_address: initialData.payout_address,
-        chain_id: initialData.chain_id,
-        chaintype_id: initialData.chaintype_id,
+        ...initialData,
+        webxr_experience_with_ai_avatar:
+          initialData.webxr_experience_with_ai_avatar || false,
       });
 
-      // Set image CIDs
-      // if (initialData.logo_image) {
-      //   setCid(initialData.logo_image.slice(7));
-      // }
-      // if (initialData.cover_image) {
-      //   setCidCover(initialData.cover_image.slice(7));
-      // }
-
-      // Set elevate region
       setElevateRegion(initialData.elevate_region || "");
       setShowForm(!!initialData.elevate_region);
 
+      // Initialize social links from initialData
       const initialSocialLinks: SocialLink[] = [];
       const socialPlatforms = [
         "website",
@@ -745,8 +760,10 @@ export default function CreateBrand({ mode = "create", initialData = null }: Bra
       <ToastContainer />
       <main className="min-h-screen">
         <div className="px-16 py-8 border-b text-black border-black">
-          <h1 className="font-bold uppercase text-3xl mb-4">Create your brand</h1>
-          <p>Fill out the details for creating your brand</p>
+          <h1 className="font-bold uppercase text-3xl mb-4">
+            {isEdit ? "Edit your brand" : "Create your brand"}
+          </h1>
+          <p>Fill out the details for your brand</p>
         </div>
 
         {!connected ? (
@@ -755,11 +772,12 @@ export default function CreateBrand({ mode = "create", initialData = null }: Bra
             <WalletMultiButton />
           </div>
         ) : (
+          // Your form content
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <div className="py-4 px-32 flex flex-col gap-12">
+                {/* Basic Information */}
                 <FormField
-                  name="website"
                   control={form.control}
                   name="name"
                   render={({ field }) => (
@@ -820,6 +838,7 @@ export default function CreateBrand({ mode = "create", initialData = null }: Bra
                   )}
                 />
 
+                {/* Image Upload Sections */}
                 <div className="flex gap-12">
                   <div>
                     <h3 className="text-2xl">Upload Logo*</h3>
@@ -894,6 +913,7 @@ export default function CreateBrand({ mode = "create", initialData = null }: Bra
                   </div>
                 </div>
 
+                {/* Cover Image Upload */}
                 <div className="flex gap-12">
                   <div>
                     <h3 className="text-2xl">Upload Cover Image*</h3>
@@ -965,6 +985,7 @@ export default function CreateBrand({ mode = "create", initialData = null }: Bra
                   </div>
                 </div>
 
+                {/* Contact Information */}
                 <FormField
                   name="representative"
                   control={form.control}
@@ -1041,6 +1062,7 @@ export default function CreateBrand({ mode = "create", initialData = null }: Bra
                   )}
                 />
 
+                {/* Social Links Section */}
                 <div className="space-y-4">
                   <FormLabel className="text-xl font-semibold">
                     Social Links
@@ -1115,6 +1137,7 @@ export default function CreateBrand({ mode = "create", initialData = null }: Bra
                   )}
                 </div>
 
+                {/* WebXR Experience Section */}
                 <div className="space-y-4">
                   <FormField
                     control={form.control}
@@ -1154,6 +1177,7 @@ export default function CreateBrand({ mode = "create", initialData = null }: Bra
                   />
                 </div>
 
+                {/* Elevate Program Section */}
                 <label className="flex items-center text-xl">
                   <input
                     type="checkbox"
@@ -1195,6 +1219,7 @@ export default function CreateBrand({ mode = "create", initialData = null }: Bra
                   </div>
                 )}
 
+                {/* AI Information Section */}
                 <FormField
                   name="additional_info"
                   control={form.control}
@@ -1219,6 +1244,7 @@ export default function CreateBrand({ mode = "create", initialData = null }: Bra
                   )}
                 />
 
+                {/* Submit Button */}
                 <Button
                   type="submit"
                   className="w-fit bg-[#30D8FF] text-black hover:text-white rounded-full"
@@ -1227,8 +1253,8 @@ export default function CreateBrand({ mode = "create", initialData = null }: Bra
                   {loading
                     ? "Processing..."
                     : isEdit
-                    ? "Update brand"
-                    : "Continue"}
+                      ? "Update brand"
+                      : "Continue"}
                 </Button>
               </div>
             </form>
