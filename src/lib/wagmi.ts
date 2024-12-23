@@ -1,6 +1,6 @@
 import { defaultWagmiConfig } from '@web3modal/wagmi/react/config'
 import { createStorage, cookieStorage } from 'wagmi'
-import { base } from 'wagmi/chains'
+import { base, baseSepolia } from 'wagmi/chains'
 
 // Get projectId from environment variables
 export const projectId ="c26b357532f63f7ba31efebac88d0eed"
@@ -17,7 +17,7 @@ export const metadata = {
 }
 
 // Define supported chains
-const chains = [base] as const
+const chains = [baseSepolia] as const
 
 // Create Wagmi configuration
 export const config = defaultWagmiConfig({

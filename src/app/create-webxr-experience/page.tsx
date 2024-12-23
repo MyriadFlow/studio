@@ -15,17 +15,18 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ToastContainer, toast } from "react-toastify";
 import { Avatar } from "@readyplayerme/visage";
 import { NFTStorage } from "nft.storage";
 import { v4 as uuidv4 } from "uuid";
-import { useGLTF, OrbitControls } from "@react-three/drei";
-import { useRouter } from "next/navigation";
-import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { PauseIcon, PlayIcon, DownArrowIcon, UpArrowIcon } from "@/components/ui/icons";
 import ColorPicker from "@/components/ui/ColorPicker";
-import { Canvas } from "@react-three/fiber";
 import axios from "axios";
+
+import { Canvas } from "@react-three/fiber";
+import { useGLTF, OrbitControls } from "@react-three/drei";
 
 const API_KEY = process.env.NEXT_PUBLIC_STORAGE_API!;
 const ELEVENLABS_API_KEY = process.env.NEXT_PUBLIC_ELEVENLABS_KEY!;
@@ -36,6 +37,7 @@ function Model({ url }: { url: string }) {
   const { scene } = useGLTF(url);
   return <primitive object={scene} />;
 }
+
 
 const formSchema = z.object({
   image360: z.string(),
@@ -112,6 +114,7 @@ export default function CreateWebxrExperience() {
   }, []);
 
   const inputFile = useRef(null);
+  const router = useRouter();
 
   const validate3dModel = (file: File) => {
     setFormatError("");
@@ -483,8 +486,11 @@ export default function CreateWebxrExperience() {
               </div>
 
               {/* 3D Model Upload Section */}
+
+              {/* 3D Model Upload Section */}
               <div className="flex gap-12">
                 <div>
+                  <h3 className="text-2xl">Upload 3D Model (GLB)*</h3>
                   <h3 className="text-2xl">Upload 3D Model (GLB)*</h3>
                   <div className="border border-dashed border-black h-60 w-[32rem] flex flex-col items-center justify-center p-6">
                     <UploadIcon />

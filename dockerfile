@@ -4,30 +4,27 @@ FROM node:18-alpine AS deps
 # Install libc6-compat if needed
 RUN apk add --no-cache libc6-compat
 
-# Install pnpm globally
-RUN npm install -g pnpm
+# Install pnpm globally with a specific version
+RUN npm install -g pnpm@8.6.12
 
 WORKDIR /app
 
 # Copy package.json and pnpm-lock.yaml
 COPY package.json pnpm-lock.yaml ./
 
-# Install dependencies with pnpm
-RUN pnpm install --frozen-lockfile
+# Install dependencies with pnpm (modified flags)
+RUN pnpm install --no-frozen-lockfile
 
 # Rebuild the source code only when needed
 FROM node:18-alpine AS builder
 WORKDIR /app
 
-# Install pnpm globally
-RUN npm install -g pnpm
+# Install pnpm globally with the same version
+RUN npm install -g pnpm@8.6.12
 
 # Copy dependencies from the deps stage
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
-# Optional: Disable Next.js telemetry during the build
-# ENV NEXT_TELEMETRY_DISABLED 1
 
 # Build the Next.js application with pnpm
 RUN pnpm run build
@@ -36,14 +33,11 @@ RUN pnpm run build
 FROM node:18-alpine AS runner
 WORKDIR /app
 
-# Install pnpm globally
-RUN npm install -g pnpm
+# Install pnpm globally with the same version
+RUN npm install -g pnpm@8.6.12
 
 # Set environment to production
 ENV NODE_ENV production
-
-# Optional: Disable telemetry during runtime
-# ENV NEXT_TELEMETRY_DISABLED 1
 
 # Create a non-root user and group
 RUN addgroup --system --gid 1001 nodejs

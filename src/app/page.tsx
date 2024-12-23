@@ -8,6 +8,8 @@ import { useAccount } from "wagmi";
 import { toast, ToastContainer } from "react-toastify";
 import Footer from "@/components/footer";
 import { v4 as uuidv4 } from "uuid";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 interface Brand {
   id: string; // UUID type
@@ -27,6 +29,7 @@ export default function Home() {
   const [tosChecked, setTosChecked] = useState(false);
   const [newsletterChecked, setNewsletterChecked] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const { wallet, connected } = useWallet();
 
   const apiUrl = process.env.NEXT_PUBLIC_URI;
   const baseUri = process.env.NEXT_PUBLIC_URI || "https://app.myriadflow.com";
@@ -258,9 +261,9 @@ export default function Home() {
               className="hidden column lg:row lg:flex flex-wrap lg:flex-nowrap"
             >
               <div className="relative inline-block">
-                <w3m-button />
+                <WalletMultiButton />
               </div>
-              {!walletAddress ? (
+              {!connected ? (
                 <Button className="px-10 py-2 rounded-[20px] font-bold text-black hover:text-white bg-white border border-solid border-[#DF1FDD] text-center">
                   Works best on Chrome browser!
                 </Button>
