@@ -114,7 +114,6 @@ export default function CreateWebxrExperience() {
   }, []);
 
   const inputFile = useRef(null);
-  const router = useRouter();
 
   const validate3dModel = (file: File) => {
     setFormatError("");

@@ -25,7 +25,7 @@ import { useAccount, useChainId, useWalletClient } from "wagmi";
 import { NFTStorage } from "nft.storage";
 import { Hex, createPublicClient, http } from "viem";
 import { base } from "viem/chains";
-
+import { v4 as uuidv4 } from 'uuid';
 import Simplestore from "@/lib/Simplestore.json";
 import tradehub from "@/lib/tradehub.json";
 import { clusterApiUrl, Connection, PublicKey } from "@solana/web3.js";
