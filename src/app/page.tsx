@@ -254,7 +254,7 @@ export default function Home() {
             <div
               style={{
                 // display: isMobile ? "none" : "flex",
-                flexDirection: isMobile ? "column" : "row",
+                flexDirection: isMobile ? "column" : "row",   
                 gap: "24px",
                 marginTop: isMobile ? "24px" : "80px",
               }}
