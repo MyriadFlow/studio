@@ -1,35 +1,39 @@
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextRequest, NextResponse } from "next/server";
 import formidable from "formidable";
 import fs from "fs";
 import axios from "axios";
 import FormData from "form-data";
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+// Since we can't use formidable directly with Edge Runtime,
+// we need to specify Node runtime
+export const runtime = "nodejs";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method not allowed" });
-  }
+// Configure the maximum duration for the API route
+export const maxDuration = 60;
 
+async function POST(req: NextRequest) {
   try {
-    const form = formidable();
-    const [fields, files] = await form.parse(req);
-    const file = files.file?.[0];
+    // Convert the request to a NodeJS readable stream
+    const data = await req.formData();
+    const file = data.get("file") as File;
 
     if (!file) {
-      return res.status(400).json({ error: "No file uploaded" });
+      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
-    const formData = new FormData();
-    formData.append("file", fs.createReadStream(file.filepath));
+    // Create a temporary file
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
 
+    // Create a temporary file path
+    const tempFilePath = `/tmp/${file.name}`;
+    fs.writeFileSync(tempFilePath, buffer);
+
+    // Create form data for Pinata
+    const formData = new FormData();
+    formData.append("file", fs.createReadStream(tempFilePath));
+
+    // Upload to Pinata
     const pinataRes = await axios.post(
       "https://api.pinata.cloud/pinning/pinFileToIPFS",
       formData,
@@ -42,9 +46,17 @@ export default async function handler(
       }
     );
 
-    return res.status(200).json(pinataRes.data);
+    // Clean up the temporary file
+    fs.unlinkSync(tempFilePath);
+
+    return NextResponse.json(pinataRes.data);
   } catch (error) {
     console.error("Upload error:", error);
-    return res.status(500).json({ error: "Error uploading file" });
+    return NextResponse.json(
+      { error: "Error uploading file" },
+      { status: 500 }
+    );
   }
 }
+
+export { POST };
