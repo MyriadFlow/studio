@@ -709,6 +709,7 @@ export default function CreateBrand({
 
         const brand = await response.json();
         localStorage.setItem("BrandId", brand.id);
+        localStorage.setItem('webxr-experience-with-ai-avatar', values.webxr_experience_with_ai_avatar.toString())
 
         const users = await fetch(`${apiUrl}/users`, {
           method: "POST",
