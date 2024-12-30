@@ -1,8 +1,13 @@
 # Install dependencies only when needed
 FROM node:18-alpine AS deps
 
-# Install libc6-compat if needed
-RUN apk add --no-cache libc6-compat
+# Install build dependencies
+RUN apk add --no-cache \
+    libc6-compat \
+    python3 \
+    make \
+    g++ \
+    build-base
 
 # Install pnpm globally
 RUN npm install -g pnpm
@@ -27,7 +32,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Optional: Disable Next.js telemetry during the build
-# ENV NEXT_TELEMETRY_DISABLED 1
+ENV NEXT_TELEMETRY_DISABLED 1
 
 # Build the Next.js application with pnpm
 RUN pnpm run build
@@ -41,9 +46,7 @@ RUN npm install -g pnpm
 
 # Set environment to production
 ENV NODE_ENV production
-
-# Optional: Disable telemetry during runtime
-# ENV NEXT_TELEMETRY_DISABLED 1
+ENV NEXT_TELEMETRY_DISABLED 1
 
 # Create a non-root user and group
 RUN addgroup --system --gid 1001 nodejs
