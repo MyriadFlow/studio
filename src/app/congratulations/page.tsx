@@ -7,11 +7,20 @@ import { Suspense, useState, useEffect } from "react";
 export default function Congratulations() {
   const [brandName, setBrandName] = useState<string | null>(null);
   const [selectedOption, setSelectedOption] = useState<string>("");
+  const [hasWebXrExperience, setHasWebXrExperience] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
+    localStorage.setItem("webxr-experience-with-ai-avatar", true.toString());
     // Access localStorage after component mounts
     const storedBrandName = localStorage.getItem("brand_name");
+    const webXrExperience: string | null = localStorage.getItem(
+      "webxr-experience-with-ai-avatar"
+    );
     setBrandName(storedBrandName);
+    console.log(webXrExperience);
+    setHasWebXrExperience(webXrExperience);
   }, []);
 
   const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -23,10 +32,17 @@ export default function Congratulations() {
       <Navbar />
       <main className="h-screen py-12 px-16 flex flex-col gap-8 text-black">
         <h1 className="text-3xl font-bold">Congratulations</h1>
-        <p className="text-xl">
-          Your brand {brandName} has been launched successfully. <br />
-          You are now ready to launch NFTs.
-        </p>
+        {hasWebXrExperience === "true" ? (
+          <p className="text-xl">
+            Your brand {brandName} and brand ambassador WebXR have been <br />{" "}
+            launched successfully. You are now ready to launch NFTs.
+          </p>
+        ) : (
+          <p className="text-xl">
+            Your brand {brandName} has been launched successfully. <br />
+            You are now ready to launch NFTs.
+          </p>
+        )}
         <h1 className="text-4xl font-medium">What would you like to create?</h1>
         <div>
           <select

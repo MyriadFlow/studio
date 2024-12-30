@@ -10,6 +10,7 @@ import { toast, ToastContainer } from "react-toastify";
 import { useAccount, useDisconnect, useConnect } from "wagmi";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 
 interface NavLink {
   title: string;
@@ -200,7 +201,7 @@ export const Navbar = () => {
 
             {/* Profile/Connect Section */}
             <div className="flex items-center gap-4">
-              {address ? (
+              {/* {address ? (
                 <div className="relative">
                   <button
                     className="flex items-center space-x-2"
@@ -220,15 +221,18 @@ export const Navbar = () => {
                 </div>
               ) : (
                 <div onClick={Notification}>
-                  <w3m-button />
+                  <WalletMultiButton />
                 </div>
-              )}
+              )} */}
+              <div onClick={Notification}>
+                <WalletMultiButton />
+              </div>
             </div>
           </NavigationMenuList>
 
           {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center gap-4 z-20">
-            {address ? (
+            {/* {address ? (
               <div className="relative hidden lg:flex">
                 <button
                   className="flex items-center space-x-2"
@@ -248,9 +252,12 @@ export const Navbar = () => {
               </div>
             ) : (
               <div className="hidden lg:flex" onClick={Notification}>
-                <w3m-button />
+                <WalletMultiButton />
               </div>
-            )}
+            )} */}
+            <div className="hidden lg:flex" onClick={Notification}>
+              <WalletMultiButton />
+            </div>
 
             <button
               className="text-white p-2"

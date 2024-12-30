@@ -150,7 +150,7 @@ export default function CreatePhygitalDetail() {
 
       localStorage.setItem("PhygitalId", phygitalId);
       toast.success("Phygital created successfully!");
-      // router.push("/create-avatar");
+      router.push("/launch-congratulation");
     } catch (error) {
       console.error(error);
       toast.error("Failed to create phygital");
