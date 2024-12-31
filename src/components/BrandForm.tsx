@@ -21,13 +21,9 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast, ToastContainer } from "react-toastify";
 import { useRouter } from "next/navigation";
-import { useAccount, useChainId, useWalletClient } from "wagmi";
-import { NFTStorage } from "nft.storage";
-import { Hex, createPublicClient, http } from "viem";
-import { base } from "viem/chains";
-import { v4 as uuidv4 } from 'uuid';
-import Simplestore from "@/lib/Simplestore.json";
-import tradehub from "@/lib/tradehub.json";
+import { useAccount } from "wagmi";
+import axios from "axios";
+import { v4 as uuidv4 } from "uuid";
 import { clusterApiUrl, Connection, PublicKey } from "@solana/web3.js";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Metaplex, walletAdapterIdentity } from "@metaplex-foundation/js";
@@ -142,13 +138,14 @@ export default function CreateBrand({
   const [cid, setCid] = useState("");
   const [cidCover, setCidCover] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [uploadingCover, setUploadingCover] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [imageError, setImageError] = useState<boolean>(false);
   const [logoUploading, setLogoUploading] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
+
   const wallet = useWallet();
   const { publicKey, connected } = wallet;
+  const inputFile = useRef(null);
 
   const connection = new Connection(clusterApiUrl("devnet"));
   const metaplex = useMemo(() => {
@@ -156,32 +153,6 @@ export default function CreateBrand({
       return new Metaplex(connection).use(walletAdapterIdentity(wallet));
     }
   }, [wallet, connection]);
-
-  const wallet = useWallet();
-  const { publicKey, connected } = wallet;
-  const inputFile = useRef(null);
-
-  const API_KEY = process.env.NEXT_PUBLIC_STORAGE_API;
-  if (!API_KEY) {
-    throw new Error("Missing NFT.storage API key");
-  }
-
-  const initializeNFTStorage = () => {
-    try {
-      return new NFTStorage({ token: API_KEY });
-    } catch (error) {
-      console.error("Failed to initialize NFT.storage:", error);
-      throw error;
-    }
-  };
-
-  const client = initializeNFTStorage();
-
-  // Initialize public client
-  const publicClient = createPublicClient({
-    chain: base,
-    transport: http(),
-  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -267,84 +238,12 @@ export default function CreateBrand({
     }
   };
 
-  const createAndUploadMetadata = async (
-    brandData: any,
-    isCollection: boolean
-  ) => {
-    try {
-      const metadata = {
-        name: isCollection ? `${brandData.name} Collection` : brandData.name,
-        symbol: isCollection ? "BRAND" : "NFT",
-        description: brandData.description,
-        image: brandData.logo_image, // Your IPFS logo URL
-        external_url: brandData.website,
-        attributes: [
-          {
-            trait_type: "Brand Representative",
-            value: brandData.representative,
-          },
-          {
-            trait_type: "Region",
-            value: brandData.elevate_region || "Global",
-          },
-        ],
-        properties: {
-          files: [
-            {
-              uri: brandData.logo_image,
-              type: "image/png", // adjust based on your image type
-            },
-          ],
-          category: "image",
-        },
-      };
-
-      // Upload to NFT.storage
-      // const client = new NFTStorage({ token: API_KEY }); // You already have this setup
-      const metadataBlob = new Blob([JSON.stringify(metadata)], {
-        type: "application/json",
-      });
-      const cid = await client.storeBlob(metadataBlob);
-
-      return `ipfs://${cid}`;
-    } catch (error) {
-      console.error("Error uploading metadata:", error);
-      throw error;
-    }
-  };
-
   const getWebsiteUrl = () => {
     const websiteLink = socialLinks.find((link) => link.platform === "website");
     return websiteLink?.url || "";
   };
 
-  // Contract Deployment Functions
   const deployContract = async () => {
-    // if (!walletClient) {
-    //   throw new Error("Wallet client not available");
-    // }
-
-    // try {
-    //   const hash = await walletClient.deployContract({
-    //     abi: Simplestore.abi,
-    //     bytecode: Simplestore.bytecode as Hex,
-    //     account: walletAddress,
-    //     args: ["0xf5d0A178a61A2543c98FC4a73E3e78a097DBD9EE"],
-    //   });
-
-    //   if (!hash) {
-    //     throw new Error("Failed to execute deploy contract transaction");
-    //   }
-
-    //   const txn = await publicClient.waitForTransactionReceipt({ hash });
-    //   setIsDeployed(true);
-    //   return txn.contractAddress;
-    // } catch (error) {
-    //   console.error("Deployment error:", error);
-    //   toast.error("Error deploying AccessMaster contract: " + error);
-    //   throw error;
-    // }
-
     if (!publicKey || !metaplex) {
       throw new Error("Wallet not connected");
     }
@@ -352,13 +251,12 @@ export default function CreateBrand({
     console.log(getWebsiteUrl());
 
     try {
-      // Create and upload metadata
       const metadata = {
         name: form.getValues("name"),
         symbol: "BRAND",
         description: form.getValues("description"),
-        image: `ipfs://${cid}`, // Your logo IPFS URI
-        external_url: getWebsiteUrl(),
+        image: `ipfs://${cid}`,
+        external_url: "",
         attributes: [
           {
             trait_type: "Brand Representative",
@@ -371,25 +269,35 @@ export default function CreateBrand({
         ],
       };
 
-      const metadataBlob = new Blob([JSON.stringify(metadata)], {
-        type: "application/json",
+      // Upload metadata to Pinata
+      const response = await fetch("/api/upload-json", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content: metadata }),
       });
-      const metadataCid = await createAndUploadMetadata(metadataBlob, false);
-      const metadataUri = `ipfs://${metadataCid}`;
 
-      // Create NFT Collection
-      const collectionNft = await metaplex.nfts().createSft({
-        name: `${form.getValues("name")} Collection`,
-        symbol: "BRAND",
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Upload failed: ${JSON.stringify(errorData)}`);
+      }
+
+      const data = await response.json();
+      const metadataUri = `ipfs://${data.IpfsHash}`;
+
+      // Create NFT Collection using Metaplex
+      const { nft: collectionNft } = await metaplex.nfts().create({
         uri: metadataUri,
-        sellerFeeBasisPoints: 500, // 5% royalties
+        name: form.getValues("name"),
+        sellerFeeBasisPoints: 500,
+        symbol: "BRAND",
         isCollection: true,
-        collectionAuthority: publicKey as any,
-        updateAuthority: publicKey as any,
+        updateAuthority: metaplex.identity(),
       });
 
       setIsDeployed(true);
-      return collectionNft.mintAddress.toString();
+      return collectionNft.address.toString();
     } catch (error) {
       console.error("Deployment error:", error);
       toast.error("Error deploying collection: " + error);
@@ -401,67 +309,55 @@ export default function CreateBrand({
     platformFee: number,
     memory_name: string
   ) => {
-    // if (!walletClient) {
-    //   throw new Error("Wallet client not available");
-    // }
-    // const AccessMasterAddress = localStorage.getItem("AccessMasterAddress");
-    // try {
-    //   const hash = await walletClient.deployContract({
-    //     abi: tradehub.abi,
-    //     bytecode: tradehub.bytecode as Hex,
-    //     account: walletAddress,
-    //     args: [platformFee, memory_name, `${AccessMasterAddress}`],
-    //   });
-
-    //   if (!hash) {
-    //     throw new Error("Failed to execute deploy contract transaction");
-    //   }
-
-    //   const txn = await publicClient.waitForTransactionReceipt({ hash });
-    //   setIsDeployed(true);
-    //   return txn.contractAddress;
-    // } catch (error) {
-    //   console.error("Deployment error:", error);
-    //   toast.error("Error deploying TradeHub contract: " + error);
-    //   throw error;
-    // }
-
     if (!publicKey || !metaplex) {
       throw new Error("Wallet not connected");
     }
 
     try {
-      // Create trading collection metadata
       const metadata = {
         name: memory_name,
         symbol: "TRADE",
         description: `Trading collection for ${form.getValues("name")}`,
         image: `ipfs://${cidCover}`,
         external_url: getWebsiteUrl(),
+        attributes: [
+          {
+            trait_type: "Platform Fee",
+            value: platformFee.toString(),
+          },
+        ],
       };
 
-      const metadataBlob = new Blob([JSON.stringify(metadata)], {
-        type: "application/json",
+      const response = await fetch("/api/upload-json", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content: metadata }),
       });
-      const metadataCid = await createAndUploadMetadata(metadataBlob, true);
-      const metadataUri = `ipfs://${metadataCid}`;
 
-      // Create Trading Collection
-      const tradingCollection = await metaplex.nfts().createSft({
-        name: memory_name,
-        symbol: "TRADE",
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Upload failed: ${JSON.stringify(errorData)}`);
+      }
+
+      const data = await response.json();
+      const metadataUri = `ipfs://${data.IpfsHash}`;
+
+      const { nft: tradingCollection } = await metaplex.nfts().create({
         uri: metadataUri,
+        name: memory_name,
         sellerFeeBasisPoints: platformFee * 100,
+        symbol: "TRADE",
         isCollection: true,
-        collectionAuthority: publicKey as any,
-        updateAuthority: publicKey as any,
+        updateAuthority: metaplex.identity(),
       });
 
       setIsDeployed(true);
       return {
-        mintAddress: tradingCollection.mintAddress.toString(),
+        mintAddress: tradingCollection.address.toString(),
         metadataAddress: tradingCollection.metadataAddress.toString(),
-        tokenAddress: tradingCollection.tokenAddress?.toString() || null,
+        // tokenAddress: tradingCollection.tokenAddress?.toString() || null,
       };
     } catch (error) {
       console.error("Deployment error:", error);
@@ -493,34 +389,12 @@ export default function CreateBrand({
     }
   };
 
-  const TradehubDeploy = async (): Promise<boolean> => {
-    // try {
-    //   const address = await deployTradehubContract(30, "NFT BAZAAR");
-    //   localStorage.setItem("TradehubAddress", address as `0x${string}`);
-    //   console.log("TradeHub Contract deployed at:", address);
-    //   return address !== null;
-    // } catch (error) {
-    //   console.error("Error deploying TradeHub contract:", error);
-    //   toast.error("Failed to deploy TradeHub contract");
-    //   return false;
-    // }
-
-    try {
-      const addresses = await deployTradehubContract(30, "NFT BAZAAR");
-      localStorage.setItem("TradehubAddress", addresses.mintAddress);
-      localStorage.setItem(
-        "TradehubMetadataAddress",
-        addresses.metadataAddress
-      );
-      if (addresses.tokenAddress) {
-        localStorage.setItem("TradehubTokenAddress", addresses.tokenAddress);
-      }
-      console.log("TradeHub Collection deployed at:", addresses.mintAddress);
-      return true;
-    } catch (error) {
-      console.error("Error deploying TradeHub collection:", error);
-      toast.error("Failed to deploy TradeHub collection");
-      return false;
+  const mintNFTToCollection = async (
+    collectionAddress: string,
+    metadata: any
+  ) => {
+    if (!publicKey || !metaplex) {
+      throw new Error("Wallet not connected");
     }
 
     try {
@@ -581,10 +455,6 @@ export default function CreateBrand({
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // if (!account.addresses) {
-    //   toast.warning("Connect your wallet");
-    //   return;
-    // }
     if (!publicKey || !metaplex) {
       throw new Error("Wallet not connected");
     }
@@ -802,11 +672,9 @@ export default function CreateBrand({
             <WalletMultiButton />
           </div>
         ) : (
-          // Your form content
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <div className="py-4 px-32 flex flex-col gap-12">
-                {/* Basic Information */}
                 <FormField
                   control={form.control}
                   name="name"
@@ -868,7 +736,6 @@ export default function CreateBrand({
                   )}
                 />
 
-                {/* Image Upload Sections */}
                 <div className="flex gap-12">
                   <div>
                     <h3 className="text-2xl">Upload Logo*</h3>
@@ -943,7 +810,6 @@ export default function CreateBrand({
                   </div>
                 </div>
 
-                {/* Cover Image Upload */}
                 <div className="flex gap-12">
                   <div>
                     <h3 className="text-2xl">Upload Cover Image*</h3>
@@ -1015,7 +881,6 @@ export default function CreateBrand({
                   </div>
                 </div>
 
-                {/* Contact Information */}
                 <FormField
                   name="representative"
                   control={form.control}
@@ -1092,7 +957,6 @@ export default function CreateBrand({
                   )}
                 />
 
-                {/* Social Links Section */}
                 <div className="space-y-4">
                   <FormLabel className="text-xl font-semibold">
                     Social Links
@@ -1167,7 +1031,6 @@ export default function CreateBrand({
                   )}
                 </div>
 
-                {/* WebXR Experience Section */}
                 <div className="space-y-4">
                   <FormField
                     control={form.control}
@@ -1207,7 +1070,6 @@ export default function CreateBrand({
                   />
                 </div>
 
-                {/* Elevate Program Section */}
                 <label className="flex items-center text-xl">
                   <input
                     type="checkbox"
@@ -1249,7 +1111,6 @@ export default function CreateBrand({
                   </div>
                 )}
 
-                {/* AI Information Section */}
                 <FormField
                   name="additional_info"
                   control={form.control}
@@ -1274,7 +1135,6 @@ export default function CreateBrand({
                   )}
                 />
 
-                {/* Submit Button */}
                 <Button
                   type="submit"
                   className="w-fit bg-[#30D8FF] text-black hover:text-white rounded-full"
@@ -1283,8 +1143,8 @@ export default function CreateBrand({
                   {loading
                     ? "Processing..."
                     : isEdit
-                      ? "Update brand"
-                      : "Continue"}
+                    ? "Update brand"
+                    : "Continue"}
                 </Button>
               </div>
             </form>

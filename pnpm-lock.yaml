@@ -1,10 +1,4 @@
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-lockfileVersion: '9.0'
-=======
 lockfileVersion: '6.0'
->>>>>>> cdd9263 (chore: fix build issue)
 
 settings:
   autoInstallPeers: true
@@ -17430,9 +17424,4 @@ packages:
     dependencies:
       '@types/react': 18.3.18
       react: 18.3.1
-<<<<<<< HEAD
-      use-sync-external-store: 1.2.0(react@18.3.1)
->>>>>>> 1adb8d0 (chore: work on solana integration)
-=======
     dev: false
->>>>>>> cdd9263 (chore: fix build issue)
