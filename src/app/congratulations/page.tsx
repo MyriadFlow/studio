@@ -12,7 +12,6 @@ export default function Congratulations() {
   );
 
   useEffect(() => {
-    localStorage.setItem("webxr-experience-with-ai-avatar", true.toString());
     // Access localStorage after component mounts
     const storedBrandName = localStorage.getItem("brand_name");
     const webXrExperience: string | null = localStorage.getItem(
