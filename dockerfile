@@ -1,64 +1,65 @@
-# Install dependencies only when needed
-FROM node:18-alpine AS deps
+FROM node:18-alpine AS builder
 
-# Install libc6-compat if needed
-RUN apk add --no-cache libc6-compat
+# Install necessary build tools and Python dependencies
+RUN apk add --no-cache \
+    libc6-compat \
+    python3 \
+    python3-dev \
+    py3-pip \
+    make \
+    g++ \
+    build-base \
+    linux-headers \
+    libusb-dev \
+    eudev-dev
 
-# Install pnpm globally with a specific version
-RUN npm install -g pnpm@8.6.12
+# Install python3 distutils
+RUN pip3 install setuptools --break-system-packages
+
+# Install pnpm and node-gyp
+RUN npm install -g pnpm@7 node-gyp
 
 WORKDIR /app
 
-# Copy package.json and pnpm-lock.yaml
+# Copy package files
 COPY package.json pnpm-lock.yaml ./
 
-# Install dependencies with pnpm (modified flags)
-RUN pnpm install --no-frozen-lockfile
+# Create .npmrc with configurations
+RUN echo "node-linker=hoisted" > .npmrc && \
+    echo "shamefully-hoist=true" >> .npmrc && \
+    echo "strict-peer-dependencies=false" >> .npmrc && \
+    echo "auto-install-peers=true" >> .npmrc
 
-# Rebuild the source code only when needed
-FROM node:18-alpine AS builder
-WORKDIR /app
+# Install dependencies
+RUN pnpm install --no-frozen-lockfile --unsafe-perm
 
-# Install pnpm globally with the same version
-RUN npm install -g pnpm@8.6.12
-
-# Copy dependencies from the deps stage
-COPY --from=deps /app/node_modules ./node_modules
+# Copy source code
 COPY . .
 
-# Build the Next.js application with pnpm
+# Build the application
 RUN pnpm run build
 
-# Production image, copy all the files and run Next.js
+# Production image
 FROM node:18-alpine AS runner
 WORKDIR /app
 
-# Install pnpm globally with the same version
-RUN npm install -g pnpm@8.6.12
-
-# Set environment to production
 ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
 
-# Create a non-root user and group
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
 
-# Copy only necessary files for production
+# Copy necessary files
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
-# Leverage output traces to reduce image size
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-# Ensure permissions for the public directory
 RUN chmod -R 777 ./public
 
 USER nextjs
 
-# Expose port and set it in environment
 EXPOSE 3000
 ENV PORT 3000
 
-# Run the server
 CMD ["node", "server.js"]
