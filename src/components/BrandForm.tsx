@@ -58,7 +58,6 @@ export interface BrandData {
   chaintype_id: string;
   elevate_region?: string;
   webxr_experience_with_ai_avatar: boolean;
-  // Social media fields
   website?: string;
   twitter?: string;
   instagram?: string;
@@ -132,8 +131,6 @@ export default function CreateBrand({
   const isEdit = mode === "edit";
   const router = useRouter();
   const account = useAccount();
-  const chainId = useChainId();
-  const { data: walletClient } = useWalletClient({ chainId });
 
   // State management
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
@@ -160,6 +157,8 @@ export default function CreateBrand({
     }
   }, [wallet, connection]);
 
+  const wallet = useWallet();
+  const { publicKey, connected } = wallet;
   const inputFile = useRef(null);
 
   const API_KEY = process.env.NEXT_PUBLIC_STORAGE_API;
@@ -207,27 +206,6 @@ export default function CreateBrand({
     },
   });
 
-  // Social Links Management
-  const addSocialLink = () => {
-    setSocialLinks([...socialLinks, { platform: "", url: "" }]);
-  };
-
-  const removeSocialLink = (index: number) => {
-    const newLinks = socialLinks.filter((_, i) => i !== index);
-    setSocialLinks(newLinks);
-  };
-
-  const updateSocialLink = (
-    index: number,
-    field: "platform" | "url",
-    value: string
-  ) => {
-    const newLinks = [...socialLinks];
-    newLinks[index][field] = value;
-    setSocialLinks(newLinks);
-  };
-
-  // File Upload Handlers
   const uploadFile = async (fileToUpload: string | Blob) => {
     try {
       setLogoUploading(true);
@@ -371,6 +349,8 @@ export default function CreateBrand({
       throw new Error("Wallet not connected");
     }
 
+    console.log(getWebsiteUrl());
+
     try {
       // Create and upload metadata
       const metadata = {
@@ -490,16 +470,26 @@ export default function CreateBrand({
     }
   };
 
-  const handleDeploy = async (): Promise<boolean> => {
+  const createAndUploadMetadata = async (metadata: any) => {
     try {
-      const address = await deployContract();
-      localStorage.setItem("AccessMasterAddress", address as `0x${string}`);
-      console.log("Contract deployed at:", address);
-      return address !== null;
-    } catch (error) {
-      console.error("Error deploying AccessMaster contract:", error);
-      toast.error("Failed to deploy AccessMaster contract");
-      return false;
+      const response = await fetch("/api/upload-json", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content: metadata }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Upload failed: ${JSON.stringify(errorData)}`);
+      }
+
+      const data = await response.json();
+      return `ipfs://${data.IpfsHash}`;
+    } catch (error: any) {
+      console.error("Error uploading metadata:", error);
+      throw error;
     }
   };
 
@@ -532,6 +522,43 @@ export default function CreateBrand({
       toast.error("Failed to deploy TradeHub collection");
       return false;
     }
+
+    try {
+      const metadataUri = await createAndUploadMetadata(metadata);
+
+      const { nft } = await metaplex.nfts().create({
+        uri: metadataUri,
+        name: metadata.name,
+        sellerFeeBasisPoints: metadata.royalties || 0,
+        symbol: metadata.symbol || "NFT",
+        collection: new PublicKey(collectionAddress),
+        collectionAuthority: publicKey as any,
+      });
+
+      return nft;
+    } catch (error) {
+      console.error("Error minting NFT:", error);
+      throw error;
+    }
+  };
+
+  const addSocialLink = () => {
+    setSocialLinks([...socialLinks, { platform: "", url: "" }]);
+  };
+
+  const removeSocialLink = (index: number) => {
+    const newLinks = socialLinks.filter((_, i) => i !== index);
+    setSocialLinks(newLinks);
+  };
+
+  const updateSocialLink = (
+    index: number,
+    field: "platform" | "url",
+    value: string
+  ) => {
+    const newLinks = [...socialLinks];
+    newLinks[index][field] = value;
+    setSocialLinks(newLinks);
   };
 
   const handleElevateSubmit = () => {
@@ -568,18 +595,13 @@ export default function CreateBrand({
     }
 
     try {
-      // Prepare social links object
-      const socialLinksObject = socialLinks.reduce(
-        (acc, link) => {
-          if (link.platform && link.url) {
-            acc[link.platform] = link.url;
-          }
-          return acc;
-        },
-        {} as Record<string, string>
-      );
+      const socialLinksObject = socialLinks.reduce((acc, link) => {
+        if (link.platform && link.url) {
+          acc[link.platform] = link.url;
+        }
+        return acc;
+      }, {} as Record<string, string>);
 
-      // Handle images
       if (cid) {
         values.logo_image = "ipfs://" + cid;
       } else if (isEdit && initialData?.logo_image) {
@@ -629,25 +651,39 @@ export default function CreateBrand({
         return;
       }
 
-      // Create mode
       if (cid) {
         setLoading(true);
-        toast.warning("Deploying AccessMaster to manage your brand");
+        toast.warning("Deploying brand collection...");
 
-        const deploySuccess = await handleDeploy();
-        if (!deploySuccess) throw new Error("AccessMaster deployment failed");
+        const collectionAddress = await deployContract();
+        localStorage.setItem("AccessMasterAddress", collectionAddress);
+        console.log("Brand collection deployed at:", collectionAddress);
 
-        const AccessMasterAddress = localStorage.getItem("AccessMasterAddress");
-        console.log("Contract deployed at:", AccessMasterAddress);
+        toast.warning("Deploying trading collection...");
+        const tradingCollectionAddresses = await deployTradehubContract(
+          30,
+          "NFT BAZAAR"
+        );
+        localStorage.setItem(
+          "TradehubAddress",
+          tradingCollectionAddresses.mintAddress
+        );
+        localStorage.setItem(
+          "TradehubMetadataAddress",
+          tradingCollectionAddresses.metadataAddress
+        );
+        // if (tradingCollectionAddresses.tokenAddress) {
+        //   localStorage.setItem(
+        //     "TradehubTokenAddress",
+        //     tradingCollectionAddresses.tokenAddress
+        //   );
+        // }
+        console.log(
+          "Trading collection deployed at:",
+          tradingCollectionAddresses.mintAddress
+        );
 
-        toast.warning("Deploying TradeHub");
-        const deployTradeHub = await TradehubDeploy();
-        if (!deployTradeHub) throw new Error("TradeHub deployment failed");
-
-        const TradehubAddress = localStorage.getItem("TradehubAddress");
-        console.log("Contract deployed at:", TradehubAddress);
-
-        toast.success("Deployment Successful");
+        toast.success("Collections deployed successfully");
 
         const brandId = uuidv4();
         const chaintype = localStorage.getItem("BaseSepoliaChain");
@@ -660,8 +696,8 @@ export default function CreateBrand({
             id: brandId,
             ...values,
             ...socialLinksObject,
-            access_master: AccessMasterAddress,
-            trade_hub: TradehubAddress,
+            access_master: collectionAddress,
+            trade_hub: tradingCollectionAddresses.mintAddress,
             payout_address: account.address,
             chain_id: "84532",
             chaintype_id: chaintype,
@@ -674,7 +710,6 @@ export default function CreateBrand({
         const brand = await response.json();
         localStorage.setItem("BrandId", brand.id);
 
-        // Create user record
         const users = await fetch(`${apiUrl}/users`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -688,13 +723,8 @@ export default function CreateBrand({
         if (!users.ok) throw new Error("Failed to add user");
 
         toast.success("Your Brand has been created");
-        if (values.webxr_experience_with_ai_avatar) {
-          router.push("/create-webxr-experience");
-        } else {
-          router.push(`/congratulations?brand_name=${values.name}`);
-        }
-      } else if (!imageError && cid === "") {
-        toast.warning("Wait for your image to finish upload");
+
+        router.push("/create-webxr-experience");
       }
     } catch (error) {
       console.error(error);
@@ -724,7 +754,6 @@ export default function CreateBrand({
       setElevateRegion(initialData.elevate_region || "");
       setShowForm(!!initialData.elevate_region);
 
-      // Initialize social links from initialData
       const initialSocialLinks: SocialLink[] = [];
       const socialPlatforms = [
         "website",
