@@ -1,9 +1,6 @@
 # Install dependencies only when needed
 FROM node:18-alpine AS deps
 
-# Install build dependencies
-RUN pnpm install
-
 # Install global dependencies
 RUN npm install -g node-gyp node-gyp-build pnpm@8.15.1
 
@@ -36,6 +33,9 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 
 RUN npm install -g pnpm@8.15.1
+
+# Install build dependencies
+RUN pnpm install
 
 # Copy all files
 COPY --from=deps /app/node_modules ./node_modules
