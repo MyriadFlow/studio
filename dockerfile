@@ -22,11 +22,11 @@ RUN echo "node-linker=hoisted" > .npmrc && \
     echo "python=/usr/bin/python3" >> .npmrc
 
 # Install dependencies
-RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-    pnpm install --no-frozen-lockfile \
-    --unsafe-perm \
-    --shamefully-hoist \
-    --network-timeout 300000
+# RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+#     pnpm install --no-frozen-lockfile \
+#     --unsafe-perm \
+#     --shamefully-hoist \
+#     --network-timeout 300000
 
 # Rebuild the source code only when needed
 FROM node:18-alpine AS builder
