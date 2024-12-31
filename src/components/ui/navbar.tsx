@@ -68,7 +68,7 @@ export const Navbar = () => {
       if (address) {
         try {
           const response = await fetch(
-            `${baseUri}/profiles/wallet/${address}`,
+            `${baseUri}profiles/wallet/${address}`,
             {
               method: "GET",
               headers: {
