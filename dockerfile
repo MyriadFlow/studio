@@ -1,47 +1,40 @@
-# Install dependencies only when needed
-FROM node:18-alpine AS deps
+FROM node:18-alpine AS builder
 
-# Install global dependencies
-RUN npm install -g node-gyp node-gyp-build pnpm@8.15.1
+# Install necessary build tools and Python dependencies
+RUN apk add --no-cache \
+    libc6-compat \
+    python3 \
+    python3-dev \
+    py3-pip \
+    make \
+    g++ \
+    build-base \
+    linux-headers \
+    libusb-dev \
+    eudev-dev
+
+# Install python3 distutils
+RUN pip3 install setuptools --break-system-packages
+
+# Install pnpm and node-gyp
+RUN npm install -g pnpm@7 node-gyp
 
 WORKDIR /app
 
-# Set environment variables for native builds
-ENV PYTHON=/usr/bin/python3
-ENV NODE_GYP=/usr/local/lib/node_modules/node-gyp/bin/node-gyp.js
-ENV PATH="/usr/local/lib/node_modules/node-gyp-build/bin:${PATH}"
-
-# Copy package configs
+# Copy package files
 COPY package.json pnpm-lock.yaml ./
 
-# Create .npmrc with necessary config
+# Create .npmrc with configurations
 RUN echo "node-linker=hoisted" > .npmrc && \
     echo "shamefully-hoist=true" >> .npmrc && \
     echo "strict-peer-dependencies=false" >> .npmrc && \
-    echo "node-gyp=/usr/local/lib/node_modules/node-gyp/bin/node-gyp.js" >> .npmrc && \
-    echo "python=/usr/bin/python3" >> .npmrc
+    echo "auto-install-peers=true" >> .npmrc
 
 # Install dependencies
-# RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-#     pnpm install --no-frozen-lockfile \
-#     --unsafe-perm \
-#     --shamefully-hoist \
-#     --network-timeout 300000
+RUN pnpm install --no-frozen-lockfile --unsafe-perm
 
-# Rebuild the source code only when needed
-FROM node:18-alpine AS builder
-WORKDIR /app
-
-RUN npm install -g pnpm@8.15.1
-
-# Copy all files
-COPY --from=deps /app/node_modules ./node_modules
+# Copy source code
 COPY . .
-
-ENV NEXT_TELEMETRY_DISABLED 1
-
-# Install build dependencies
-RUN pnpm install
 
 # Build the application
 RUN pnpm run build

@@ -31,7 +31,7 @@ export const config = defaultWagmiConfig({
     walletFeatures: true
   },
   ssr: true,
-  storage: createStorage({
-    storage: cookieStorage
-  })
+  // storage: createStorage({
+  //   storage: cookieStorage
+  // })
 })
