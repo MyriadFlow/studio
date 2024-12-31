@@ -34,14 +34,14 @@ WORKDIR /app
 
 RUN npm install -g pnpm@8.15.1
 
-# Install build dependencies
-RUN pnpm install
-
 # Copy all files
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED 1
+
+# Install build dependencies
+RUN pnpm install
 
 # Build the application
 RUN pnpm run build
