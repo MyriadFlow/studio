@@ -2,19 +2,7 @@
 FROM node:18-alpine AS deps
 
 # Install build dependencies
-RUN apk add --no-cache \
-    libc6-compat \
-    python3 \
-    make \
-    g++ \
-    build-base \
-    git \
-    python3 \
-    py3-pip \
-    autoconf \
-    automake \
-    libtool \
-    nasm
+RUN pnpm install
 
 # Install global dependencies
 RUN npm install -g node-gyp node-gyp-build pnpm@8.15.1
