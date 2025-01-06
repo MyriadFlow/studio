@@ -17,8 +17,8 @@ export async function POST(request: Request) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          pinata_api_key: process.env.NEXT_PUBLIC_PINATA_API_KEY!,
-          pinata_secret_api_key: process.env.NEXT_PUBLIC_PINATA_SECRET_KEY!,
+          pinata_api_key: '420fa5e0818989bf7c8',
+          pinata_secret_api_key: '059a5c6e54156958dce952e5ca416a0ee9832a071900ee4841e616e41a6c14c',
         },
         body: JSON.stringify({
           pinataContent: content,
