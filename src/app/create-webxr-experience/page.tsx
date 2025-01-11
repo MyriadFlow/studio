@@ -490,7 +490,6 @@ export default function CreateWebxrExperience() {
               <div className="flex gap-12">
                 <div>
                   <h3 className="text-2xl">Upload 3D Model (GLB)*</h3>
-                  <h3 className="text-2xl">Upload 3D Model (GLB)*</h3>
                   <div className="border border-dashed border-black h-60 w-[32rem] flex flex-col items-center justify-center p-6">
                     <UploadIcon />
                     {uploading3d ? (
