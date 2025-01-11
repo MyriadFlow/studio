@@ -24,7 +24,7 @@ import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
-import { clusterApiUrl, Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { clusterApiUrl, Connection, PublicKey, LAMPORTS_PER_SOL, Keypair } from "@solana/web3.js";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Metaplex, walletAdapterIdentity } from "@metaplex-foundation/js";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
@@ -257,6 +257,9 @@ export default function CreateBrand({
             return;
         }
 
+        // Generate a new keypair for the mint
+        const mintKeypair = Keypair.generate();
+
         // Create metadata
         const metadata = {
             name: form.getValues("name"),
@@ -287,7 +290,15 @@ export default function CreateBrand({
             sellerFeeBasisPoints: 500, // 5% royalty
             symbol: "BRAND",
             isCollection: true,
-            updateAuthority: metaplex.identity(),
+            useNewMint: mintKeypair,
+            creators: [
+                {
+                    address: publicKey,
+                    share: 100,
+                    authority: metaplex.identity(),
+                }
+            ],
+            isMutable: true,
         });
 
         // Store collection address for future reference
