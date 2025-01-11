@@ -24,7 +24,7 @@ import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
-import { clusterApiUrl, Connection, PublicKey } from "@solana/web3.js";
+import { clusterApiUrl, Connection, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Metaplex, walletAdapterIdentity } from "@metaplex-foundation/js";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
@@ -245,65 +245,60 @@ export default function CreateBrand({
 
   const deployContract = async () => {
     if (!publicKey || !metaplex) {
-      throw new Error("Wallet not connected");
+        toast.error("Please connect your wallet first");
+        return;
     }
-
-    console.log(getWebsiteUrl());
 
     try {
-      const metadata = {
-        name: form.getValues("name"),
-        symbol: "BRAND",
-        description: form.getValues("description"),
-        image: `ipfs://${cid}`,
-        external_url: "",
-        attributes: [
-          {
-            trait_type: "Brand Representative",
-            value: form.getValues("representative"),
-          },
-          {
-            trait_type: "Region",
-            value: elevateRegion || "Global",
-          },
-        ],
-      };
+        // Check SOL balance
+        const balance = await connection.getBalance(publicKey);
+        if (balance < LAMPORTS_PER_SOL * 0.05) {
+            toast.error("Insufficient SOL balance. Need at least 0.05 SOL");
+            return;
+        }
 
-      // Upload metadata to Pinata
-      const response = await fetch("/api/upload-json", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ content: metadata }),
-      });
+        // Create metadata
+        const metadata = {
+            name: form.getValues("name"),
+            symbol: "BRAND",
+            description: form.getValues("description"),
+            image: `ipfs://${cid}`,
+            external_url: getWebsiteUrl(),
+            attributes: [
+                {
+                    trait_type: "Brand Representative",
+                    value: form.getValues("representative"),
+                },
+                {
+                    trait_type: "Region",
+                    value: elevateRegion || "Global",
+                },
+            ],
+        };
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Upload failed: ${JSON.stringify(errorData)}`);
-      }
+        // Upload to IPFS
+        const { IpfsHash } = await uploadToIPFS(metadata);
+        const metadataUri = `ipfs://${IpfsHash}`;
 
-      const data = await response.json();
-      const metadataUri = `ipfs://${data.IpfsHash}`;
+        // Create Brand Collection
+        const { nft: collectionNft } = await metaplex.nfts().create({
+            uri: metadataUri,
+            name: form.getValues("name"),
+            sellerFeeBasisPoints: 500, // 5% royalty
+            symbol: "BRAND",
+            isCollection: true,
+            updateAuthority: metaplex.identity(),
+        });
 
-      // Create NFT Collection using Metaplex
-      const { nft: collectionNft } = await metaplex.nfts().create({
-        uri: metadataUri,
-        name: form.getValues("name"),
-        sellerFeeBasisPoints: 500,
-        symbol: "BRAND",
-        isCollection: true,
-        updateAuthority: metaplex.identity(),
-      });
-
-      setIsDeployed(true);
-      return collectionNft.address.toString();
+        // Store collection address for future reference
+        setIsDeployed(true);
+        return collectionNft.address.toString();
     } catch (error) {
-      console.error("Deployment error:", error);
-      toast.error("Error deploying collection: " + error);
-      throw error;
+        console.error("Deployment error:", error);
+        toast.error(getErrorMessage(error));
+        throw error;
     }
-  };
+};
 
   const deployTradehubContract = async (
     platformFee: number,
@@ -526,7 +521,7 @@ export default function CreateBrand({
         toast.warning("Deploying brand collection...");
 
         const collectionAddress = await deployContract();
-        localStorage.setItem("AccessMasterAddress", collectionAddress);
+        localStorage.setItem("AccessMasterAddress", collectionAddress as string);
         console.log("Brand collection deployed at:", collectionAddress);
 
         toast.warning("Deploying trading collection...");
@@ -653,6 +648,30 @@ export default function CreateBrand({
       setSocialLinks(initialSocialLinks);
     }
   }, [isEdit, initialData, form]);
+
+  const uploadToIPFS = async (content: any) => {
+    const response = await fetch("/api/upload-json", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ content }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Upload failed: ${JSON.stringify(errorData)}`);
+    }
+
+    return response.json();
+  };
+
+  const getErrorMessage = (error: any): string => {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    return "An unknown error occurred";
+  };
 
   return (
     <>
