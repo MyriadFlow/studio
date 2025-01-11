@@ -40,8 +40,8 @@ async function POST(req: NextRequest) {
       {
         headers: {
           "Content-Type": `multipart/form-data; boundary=${formData.getBoundary()}`,
-          pinata_api_key: process.env.PINATA_API_KEY!,
-          pinata_secret_api_key: process.env.PINATA_SECRET_KEY!,
+          pinata_api_key: 'fd37bea7d175cf88fb60',
+          pinata_secret_api_key: '85d42a6aa7e399789beee89b987a55ebf44173a03ef49782ac486bddb34e22f4',
         },
       }
     );
