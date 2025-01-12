@@ -21,9 +21,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { TagsInput } from "@/components/TagsInput";
 import {
-  baseFormSchema,
+  // baseFormSchema,
   categories,
   PhygitalData,
+  rareItemFormSchema,
 } from "../../utils/phygitals";
 import { toast, ToastContainer } from "react-toastify";
 import { useRouter } from "next/navigation";
@@ -40,13 +41,15 @@ export default function CreateRareItem() {
   const inputFile = useRef(null);
   const router = useRouter();
 
-  const form = useForm<z.infer<typeof baseFormSchema>>({
-    resolver: zodResolver(baseFormSchema),
+  const form = useForm<z.infer<typeof rareItemFormSchema>>({
+    resolver: zodResolver(rareItemFormSchema),
     defaultValues: {
       name: "",
       category: [],
       price: "",
       image: "",
+      brand_name: "",
+      tags: [],
     },
   });
 
@@ -98,7 +101,7 @@ export default function CreateRareItem() {
     setCids((prev) => prev.filter((_, i) => i !== index));
   };
 
-  async function onSubmit(values: z.infer<typeof baseFormSchema>) {
+  async function onSubmit(values: z.infer<typeof rareItemFormSchema>) {
     console.log("Form values:", values); 
     console.log("Form errors:", form.formState.errors);
     console.log("CIDs:", cids);

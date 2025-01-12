@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-// Initial form schema for rare items (first page)
-export const baseFormSchema = z.object({
+// Base schema with common fields
+const commonFields = {
   name: z
     .string()
     .min(2, {
@@ -15,9 +15,38 @@ export const baseFormSchema = z.object({
   image: z.string().optional(),
   brand_name: z.string().optional(),
   tags: z.array(z.string()).optional(),
+};
+
+// Schema for rare items (first page)
+export const rareItemFormSchema = z.object({
+  ...commonFields,
 });
 
-// Details form schema (second page)
+// Schema for phygital items
+export const phygitalFormSchema = z.object({
+  ...commonFields,
+  description: z
+    .string()
+    .min(2, {
+      message: "Description must be at least 2 characters",
+    })
+    .max(1000, {
+      message: "Description should be less than 1000 words",
+    }),
+  royality: z.string(),
+  product_info: z.string(),
+  quantity: z.number(),
+  size_option: z.number(),
+  size_details: z.array(
+    z.object({
+      size: z.string(),
+      quantity: z.number(),
+      additional_details: z.string().optional(),
+    })
+  ).optional(),
+});
+
+// Details form schema (second page for rare items)
 export const detailsFormSchema = z.object({
   description: z
     .string()
@@ -45,8 +74,6 @@ export const detailsFormSchema = z.object({
   origin_country: z.string().min(1, "Country of origin is required"),
   product_info: z.string(),
   royality: z.string(),
-  quantity: z.number(),
-  size_option: z.number(),
 });
 
 export const categories = [

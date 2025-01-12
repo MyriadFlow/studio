@@ -21,9 +21,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { TagsInput } from "@/components/TagsInput";
 import {
-  baseFormSchema,
   categories,
   PhygitalData,
+  phygitalFormSchema,
 } from "../../utils/phygitals";
 import { toast, ToastContainer } from "react-toastify";
 import { useRouter } from "next/navigation";
@@ -52,8 +52,8 @@ export default function CreatePhygital() {
   const inputFile = useRef(null);
   const router = useRouter();
 
-  const form = useForm<z.infer<typeof baseFormSchema>>({
-    resolver: zodResolver(baseFormSchema),
+  const form = useForm<z.infer<typeof phygitalFormSchema>>({
+    resolver: zodResolver(phygitalFormSchema),
     defaultValues: {
       name: "",
       category: [],
@@ -66,6 +66,7 @@ export default function CreatePhygital() {
       tags: [],
       size_option: 0,
       size_details: [],
+      quantity: 1,
     },
   });
 
@@ -129,7 +130,7 @@ export default function CreatePhygital() {
     });
   };
 
-  async function onSubmit(values: z.infer<typeof baseFormSchema>) {
+  async function onSubmit(values: z.infer<typeof phygitalFormSchema>) {
     if (cids.length === 0) {
       setImageError(true);
       return;
@@ -326,12 +327,14 @@ export default function CreatePhygital() {
                             placeholder="0"
                             {...field}
                             onChange={(e) => {
-                              field.onChange(e);
+                              const value = e.target.value ? parseInt(e.target.value) : 0;
+                              field.onChange(value);
                               setSizeData({
                                 option: 0,
                                 details: [],
                               });
                             }}
+                            value={field.value || ""}
                           />
                         </FormControl>
                         <span>Items</span>
