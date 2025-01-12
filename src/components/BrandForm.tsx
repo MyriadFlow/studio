@@ -24,9 +24,18 @@ import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
-import { clusterApiUrl, Connection, PublicKey, LAMPORTS_PER_SOL, Keypair } from "@solana/web3.js";
+import {
+  clusterApiUrl,
+  Connection,
+  PublicKey,
+  LAMPORTS_PER_SOL,
+  Keypair,
+  SystemProgram,
+  Transaction,
+  sendAndConfirmTransaction,
+} from "@solana/web3.js";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { Metaplex, walletAdapterIdentity } from "@metaplex-foundation/js";
+import { Metaplex, walletAdapterIdentity, toBigNumber } from "@metaplex-foundation/js";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 
 interface BrandFormProps {
@@ -245,71 +254,86 @@ export default function CreateBrand({
 
   const deployContract = async () => {
     if (!publicKey || !metaplex) {
-        toast.error("Please connect your wallet first");
-        return;
+      toast.error("Please connect your wallet first");
+      return;
     }
 
     try {
-        // Check SOL balance
-        const balance = await connection.getBalance(publicKey);
-        if (balance < LAMPORTS_PER_SOL * 0.05) {
-            toast.error("Insufficient SOL balance. Need at least 0.05 SOL");
-            return;
-        }
+      // Check SOL balance
+      const balance = await connection.getBalance(publicKey);
+      const MINIMUM_BALANCE = LAMPORTS_PER_SOL * 0.05; // 0.05 SOL
+      if (balance < MINIMUM_BALANCE) {
+        toast.error("Insufficient SOL balance. Need at least 0.05 SOL");
+        return;
+      }
 
-        // Generate a new keypair for the mint
-        const mintKeypair = Keypair.generate();
+      // Create metadata
+      const metadata = {
+        name: form.getValues("name"),
+        symbol: "BRAND",
+        description: form.getValues("description"),
+        image: `ipfs://${cid}`,
+        external_url: getWebsiteUrl(),
+        attributes: [
+          {
+            trait_type: "Brand Representative",
+            value: form.getValues("representative"),
+          },
+          {
+            trait_type: "Region",
+            value: elevateRegion || "Global",
+          },
+        ],
+      };
 
-        // Create metadata
-        const metadata = {
-            name: form.getValues("name"),
-            symbol: "BRAND",
-            description: form.getValues("description"),
-            image: `ipfs://${cid}`,
-            external_url: getWebsiteUrl(),
-            attributes: [
-                {
-                    trait_type: "Brand Representative",
-                    value: form.getValues("representative"),
-                },
-                {
-                    trait_type: "Region",
-                    value: elevateRegion || "Global",
-                },
-            ],
-        };
+      // Upload to IPFS
+      const { IpfsHash } = await uploadToIPFS(metadata);
+      const metadataUri = `ipfs://${IpfsHash}`;
 
-        // Upload to IPFS
-        const { IpfsHash } = await uploadToIPFS(metadata);
-        const metadataUri = `ipfs://${IpfsHash}`;
-
-        // Create Brand Collection
-        const { nft: collectionNft } = await metaplex.nfts().create({
+      // Create Brand Collection with retries
+      let retries = 3;
+      let lastError;
+      
+      while (retries > 0) {
+        try {
+          const { nft: collectionNft } = await metaplex.nfts().create({
             uri: metadataUri,
             name: form.getValues("name"),
             sellerFeeBasisPoints: 500, // 5% royalty
             symbol: "BRAND",
             isCollection: true,
-            useNewMint: mintKeypair,
             creators: [
-                {
-                    address: publicKey,
-                    share: 100,
-                    authority: metaplex.identity(),
-                }
+              {
+                address: publicKey,
+                share: 100,
+                authority: metaplex.identity(),
+              },
             ],
             isMutable: true,
-        });
+            maxSupply: toBigNumber(0),
+          });
 
-        // Store collection address for future reference
-        setIsDeployed(true);
-        return collectionNft.address.toString();
+          // Store collection address for future reference
+          setIsDeployed(true);
+          return collectionNft.address.toString();
+        } catch (error) {
+          lastError = error;
+          retries--;
+          if (retries > 0) {
+            console.warn(`NFT creation failed, retrying... (${retries} attempts left)`);
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+          }
+        }
+      }
+
+      // If we get here, all retries failed
+      throw lastError;
     } catch (error) {
-        console.error("Deployment error:", error);
-        toast.error(getErrorMessage(error));
-        throw error;
+      console.error("Deployment error:", error);
+      toast.error(getErrorMessage(error));
+      throw error;
     }
-};
+  };
 
   const deployTradehubContract = async (
     platformFee: number,
@@ -471,12 +495,15 @@ export default function CreateBrand({
     }
 
     try {
-      const socialLinksObject = socialLinks.reduce((acc, link) => {
-        if (link.platform && link.url) {
-          acc[link.platform] = link.url;
-        }
-        return acc;
-      }, {} as Record<string, string>);
+      const socialLinksObject = socialLinks.reduce(
+        (acc, link) => {
+          if (link.platform && link.url) {
+            acc[link.platform] = link.url;
+          }
+          return acc;
+        },
+        {} as Record<string, string>
+      );
 
       if (cid) {
         values.logo_image = "ipfs://" + cid;
@@ -532,7 +559,10 @@ export default function CreateBrand({
         toast.warning("Deploying brand collection...");
 
         const collectionAddress = await deployContract();
-        localStorage.setItem("AccessMasterAddress", collectionAddress as string);
+        localStorage.setItem(
+          "AccessMasterAddress",
+          collectionAddress as string
+        );
         console.log("Brand collection deployed at:", collectionAddress);
 
         toast.warning("Deploying trading collection...");
@@ -585,7 +615,10 @@ export default function CreateBrand({
 
         const brand = await response.json();
         localStorage.setItem("BrandId", brand.id);
-        localStorage.setItem('webxr-experience-with-ai-avatar', values.webxr_experience_with_ai_avatar.toString())
+        localStorage.setItem(
+          "webxr-experience-with-ai-avatar",
+          values.webxr_experience_with_ai_avatar.toString()
+        );
 
         const users = await fetch(`${apiUrl}/users`, {
           method: "POST",
@@ -1173,8 +1206,8 @@ export default function CreateBrand({
                   {loading
                     ? "Processing..."
                     : isEdit
-                    ? "Update brand"
-                    : "Continue"}
+                      ? "Update brand"
+                      : "Continue"}
                 </Button>
               </div>
             </form>

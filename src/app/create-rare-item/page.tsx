@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, ChangeEvent } from "react";
+import React, { useState, useRef, ChangeEvent, useEffect } from "react";
 import {
   Button,
   Checkbox,
@@ -45,15 +45,17 @@ export default function CreateRareItem() {
     defaultValues: {
       name: "",
       category: [],
-      description: "",
       price: "",
-      royality: "",
-      product_info: "",
       image: "",
-      brand_name: "",
-      tags: [],
     },
   });
+
+  useEffect(() => {
+    const subscription = form.watch((value, { name, type }) => 
+      console.log("Form updated:", { field: name, type, value, errors: form.formState.errors })
+    );
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const uploadFile = async (fileToUpload: File) => {
     try {
@@ -97,32 +99,41 @@ export default function CreateRareItem() {
   };
 
   async function onSubmit(values: z.infer<typeof baseFormSchema>) {
+    console.log("Form values:", values); 
+    console.log("Form errors:", form.formState.errors);
+    console.log("CIDs:", cids);
+
     if (cids.length === 0) {
       setImageError(true);
+      toast.error("Please upload at least one image");
       return;
     }
 
     try {
       const brand_name = localStorage.getItem("brand_name");
-      const phygitalData: PhygitalData = {
+      
+      if (!brand_name) {
+        toast.error("Brand name not found. Please create a brand first.");
+        return;
+      }
+
+      const phygitalData: Partial<PhygitalData> = {
         type: "rare",
         name: values.name,
-        brand_name: brand_name || "",
+        brand_name: brand_name,
         category: values.category,
-        description: values.description,
         price: values.price,
-        royality: values.royality,
-        product_info: values.product_info,
         images: cids.map((cid) => "ipfs://" + cid),
         tags: tags,
       };
 
+      console.log("Saving phygital data:", phygitalData);
       localStorage.setItem("phygitalData", JSON.stringify(phygitalData));
       setLoading(true);
       router.push("/create-phygital-detail");
     } catch (error) {
       console.error("Error:", error);
-      toast.error("Failed to save data");
+      toast.error("Failed to save data: " + (error as Error).message);
     } finally {
       setLoading(false);
     }
@@ -140,7 +151,12 @@ export default function CreateRareItem() {
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
+          <form 
+            onSubmit={form.handleSubmit(onSubmit, (errors) => {
+              console.log("Form validation failed:", errors);
+              toast.error("Please fill in all required fields");
+            })}
+          >
             <div className="py-4 px-32 flex flex-col gap-12">
               <FormField
                 name="name"
@@ -318,6 +334,7 @@ export default function CreateRareItem() {
               <Button
                 type="submit"
                 className="w-fit bg-[#30D8FF] rounded-full hover:text-white text-black"
+                disabled={loading || form.formState.isSubmitting}
               >
                 {loading ? "Loading..." : "Next"}
               </Button>

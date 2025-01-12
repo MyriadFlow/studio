@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// Base schema for both phygital and rare items
+// Initial form schema for rare items (first page)
 export const baseFormSchema = z.object({
   name: z
     .string()
@@ -10,7 +10,15 @@ export const baseFormSchema = z.object({
     .regex(/^[a-zA-Z0-9\s]*$/, {
       message: "Name must only contain letters and numbers",
     }),
-  category: z.array(z.string()) || z.string(),
+  category: z.array(z.string()),
+  price: z.string().min(1, { message: "Price must be provided" }),
+  image: z.string().optional(),
+  brand_name: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+});
+
+// Details form schema (second page)
+export const detailsFormSchema = z.object({
   description: z
     .string()
     .min(2, {
@@ -19,17 +27,7 @@ export const baseFormSchema = z.object({
     .max(1000, {
       message: "Description should be less than 1000 words",
     }),
-  price: z.string().min(1, { message: "Price must be provided" }),
-  royality: z.string(),
-  product_info: z.string().min(2, {
-    message: "Product Information must be at least 2 characters",
-  }),
-  image: z.string(),
-  brand_name: z.string(),
-  tags: z.array(z.string()).optional(),
-  quantity: z.number(),
   color: z.string().min(1, "Color is required"),
-  size_option: z.number(),
   size_details: z
     .array(
       z.object({
@@ -39,24 +37,16 @@ export const baseFormSchema = z.object({
       })
     )
     .optional(),
-});
-
-// Details form schema
-export const detailsFormSchema = z.object({
-  color: z.string().min(1, "Color is required"),
-  size_details: z.array(
-    z.object({
-      size: z.string(),
-      quantity: z.number(),
-      additional_details: z.string().optional(),
-    })
-  ),
   weight: z.string().min(1, "Weight is required"),
   material: z.string().min(1, "Material is required"),
   usage: z.string().optional(),
   care_instructions: z.string().optional(),
   manufacturer: z.string().min(1, "Manufacturer is required"),
   origin_country: z.string().min(1, "Country of origin is required"),
+  product_info: z.string(),
+  royality: z.string(),
+  quantity: z.number(),
+  size_option: z.number(),
 });
 
 export const categories = [
